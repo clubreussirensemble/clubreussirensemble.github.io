@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administration du blog — Club Réussir Ensemble</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--navy:#0A2A57;--navy-deep:#071A38;--gold:#FAB202;--green:#017529;--red:#D9060C;--ink:#0B1B2B;--ink2:#4A5A6A;--paper2:#F4F6F9;--line:rgba(10,42,87,.12)}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Work Sans',system-ui,sans-serif;color:var(--ink);background:#fff;padding:18px}
+h2{font-size:16px;margin:0 0 12px;color:var(--navy-deep)}
+.f{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+label{font-size:11.5px;font-weight:700;color:var(--ink2)}
+input,select,textarea{padding:9px 11px;border:1.5px solid var(--line);border-radius:7px;font:inherit;font-size:13.5px;background:var(--paper2);width:100%}
+textarea{min-height:200px;resize:vertical}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.b{border:none;background:var(--navy);color:#fff;font-weight:700;font-size:12.5px;padding:8px 13px;border-radius:7px;cursor:pointer}
+.b.gold{background:var(--gold);color:var(--navy-deep)}.b.red{background:var(--red)}.b.grey{background:#8593a3}.b.green{background:var(--green)}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+th{text-align:left;color:var(--ink2);font-size:11.5px;text-transform:uppercase;padding:8px;border-bottom:2px solid var(--line)}
+td{padding:9px 8px;border-bottom:1px solid var(--paper2);vertical-align:top}
+.pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#fff6de;color:#9a6a00}.pill.p{background:#e7f6ec;color:var(--green)}.pill.a{background:#eceff3;color:#5a6672}
+.box{border:1.5px solid var(--line);border-radius:12px;padding:18px;margin-bottom:22px}
+.hint{font-size:12px;color:var(--ink2);margin:4px 0 0}
+.login{max-width:360px;margin:50px auto}.err{color:var(--red);font-size:12.5px}
+</style>
+</head>
+<body>
+<div id="login" class="login"><h2>Administration du blog</h2>
+  <form id="lf"><div class="f"><label>E-mail</label><input name="email" type="email" required></div>
+  <div class="f"><label>Mot de passe</label><input name="password" type="password" required></div>
+  <button class="b" style="width:100%">Se connecter</button><p class="err" id="le"></p></form></div>
+
+<div id="app" style="display:none">
+  <div class="box"><h2 id="ft">Nouvel article</h2>
+    <form id="af">
+      <div class="g">
+        <div class="f"><label>Titre *</label><input name="titre" required maxlength="140"></div>
+        <div class="f"><label>Catégorie *</label><select name="categorie" required></select></div>
+        <div class="f"><label>Auteur (nom affiché)</label><input name="auteur" value="Club Réussir Ensemble" maxlength="60"></div>
+        <div class="f"><label>Image de couverture (lien https, facultatif)</label><input name="couverture" type="url" placeholder="https://…"></div>
+        <div class="f"><label>🎬 Vidéo / documentaire (lien YouTube ou Google Drive, facultatif)</label><input name="video" type="url" placeholder="https://youtu.be/… ou https://drive.google.com/file/d/…"><p class="hint">Drive : ouvrez la vidéo → Partager → « Toute personne disposant du lien », sinon elle ne se lira pas sur le blog. YouTube : « Non répertoriée » ou « Publique ».</p></div>
+      </div>
+      <div class="f"><label>Résumé (affiché sur la carte) *</label><input name="extrait" required maxlength="220"></div>
+      <div class="f"><label>Contenu *</label><textarea name="contenu" required></textarea>
+        <p class="hint">Séparez les paragraphes par une ligne vide. « ## Titre » pour un intertitre ; lignes commençant par « - » pour une liste. Aucun HTML n'est interprété.</p></div>
+      <p class="hint" style="margin:0 0 10px">Ne publiez pas de photo, de nom ou de témoignage d'élève sans l'accord requis.</p>
+      <button type="button" class="b green" id="pub">Publier</button>
+      <button type="button" class="b gold" id="draft">Enregistrer en brouillon</button>
+      <button type="button" class="b grey" id="cancel" style="display:none">Annuler la modification</button>
+    </form>
+  </div>
+  <div class="box"><h2>Articles</h2>
+    <table><thead><tr><th>Titre</th><th>Catégorie</th><th>Statut</th><th>Date</th><th></th></tr></thead><tbody id="tb"><tr><td colspan="5">Chargement…</td></tr></tbody></table>
+  </div>
+  <div class="box"><h2>💬 Commentaires à valider <span class="pill" id="cn">0</span></h2><div id="cp"><p class="hint">Aucun commentaire en attente.</p></div></div>
+  <div class="box"><h2>Commentaires publiés</h2><div id="cpub"><p class="hint">Aucun commentaire publié.</p></div></div>
+  <div class="box"><h2>Textes de la colonne latérale du blog</h2>
+    <form id="cf"><div class="f"><label>Notre objectif</label><input name="objectif"></div>
+    <div class="g"><div class="f"><label>Citation du jour</label><input name="citation"></div><div class="f"><label>Auteur de la citation</label><input name="citationAuteur"></div></div>
+    <button class="b">Enregistrer</button></form>
+  </div>
+</div>
+
+<script type="module">
+import {fbAuth,fbDB,C_CONFIG,collection,doc,getDoc,setDoc,deleteDoc,orderBy,query,onSnapshot,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "./firebase.js";
+const CATS=["Conseils d'études","Méthodes de travail","Motivation","Examens & Révisions","Vie du club","Cours & Ressources","Témoignages"];
+const PUB='site_blog_articles',DRA='site_blog_brouillons',PEND='site_blog_commentaires_attente';
+const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=id=>document.getElementById(id),af=$('af');
+af.categorie.innerHTML=CATS.map(c=>`<option>${e(c)}</option>`).join('');
+let pubs=[],dras=[],editing=null,started=false;
+
+onAuthStateChanged(fbAuth,async u=>{
+ if(!u){$('login').style.display='block';$('app').style.display='none';return}
+ const s=await getDoc(doc(fbDB,'admins',u.uid));
+ if(!s.exists()){$('le').textContent="Ce compte n'a pas les droits d'administration.";await signOut(fbAuth);return}
+ $('login').style.display='none';$('app').style.display='block';start();
+});
+$('lf').onsubmit=async ev=>{ev.preventDefault();$('le').textContent='';const f=new FormData(ev.target);
+ try{await signInWithEmailAndPassword(fbAuth,f.get('email').trim(),f.get('password'))}catch(_){$('le').textContent='E-mail ou mot de passe incorrect.'}};
+
+function start(){
+ if(started)return;started=true;
+ onSnapshot(query(collection(fbDB,PUB),orderBy('publishedAt','desc')),s=>{pubs=s.docs.map(d=>({id:d.id,...d.data()}));draw();ensureSubs()});
+ onSnapshot(query(collection(fbDB,PEND),orderBy('at','asc')),s=>{pend=s.docs.map(d=>({id:d.id,...d.data()}));drawC()},()=>{});
+ onSnapshot(collection(fbDB,DRA),s=>{dras=s.docs.map(d=>({id:d.id,...d.data()}));draw()});
+ getDoc(doc(fbDB,C_CONFIG,'blog')).then(s=>{if(!s.exists())return;const d=s.data(),f=$('cf');['objectif','citation','citationAuteur'].forEach(k=>{if(d[k])f.elements[k].value=d[k]})}).catch(()=>{});
+}
+
+// ===== Modération des commentaires =====
+let pend=[],pubC={},subs={};
+const fd=t=>t?new Date(t).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+function ensureSubs(){pubs.forEach(a=>{if(subs[a.id])return;subs[a.id]=onSnapshot(collection(fbDB,PUB,a.id,'commentaires'),s=>{pubC[a.id]=s.docs.map(d=>({id:d.id,artId:a.id,artTitre:a.titre,...d.data()}));drawC()},()=>{})})}
+function drawC(){
+ $('cn').textContent=pend.length;
+ $('cp').innerHTML=pend.length?pend.map(c=>`<div style="padding:10px 0;border-bottom:1px solid var(--paper2)"><b>${e(c.nom)}</b> <span class="hint">· ${fd(c.at)} · sur « ${e(c.articleTitre)} »</span><p style="margin:6px 0;white-space:pre-line;word-break:break-word">${e(c.texte)}</p><button class="b green" data-k="ok" data-id="${e(c.id)}">Approuver</button> <button class="b red" data-k="no" data-id="${e(c.id)}">Refuser</button></div>`).join(''):'<p class="hint">Aucun commentaire en attente.</p>';
+ $('cp').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>modere(b.dataset.k,pend.find(x=>x.id===b.dataset.id)));
+ const all=Object.values(pubC).flat().sort((a,b)=>(b.at||0)-(a.at||0));
+ $('cpub').innerHTML=all.length?all.map(c=>`<div style="padding:9px 0;border-bottom:1px solid var(--paper2)"><b>${e(c.nom)}</b> <span class="hint">· ${fd(c.at)} · « ${e(c.artTitre)} »</span><p style="margin:5px 0;white-space:pre-line;word-break:break-word">${e(c.texte)}</p><button class="b red" data-p="${e(c.artId)}" data-id="${e(c.id)}">Supprimer</button></div>`).join(''):'<p class="hint">Aucun commentaire publié.</p>';
+ $('cpub').querySelectorAll('[data-p]').forEach(b=>b.onclick=async()=>{if(confirm('Supprimer ce commentaire ?'))await deleteDoc(doc(fbDB,PUB,b.dataset.p,'commentaires',b.dataset.id))});
+}
+async function modere(k,c){
+ if(!c)return;
+ try{
+  if(k==='ok')await setDoc(doc(fbDB,PUB,c.articleId,'commentaires',c.id),{nom:c.nom,texte:c.texte,at:c.at,articleTitre:c.articleTitre});
+  await deleteDoc(doc(fbDB,PEND,c.id));
+ }catch(_){alert('Action impossible. Vérifiez les règles Firestore.')}
+}
+function draw(){
+ const rows=[...pubs.map(a=>({...a,statut:'published'})),...dras].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+ const lab={published:['Publié','p'],draft:['Brouillon',''],archived:['Archivé','a']};
+ $('tb').innerHTML=rows.length?rows.map(a=>{const l=lab[a.statut]||lab.draft;return `<tr><td>${e(a.titre)}</td><td>${e(a.categorie)}</td><td><span class="pill ${l[1]}">${l[0]}</span></td><td>${a.updatedAt?new Date(a.updatedAt).toLocaleDateString('fr-FR'):'—'}</td>
+ <td style="white-space:nowrap"><button class="b" data-a="edit" data-id="${a.id}">Modifier</button> ${a.statut==='published'?`<button class="b gold" data-a="unpub" data-id="${a.id}">Dépublier</button>`:`<button class="b green" data-a="pub" data-id="${a.id}">Publier</button>`} ${a.statut==='archived'?'':`<button class="b grey" data-a="arch" data-id="${a.id}">Archiver</button>`} <button class="b red" data-a="del" data-id="${a.id}">Supprimer</button></td></tr>`}).join(''):'<tr><td colspan="5">Aucun article.</td></tr>';
+ $('tb').querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>act(b.dataset.a,rows.find(x=>x.id===b.dataset.id)));
+}
+// Un article publié vit dans blogArticles (lisible par tous) ; brouillons/archives dans blogBrouillons (admin seulement).
+async function store(id,data,statut){
+ const now=Date.now();
+ const rec={titre:data.titre,categorie:data.categorie,auteur:data.auteur||'Club Réussir Ensemble',couverture:data.couverture||'',video:data.video||'',extrait:data.extrait,contenu:data.contenu,statut,createdAt:data.createdAt||now,updatedAt:now,publishedAt:data.publishedAt||null};
+ if(statut==='published'){rec.publishedAt=data.publishedAt||now;await setDoc(doc(fbDB,PUB,id),rec);await deleteDoc(doc(fbDB,DRA,id))}
+ else{await setDoc(doc(fbDB,DRA,id),rec);await deleteDoc(doc(fbDB,PUB,id))}
+}
+async function act(a,art){
+ if(!art)return;
+ if(a==='edit'){editing=art;for(const k of ['titre','categorie','auteur','couverture','video','extrait','contenu'])af.elements[k].value=art[k]||'';$('ft').textContent="Modifier l'article";$('cancel').style.display='inline-block';scrollTo(0,0);return}
+ if(a==='del'){if(confirm('Supprimer définitivement cet article ?')){await deleteDoc(doc(fbDB,PUB,art.id));await deleteDoc(doc(fbDB,DRA,art.id))}return}
+ await store(art.id,art,a==='pub'?'published':a==='unpub'?'draft':'archived');
+}
+
+const okVideo=u=>{try{const x=new URL(u),h=x.hostname.replace(/^www\./,'');
+ if(h==='youtu.be')return /^[\w-]{6,20}$/.test(x.pathname.slice(1));
+ if(h==='youtube.com'||h==='m.youtube.com')return (x.pathname==='/watch'&&/^[\w-]{6,20}$/.test(x.searchParams.get('v')||''))||/^\/(embed|shorts|live)\/[\w-]{6,20}/.test(x.pathname);
+ if(h==='drive.google.com')return /\/file\/d\/[\w-]+/.test(x.pathname)||/^[\w-]+$/.test(x.searchParams.get('id')||'');
+ }catch(_){}return false};
+async function save(statut){
+ if(!af.reportValidity())return;
+ const f=Object.fromEntries(new FormData(af).entries());for(const k in f)f[k]=f[k].trim();
+ if(f.video&&!okVideo(f.video)){alert("Le lien vidéo doit être un lien YouTube ou Google Drive (drive.google.com/file/d/…).");return}
+ if(f.couverture&&!/^https:\/\//.test(f.couverture)){alert("Le lien de l'image doit commencer par https://");return}
+ const id=editing?editing.id:doc(collection(fbDB,DRA)).id;
+ await store(id,{...(editing||{}),...f},statut);
+ reset();alert(statut==='published'?'Article publié ✔':'Brouillon enregistré ✔');
+}
+function reset(){editing=null;af.reset();af.elements.auteur.value='Club Réussir Ensemble';$('ft').textContent='Nouvel article';$('cancel').style.display='none'}
+$('pub').onclick=()=>save('published');$('draft').onclick=()=>save('draft');$('cancel').onclick=reset;
+$('cf').onsubmit=async ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target).entries());for(const k in f)f[k]=f[k].trim();await setDoc(doc(fbDB,C_CONFIG,'blog'),f,{merge:true});alert('Enregistré ✔')};
+</script>
+</body>
+</html>
