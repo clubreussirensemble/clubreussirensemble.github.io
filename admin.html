@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administration — Club Réussir Ensemble</title>
+<link rel="manifest" href="manifest-admin.json">
+<meta name="theme-color" content="#0A2A57">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CRE Admin">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Club Réussir Ensemble — styles partagés */
+:root{
+  --navy:#0A2A57; --navy-deep:#071A38;
+  --gold:#FAB202; --green:#017529; --red:#D9060C;
+  --ink:#0B1B2B; --ink2:#4A5A6A;
+  --paper:#FFFFFF; --paper2:#F4F6F9;
+  --line:rgba(10,42,87,.12);
+  --radius:10px;
+  --shadow:0 10px 30px rgba(10,26,45,.10);
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Work Sans',sans-serif;color:var(--ink);background:var(--paper2);line-height:1.5;-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+h1,h2,h3{font-family:'Poppins',sans-serif;font-weight:700;line-height:1.15;color:var(--navy-deep)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.flag-rule{height:5px;background:linear-gradient(90deg,var(--red) 0 33%,var(--gold) 33% 66%,var(--green) 66% 100%)}
+
+/* Nav */
+.site-nav{background:var(--navy-deep);position:sticky;top:0;z-index:20;box-shadow:0 4px 18px rgba(0,0,0,.18)}
+.site-nav .row{display:flex;align-items:center;gap:14px;padding:10px 0}
+.site-nav .logo-mark{height:46px;width:46px;border-radius:50%;background:#fff;padding:3px;flex-shrink:0}
+.site-nav .brand{color:#fff;font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;line-height:1.2}
+.site-nav .brand span{display:block;font-size:10.5px;color:var(--gold);font-weight:600;letter-spacing:.04em}
+.site-nav nav{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+.site-nav nav a{color:#cfd8e3;font-size:14.5px;font-weight:500;padding:8px 12px;border-radius:6px;transition:background .2s var(--ease),color .2s var(--ease)}
+.site-nav nav a:hover,.site-nav nav a.active{background:rgba(255,255,255,.08);color:#fff}
+.site-nav .cta{background:var(--gold);color:var(--navy-deep);font-weight:700;padding:9px 16px;border-radius:7px;font-size:14px}
+.nav-toggle{display:none;background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:7px;width:38px;height:38px;font-size:18px}
+@media (max-width:860px){
+  .site-nav nav{display:none;position:absolute;top:100%;left:0;right:0;background:var(--navy-deep);flex-direction:column;padding:8px 20px 16px;gap:0}
+  .site-nav nav.open{display:flex}
+  .site-nav nav a{padding:12px 4px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .nav-toggle{display:block;margin-left:auto}
+  .site-nav .cta{display:none}
+}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:8px;font-weight:700;font-size:15px;border:2px solid transparent;cursor:pointer;transition:transform .15s var(--ease),box-shadow .15s var(--ease)}
+.btn:hover{transform:translateY(-2px)}
+.btn-gold{background:var(--gold);color:var(--navy-deep)}
+.btn-gold:hover{box-shadow:0 8px 20px rgba(250,178,2,.35)}
+.btn-outline{border-color:#fff;color:#fff}
+.btn-navy{background:var(--navy);color:#fff}
+
+/* Footer */
+.site-footer{background:var(--navy-deep);color:#cfd8e3;margin-top:60px}
+.site-footer .wrap{padding:46px 20px 22px;display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:32px}
+.site-footer h4{color:#fff;font-family:'Poppins',sans-serif;font-size:15px;margin-bottom:12px}
+.site-footer p,.site-footer a{font-size:13.5px;color:#a9b6c4}
+.site-footer ul{list-style:none}
+.site-footer li{margin-bottom:8px}
+.site-footer a:hover{color:#fff}
+.foot-bottom{border-top:1px solid rgba(255,255,255,.1);text-align:center;padding:16px 20px;font-size:12.5px;color:#8393a4}
+@media (max-width:700px){.site-footer .wrap{grid-template-columns:1fr}}
+
+/* Section helpers */
+.section{padding:64px 0}
+.section-head{max-width:620px;margin-bottom:34px}
+.section-head p{color:var(--ink2);font-size:16px;margin-top:10px}
+.kicker{color:var(--red);font-weight:700;font-size:13.5px}
+
+</style>
+<style>
+body{background:var(--paper2)}
+.admin-top{background:var(--navy-deep);color:#fff;padding:16px 0}
+.admin-top .row{display:flex;align-items:center;gap:12px}
+.admin-top h1{color:#fff;font-size:17px;flex:1}
+.admin-link{font-size:12.5px;color:#cfd8e3;text-decoration:underline}
+.admin-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0}
+.admin-tabs button{background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 15px;font-weight:700;font-size:13.5px;cursor:pointer;color:var(--ink2);white-space:nowrap}
+.admin-tabs button.active{background:var(--navy-deep);color:#fff;border-color:var(--navy-deep)}
+
+.panel{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
+.panel h2{font-size:16px;margin-bottom:16px}
+.row-form{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:flex-end}
+.row-form .field{display:flex;flex-direction:column;gap:5px}
+.row-form label{font-size:11.5px;font-weight:700;color:var(--ink2)}
+.row-form input,.row-form select{padding:9px 11px;border:1.5px solid var(--line);border-radius:7px;font-size:13.5px;font-family:inherit;background:var(--paper2)}
+
+.content-block{border-top:1px solid var(--paper2);padding-top:18px;margin-top:18px}
+.content-block:first-child{border-top:none;padding-top:0;margin-top:0}
+.content-block h3{font-size:14px;margin-bottom:12px;color:var(--navy-deep)}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:12px}
+.grid-2 .field{display:flex;flex-direction:column;gap:5px}
+.grid-2 label{font-size:11.5px;font-weight:700;color:var(--ink2)}
+.grid-2 input{padding:9px 11px;border:1.5px solid var(--line);border-radius:7px;font-size:13.5px;font-family:inherit;background:var(--paper2)}
+
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700}
+.pill.attente{background:#fff3cd;color:#8a6300}
+.pill.accepte,.pill.ok{background:#e7f6ec;color:var(--green)}
+.pill.refuse{background:#fdeaea;color:var(--red)}
+.insc-actions select{padding:6px 8px;border:1.5px solid var(--line);border-radius:6px;font-size:12.5px;font-family:inherit}
+
+.gal-thumb{width:70px;height:52px;object-fit:cover;border-radius:6px;background:var(--paper2)}
+.gal-com-toggle{border:none;background:none;color:var(--navy);font-weight:700;font-size:12.5px;cursor:pointer;padding:0}
+.gal-com-panel{display:none;margin-top:6px}
+.gal-com-panel.open{display:block}
+.gal-com-item{font-size:12.5px;background:var(--paper2);border-radius:6px;padding:6px 8px;margin-bottom:4px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;color:var(--ink2);font-size:11.5px;text-transform:uppercase;padding:8px 10px;border-bottom:2px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
+.pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px}
+.pill.ok{background:#e7f6ec;color:var(--green)}
+.pill.attente{background:#fff6de;color:#9a6a00}
+.small-btn{border:none;background:var(--navy);color:#fff;font-size:12px;font-weight:700;padding:6px 11px;border-radius:6px;cursor:pointer}
+
+.auth-box{max-width:380px;margin:70px auto;background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:30px}
+.auth-box h2{font-size:18px;margin-bottom:16px}
+.auth-box .field{margin-bottom:12px}
+.auth-box label{display:block;font-size:12px;font-weight:700;color:var(--ink2);margin-bottom:5px}
+.auth-box input{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit}
+.err{color:var(--red);font-size:12.5px;margin-top:10px}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(7,26,56,.55);z-index:100;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;max-width:480px;width:100%;max-height:86vh;overflow-y:auto}
+.modal-box h3{font-size:16px;margin-bottom:14px}
+.modal-close{float:right;border:none;background:none;font-size:20px;cursor:pointer;color:var(--ink2);line-height:1}
+.lecon-item{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--paper2);border-radius:7px;padding:8px 10px;margin-bottom:6px;font-size:13px}
+.lecon-item span.type{font-size:11px;font-weight:700;color:var(--ink2);white-space:nowrap}
+.lecon-item button{border:none;background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:4px 9px;border-radius:5px;cursor:pointer;flex-shrink:0}
+.lecon-form{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:flex-end}
+.lecon-form .field{display:flex;flex-direction:column;gap:5px;flex:1 1 140px}
+.lecon-form label{font-size:11.5px;font-weight:700;color:var(--ink2)}
+.lecon-form input,.lecon-form select{padding:9px 11px;border:1.5px solid var(--line);border-radius:7px;font-size:13.5px;font-family:inherit;background:var(--paper2)}
+</style>
+</head>
+<body>
+
+<div id="loginView" class="auth-box">
+  <h2>Espace admin</h2>
+  <form id="loginForm">
+    <div class="field"><label>E-mail</label><input name="email" type="email" required></div>
+    <div class="field"><label>Mot de passe</label><input name="password" type="password" required></div>
+    <button type="submit" class="btn btn-navy" style="width:100%">Se connecter</button>
+    <p class="err" id="loginErr"></p>
+  </form>
+</div>
+
+<div id="adminView" style="display:none">
+  <div class="admin-top">
+    <div class="wrap row">
+      <h1>Administration — Club Réussir Ensemble</h1>
+      <a class="admin-link" href="index.html">Voir le site</a>
+      <button class="admin-link" id="installBtn" style="display:none;border:none;cursor:pointer;font:inherit">📲 Installer l'application</button>
+      <a class="admin-link" href="#" id="logoutLink">Déconnexion</a>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="admin-tabs">
+      <button data-tab="olyjeu" style="background:#FFF6DA;border-color:#FAB202;color:#0A2A57">🎮 Jeu Olympiades</button>
+      <button data-tab="olympiades" style="background:#FFF6DA;border-color:#FAB202;color:#0A2A57">🏆 Page Olympiades</button>
+      <button class="active" data-tab="matieres">Matières</button>
+      <button data-tab="paiements">Paiements</button>
+      <button data-tab="eleves">Élèves</button>
+      <button data-tab="evenements">Événements</button>
+      <button data-tab="evaluations">Évaluations</button>
+      <button data-tab="objectifs">Objectifs</button>
+      <button data-tab="contenu">Contenu</button>
+      <button data-tab="videos">Vidéos</button>
+      <button data-tab="equipe">Équipe</button>
+      <button data-tab="ressources">Ressources</button>
+      <button data-tab="inscriptions">Inscriptions</button>
+      <button data-tab="galerie">Galerie</button>
+      <button data-tab="temoignages">Témoignages</button>
+      <button data-tab="resultatspal">Résultats & palmarès</button>
+      <button data-tab="quizq">Quiz</button>
+      <button data-tab="liens">Réseaux sociaux</button>
+      <button data-tab="espace">Espace élève (Chat, devoirs…)</button>
+      <button data-tab="blog">Blog</button>
+    </div>
+
+    <div id="tab-espace" class="panel" style="display:none;padding:0">
+      <p style="margin:14px 0;color:var(--ink2);font-size:13px">Devoirs, évaluations, emploi du temps, sondages, groupe de classe, progression et messagerie — tout se gère ici, comme dans Chat_eleves.html. La première fois, saisis le mot de passe professeur habituel.</p>
+      <iframe src="Chat_eleves.html" style="width:100%;height:80vh;min-height:640px;border:0;border-radius:var(--radius);box-shadow:var(--shadow);background:#fff" title="Espace numérique de l'élève — administration"></iframe>
+    </div>
+
+    <div id="tab-blog" class="panel" style="display:none;padding:0">
+      <iframe src="admin-blog.html" style="width:100%;height:85vh;min-height:640px;border:0;border-radius:var(--radius);box-shadow:var(--shadow);background:#fff" title="Administration du blog"></iframe>
+    </div>
+
+    <div id="tab-olyjeu" class="panel" style="display:none;padding:0">
+      <p style="margin:14px 0;color:var(--ink2);font-size:13px">Joueurs, questions, classement, phases et paramètres du jeu. Connecte-toi avec le compte administrateur du jeu. <a href="olympiade-app.html?admin=1" target="_blank" rel="noopener" style="color:var(--blue);font-weight:700">Ouvrir dans un nouvel onglet</a> si l'affichage est trop petit.</p>
+      <iframe id="olyJeuFrame" data-src="olympiade-app.html?admin=1" style="width:100%;height:85vh;min-height:640px;border:0;border-radius:var(--radius);box-shadow:var(--shadow);background:#0D1B2E" title="Administration du jeu Olympiades"></iframe>
+    </div>
+
+    <div id="tab-olympiades" class="panel" style="display:none">
+      <h2>Page « Olympiades » du site</h2>
+      <p style="color:var(--ink2);font-size:13px;margin:4px 0 14px">Modifie ce qui s'affiche sur <a href="olympiades.html" target="_blank" rel="noopener" style="color:var(--blue);font-weight:700">olympiades.html</a>. Les champs laissés vides reprennent les valeurs par défaut de la page. Pour gérer les questions, les joueurs et les matchs, ouvre <a href="olympiade-app.html" target="_blank" rel="noopener" style="color:var(--blue);font-weight:700">l'application des Olympiades</a>.</p>
+      <form id="olyForm">
+        <div class="content-block">
+          <h3>Texte d'introduction</h3>
+          <div class="field"><textarea name="intro" rows="3" placeholder="Une compétition intellectuelle pour révéler les talents…" style="padding:9px 11px;border:1.5px solid var(--line);border-radius:7px;font:inherit;font-size:13.5px"></textarea></div>
+        </div>
+        <div class="content-block">
+          <h3>Disciplines</h3>
+          <div id="olyDisc"></div>
+          <button type="button" class="small-btn" id="olyAddDisc">+ Ajouter une discipline</button>
+        </div>
+        <div class="content-block">
+          <h3>Étapes et dates</h3>
+          <div id="olyEtapes"></div>
+          <button type="button" class="small-btn" id="olyAddEtape">+ Ajouter une étape</button>
+        </div>
+        <div class="content-block">
+          <h3>Résultats publiés</h3>
+          <p style="color:var(--ink2);font-size:12.5px;margin:0 0 10px">Ajoute uniquement des résultats vérifiés et publiés avec l'accord des élèves ou de leurs responsables. Préfère un nom d'affichage (prénom et initiale).</p>
+          <div id="olyRes"></div>
+          <button type="button" class="small-btn" id="olyAddRes">+ Ajouter un résultat</button>
+        </div>
+        <button class="btn btn-navy" type="submit" style="margin-top:8px">Enregistrer la page Olympiades</button>
+      </form>
+
+      <div class="content-block" id="olyInscBlock">
+        <h3>Inscriptions reçues</h3>
+        <p style="color:var(--ink2);font-size:12.5px;margin:0 0 10px">Vérifie chaque inscription, puis valide-la. Pour créer les codes d'accès, copie les noms validés et colle-les dans « Import multiple » de <a href="olympiade-app.html" target="_blank" rel="noopener" style="color:var(--blue);font-weight:700">l'application</a>, puis envoie à chaque famille son lien.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+          <select id="olyInscFiltre" style="padding:8px 10px;border:1.5px solid var(--line);border-radius:7px;font:inherit;font-size:13px">
+            <option value="">Toutes</option><option value="soumis">Nouvelles</option><option value="a_verifier">À vérifier</option><option value="valide">Validées</option><option value="refuse">Refusées</option>
+          </select>
+          <button type="button" class="small-btn" id="olyInscCopy">Copier les noms validés</button>
+          <span id="olyInscCount" style="font-size:12.5px;color:var(--ink2)"></span>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Participant</th><th>Classe</th><th>Établissement</th><th>Disciplines</th><th>Contact</th><th>Statut</th><th></th></tr></thead>
+            <tbody id="olyInscBody"><tr><td colspan="7">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-matieres" class="panel">
+      <h2>Ajouter une matière</h2>
+      <form id="matiereForm" class="row-form">
+        <div class="field"><label>Nom</label><input name="nom" required placeholder="Mathématiques"></div>
+        <div class="field"><label>Encadreur</label><input name="prof" placeholder="Nom du prof"></div>
+        <div class="field"><label>Prix (GNF)</label><input name="prix" type="number" min="0" placeholder="0"></div>
+        <button class="btn btn-navy" type="submit">Ajouter</button>
+      </form>
+      <table>
+        <thead><tr><th>Matière</th><th>Encadreur</th><th>Prix</th><th>Leçons</th><th></th></tr></thead>
+        <tbody id="matieresBody"><tr><td colspan="5">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div id="tab-paiements" class="panel" style="display:none">
+      <h2>Paiements reçus</h2>
+      <table>
+        <thead><tr><th>Élève</th><th>Matière</th><th>Montant</th><th>Date</th><th>Statut</th><th></th></tr></thead>
+        <tbody id="paiementsBody"><tr><td colspan="6">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div id="tab-eleves" class="panel" style="display:none">
+      <h2>Élèves inscrits</h2>
+      <table>
+        <thead><tr><th>Nom</th><th>Classe</th><th>Téléphone</th><th>E-mail</th><th>Statut</th><th></th></tr></thead>
+        <tbody id="elevesBody"><tr><td colspan="6">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div id="tab-evenements" class="panel" style="display:none">
+      <h2>Ajouter un événement</h2>
+      <form id="evenementForm" class="row-form">
+        <div class="field"><label>Titre</label><input name="titre" required placeholder="Concours de mathématiques"></div>
+        <div class="field"><label>Type</label>
+          <select name="type" required>
+            <option value="concours">Concours</option>
+            <option value="conference">Conférence</option>
+            <option value="activite">Activité</option>
+          </select>
+        </div>
+        <div class="field"><label>Date</label><input name="date" type="date" required></div>
+        <div class="field"><label>Heure</label><input name="heure" placeholder="14h00"></div>
+        <div class="field"><label>Lieu</label><input name="lieu" placeholder="Salle du Club, Mamou"></div>
+        <div class="field" style="flex:1 1 260px"><label>Description</label><input name="description" placeholder="Courte description"></div>
+        <button class="btn btn-navy" type="submit">Ajouter</button>
+      </form>
+      <table>
+        <thead><tr><th>Date</th><th>Titre</th><th>Type</th><th>Lieu</th><th></th></tr></thead>
+        <tbody id="evenementsBody"><tr><td colspan="5">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div id="tab-evaluations" class="panel" style="display:none">
+      <h2>Ajouter une évaluation</h2>
+      <form id="evaluationForm" class="row-form">
+        <div class="field"><label>Titre</label><input name="titre" required placeholder="Bac blanc — Physique"></div>
+        <div class="field"><label>Matière</label><input name="matiere" placeholder="Physique"></div>
+        <div class="field"><label>Type</label>
+          <select name="type" required>
+            <option value="quiz">Quiz</option>
+            <option value="devoir">Devoir</option>
+            <option value="examen">Examen blanc</option>
+          </select>
+        </div>
+        <div class="field"><label>Date</label><input name="date" type="date" required></div>
+        <div class="field"><label>Durée (min)</label><input name="dureeMin" type="number" min="0" placeholder="60"></div>
+        <div class="field"><label>Notée sur</label><input name="noteSur" type="number" min="1" value="20"></div>
+        <button class="btn btn-navy" type="submit">Ajouter</button>
+      </form>
+      <table>
+        <thead><tr><th>Date</th><th>Titre</th><th>Matière</th><th>Type</th><th></th></tr></thead>
+        <tbody id="evaluationsBody"><tr><td colspan="5">Chargement…</td></tr></tbody>
+      </table>
+
+      <h2 style="margin-top:26px">Saisir un résultat</h2>
+      <form id="resultatForm" class="row-form">
+        <div class="field"><label>Évaluation</label><select name="evaluationId" id="evalSelect" required></select></div>
+        <div class="field"><label>Élève</label><select name="uid" id="eleveSelect" required></select></div>
+        <div class="field"><label>Note</label><input name="note" type="number" min="0" step="0.5" required></div>
+        <button class="btn btn-navy" type="submit">Enregistrer</button>
+      </form>
+      <table>
+        <thead><tr><th>Élève</th><th>Évaluation</th><th>Note</th><th></th></tr></thead>
+        <tbody id="resultatsBody"><tr><td colspan="4">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div id="tab-objectifs" class="panel" style="display:none">
+      <h2>Objectifs des élèves</h2>
+      <table>
+        <thead><tr><th>Élève</th><th>Objectif</th><th>Statut</th><th></th></tr></thead>
+        <tbody id="objectifsBody"><tr><td colspan="4">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div id="tab-contenu" class="panel" style="display:none">
+      <h2>Textes du site public</h2>
+
+      <div class="content-block">
+        <h3>Page d'accueil</h3>
+        <form id="configAccueilForm">
+          <div class="grid-2">
+            <div class="field"><label>Titre (ligne 1)</label><input name="heroTitle1"></div>
+            <div class="field"><label>Titre (ligne 2, en couleur)</label><input name="heroTitle2"></div>
+            <div class="field" style="grid-column:1/-1"><label>Texte sous le titre</label><input name="heroLead"></div>
+            <div class="field"><label>Carte — titre</label><input name="heroCardTitle"></div>
+            <div class="field"><label>Carte — texte</label><input name="heroCardText"></div>
+            <div class="field"><label>Chiffre 1</label><input name="stat1Value"></div>
+            <div class="field"><label>Légende 1</label><input name="stat1Label"></div>
+            <div class="field"><label>Chiffre 2</label><input name="stat2Value"></div>
+            <div class="field"><label>Légende 2</label><input name="stat2Label"></div>
+            <div class="field"><label>Chiffre 3</label><input name="stat3Value"></div>
+            <div class="field"><label>Légende 3</label><input name="stat3Label"></div>
+            <div class="field"><label>Kicker "Pourquoi nous choisir"</label><input name="whyKicker"></div>
+            <div class="field"><label>Titre de la section</label><input name="whyTitle"></div>
+            <div class="field"><label>Carte 1 — titre</label><input name="why1Title"></div>
+            <div class="field"><label>Carte 1 — texte</label><input name="why1Text"></div>
+            <div class="field"><label>Carte 2 — titre</label><input name="why2Title"></div>
+            <div class="field"><label>Carte 2 — texte</label><input name="why2Text"></div>
+            <div class="field"><label>Carte 3 — titre</label><input name="why3Title"></div>
+            <div class="field"><label>Carte 3 — texte</label><input name="why3Text"></div>
+            <div class="field"><label>Bandeau — titre</label><input name="ctaTitle"></div>
+            <div class="field"><label>Bandeau — texte</label><input name="ctaText"></div>
+          </div>
+          <button class="btn btn-navy" type="submit">Enregistrer l'accueil</button>
+        </form>
+      </div>
+
+      <div class="content-block">
+        <h3>Page "À propos"</h3>
+        <form id="configAproposForm">
+          <div class="grid-2">
+            <div class="field"><label>Titre de la page</label><input name="pageTitle"></div>
+            <div class="field"><label>Sous-titre</label><input name="pageSubtitle"></div>
+            <div class="field"><label>Titre "Notre mission"</label><input name="missionTitle"></div>
+            <div class="field" style="grid-column:1/-1"><label>Texte de la mission</label><input name="missionText"></div>
+            <div class="field"><label>Sceau — titre</label><input name="sealTitle"></div>
+            <div class="field"><label>Sceau — sous-titre</label><input name="sealSubtitle"></div>
+            <div class="field"><label>Kicker devise</label><input name="devKicker"></div>
+            <div class="field"><label>Titre devise</label><input name="devTitle"></div>
+            <div class="field"><label>Valeur 1 — titre</label><input name="value1Title"></div>
+            <div class="field"><label>Valeur 1 — texte</label><input name="value1Text"></div>
+            <div class="field"><label>Valeur 2 — titre</label><input name="value2Title"></div>
+            <div class="field"><label>Valeur 2 — texte</label><input name="value2Text"></div>
+            <div class="field"><label>Valeur 3 — titre</label><input name="value3Title"></div>
+            <div class="field"><label>Valeur 3 — texte</label><input name="value3Text"></div>
+            <div class="field"><label>Kicker contact</label><input name="contactKicker"></div>
+            <div class="field"><label>Titre contact</label><input name="contactTitle"></div>
+            <div class="field"><label>Adresse</label><input name="adresse"></div>
+            <div class="field"><label>WhatsApp — texte affiché</label><input name="whatsapp"></div>
+            <div class="field"><label>WhatsApp — lien (wa.me/…)</label><input name="whatsappLink" type="url" placeholder="https://wa.me/224xxxxxxxxx"></div>
+            <div class="field"><label>E-mail</label><input name="email"></div>
+          </div>
+          <button class="btn btn-navy" type="submit">Enregistrer "À propos"</button>
+        </form>
+      </div>
+
+      <div class="content-block">
+        <h3>Page "Vidéos"</h3>
+        <form id="configVideosForm">
+          <div class="grid-2">
+            <div class="field"><label>Titre de la page</label><input name="pageTitle"></div>
+            <div class="field"><label>Sous-titre</label><input name="pageSubtitle"></div>
+            <div class="field"><label>Bandeau direct — titre</label><input name="liveTitle"></div>
+            <div class="field"><label>Bandeau direct — sous-titre</label><input name="liveSubtitle"></div>
+            <div class="field"><label>Bandeau direct — bouton</label><input name="liveBtnText"></div>
+          </div>
+          <button class="btn btn-navy" type="submit">Enregistrer "Vidéos"</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="tab-liens" class="panel" style="display:none">
+      <h2>Réseaux sociaux du site (pied de page)</h2>
+      <div class="content-block">
+        <form id="configReseauxForm">
+          <div class="grid-2">
+            <div class="field"><label>Facebook — lien</label><input name="facebook" type="url" placeholder="https://www.facebook.com/..."></div>
+            <div class="field"><label>YouTube — lien</label><input name="youtube" type="url" placeholder="https://www.youtube.com/..."></div>
+            <div class="field"><label>WhatsApp — lien (wa.me/…)</label><input name="whatsapp" type="url" placeholder="https://wa.me/224xxxxxxxxx"></div>
+            <div class="field"><label>E-mail</label><input name="email" type="email" placeholder="contact@clubreussirensemble-mamou.com"></div>
+            <div class="field"><label>Localisation (Google Maps) — lien</label><input name="maps" type="url" placeholder="https://maps.google.com/..."></div>
+          </div>
+          <button class="btn btn-navy" type="submit">Enregistrer les réseaux sociaux</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="tab-videos" class="panel" style="display:none">
+      <h2>Ajouter une vidéo</h2>
+      <form id="videoForm" class="row-form">
+        <div class="field"><label>Titre</label><input name="titre" required placeholder="Suites numériques — les bases"></div>
+        <div class="field"><label>Matière</label><input name="matiere" placeholder="Mathématiques"></div>
+        <div class="field"><label>Durée</label><input name="duree" placeholder="12:40"></div>
+        <div class="field"><label>Lien (YouTube, etc.)</label><input name="lien" type="url" placeholder="https://…"></div>
+        <div class="field" style="flex:1 1 260px"><label>Description</label><input name="description" placeholder="Courte description"></div>
+        <button class="btn btn-navy" type="submit">Ajouter</button>
+      </form>
+      <table>
+        <thead><tr><th>Titre</th><th>Matière</th><th>Durée</th><th></th></tr></thead>
+        <tbody id="videosBody"><tr><td colspan="4">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div id="tab-equipe" class="panel" style="display:none">
+      <h2>Ajouter un membre de l'équipe</h2>
+      <form id="equipeForm" class="row-form">
+        <div class="field"><label>Nom</label><input name="nom" required placeholder="M. Diallo Boubacar"></div>
+        <div class="field"><label>Rôle</label><input name="role" placeholder="Fondateur, encadreur…"></div>
+        <div class="field"><label>Groupe (page « Notre équipe »)</label><select name="categorie"><option value="encadreur">Encadreur</option><option value="direction">Direction</option><option value="benevole">Bénévole</option></select></div>
+        <div class="field"><label>Matière (facultatif)</label><input name="matiere" maxlength="40" placeholder="Mathématiques"></div>
+        <div class="field"><label>Photo (URL)</label><input name="photoUrl" type="url" placeholder="https://…"></div>
+        <div class="field" style="flex:1 1 260px"><label>Bio courte</label><input name="bio" placeholder="Une phrase de présentation"></div>
+        <div class="field" style="flex:1 1 100%"><label>Parcours (facultatif)</label><input name="parcours" maxlength="400" placeholder="Formation, expérience, années au club…"></div>
+        <button class="btn btn-navy" type="submit">Ajouter</button>
+      </form>
+      <table>
+        <thead><tr><th>Nom</th><th>Rôle</th><th></th></tr></thead>
+        <tbody id="equipeBody"><tr><td colspan="3">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div id="tab-ressources" class="panel" style="display:none">
+      <h2>Ajouter une ressource</h2>
+      <form id="ressourceForm" class="row-form">
+        <div class="field"><label>Titre</label><input name="titre" required placeholder="Suites numériques — résumé"></div>
+        <div class="field"><label>Type</label>
+          <select name="type" required>
+            <option value="Fiche de cours">Fiche de cours</option>
+            <option value="Exercices">Exercices</option>
+            <option value="Annale">Annale</option>
+          </select>
+        </div>
+        <div class="field"><label>Matière</label><input name="matiere" placeholder="Mathématiques"></div>
+        <div class="field"><label>Pages</label><input name="pages" type="number" min="0" placeholder="6"></div>
+        <div class="field"><label>Lien (Google Drive)</label><input name="lien" type="url" placeholder="https://drive.google.com/..."></div>
+        <div class="field"><label>Couverture (lien direct Postimages)</label><input name="couverture" type="url" placeholder="https://i.postimg.cc/.../couverture.jpg"></div>
+        <div class="field" style="flex:1 1 260px"><label>Description</label><input name="description" placeholder="Courte description"></div>
+        <button class="btn btn-navy" type="submit">Ajouter</button>
+      </form>
+      <table>
+        <thead><tr><th>Titre</th><th>Type</th><th>Matière</th><th></th></tr></thead>
+        <tbody id="ressourcesBody"><tr><td colspan="4">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div id="tab-inscriptions" class="panel" style="display:none">
+      <h2>Fiches d'inscription reçues</h2>
+      <table>
+        <thead><tr><th>Nom</th><th>Contact</th><th>Classe</th><th>Message</th><th>Statut</th><th>Décision</th><th>Contacter</th><th></th></tr></thead>
+        <tbody id="inscriptionsBody"><tr><td colspan="8">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div id="tab-galerie" class="panel" style="display:none">
+      <h2>Ajouter une photo</h2>
+      <form id="galerieForm" class="row-form">
+        <div class="field" style="flex:1 1 300px"><label>Lien de l'image (URL)</label><input name="url" type="url" required placeholder="https://…"></div>
+        <div class="field" style="flex:1 1 300px"><label>Légende</label><input name="legende" placeholder="Ex. Remise des prix du concours de maths"></div>
+        <button class="btn btn-navy" type="submit">Ajouter</button>
+      </form>
+      <table>
+        <thead><tr><th>Photo</th><th>Légende</th><th>Commentaires</th><th></th></tr></thead>
+        <tbody id="galerieBody"><tr><td colspan="4">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div id="tab-temoignages" class="panel" style="display:none">
+      <div class="content-block">
+        <h3>À valider</h3>
+        <table>
+          <thead><tr><th>Auteur</th><th>Message</th><th></th></tr></thead>
+          <tbody id="temAttenteBody"><tr><td colspan="3">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="content-block">
+        <h3>Ajouter un témoignage ou une réussite</h3>
+        <form id="temForm" class="row-form">
+          <div class="field" style="flex:1 1 200px"><label>Nom affiché</label><input name="nom" required maxlength="50" placeholder="Ex. Mariama D."></div>
+          <div class="field" style="flex:1 1 160px"><label>Statut</label><input name="statut" maxlength="40" placeholder="Élève, Parent, Ancien élève…"></div>
+          <div class="field" style="flex:1 1 160px"><label>Type</label>
+            <select name="type"><option value="temoignage">Témoignage</option><option value="reussite">Réussite</option></select></div>
+          <div class="field" style="flex:1 1 240px"><label>Résultat (pour une réussite)</label><input name="resultat" maxlength="60" placeholder="Ex. BAC 2026 – Mention Bien"></div>
+          <div class="field" style="flex:1 1 240px"><label>Photo (lien, facultatif)</label><input name="photo" type="url" placeholder="https://…"></div>
+          <div class="field" style="flex:1 1 100%"><label>Message</label><textarea name="texte" required maxlength="500" rows="3" style="padding:9px 11px;border:1.5px solid var(--line);border-radius:7px;font-size:13.5px;font-family:inherit;background:var(--paper2);width:100%"></textarea></div>
+          <button class="btn btn-navy" type="submit">Publier</button>
+        </form>
+      </div>
+      <div class="content-block">
+        <h3>Publiés</h3>
+        <table>
+          <thead><tr><th>Auteur</th><th>Type</th><th>Message</th><th></th></tr></thead>
+          <tbody id="temPubBody"><tr><td colspan="4">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="tab-quizq" class="panel" style="display:none">
+      <div class="content-block">
+        <h3>Ajouter une question au quiz « Teste ton niveau »</h3>
+        <p style="color:var(--ink2);font-size:12.5px;margin:0 0 10px">Le quiz contient déjà 16 questions intégrées. Celles-ci s'y ajoutent et sont tirées au hasard.</p>
+        <form id="quizForm" class="row-form">
+          <div class="field"><label>Niveau</label><select name="niveau"><option value="college">Collège</option><option value="lycee">Lycée</option></select></div>
+          <div class="field"><label>Matière</label><select name="matiere"><option value="maths">Mathématiques</option><option value="pc">Physique-Chimie</option></select></div>
+          <div class="field" style="flex:1 1 100%"><label>Question</label><input name="question" required maxlength="250"></div>
+          <div class="field" style="flex:1 1 220px"><label>Choix 1 (bonne réponse)</label><input name="c0" required maxlength="100"></div>
+          <div class="field" style="flex:1 1 220px"><label>Choix 2</label><input name="c1" required maxlength="100"></div>
+          <div class="field" style="flex:1 1 220px"><label>Choix 3 (facultatif)</label><input name="c2" maxlength="100"></div>
+          <div class="field" style="flex:1 1 220px"><label>Choix 4 (facultatif)</label><input name="c3" maxlength="100"></div>
+          <div class="field" style="flex:1 1 100%"><label>Explication de la correction (facultatif)</label><input name="explication" maxlength="300"></div>
+          <button class="btn btn-navy" type="submit">Ajouter</button>
+        </form>
+      </div>
+      <div class="content-block">
+        <h3>Questions ajoutées</h3>
+        <table>
+          <thead><tr><th>Question</th><th>Niveau</th><th></th></tr></thead>
+          <tbody id="quizBody"><tr><td colspan="3">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="tab-resultatspal" class="panel" style="display:none">
+      <div class="content-block">
+        <h3>Ajouter un résultat d'examen</h3>
+        <form id="rpResForm" class="row-form">
+          <div class="field" style="flex:1 1 120px"><label>Année</label><input name="annee" required maxlength="9" placeholder="2026"></div>
+          <div class="field" style="flex:1 1 160px"><label>Examen</label><input name="examen" required maxlength="40" placeholder="BEPC, BAC, Certificat…"></div>
+          <div class="field" style="flex:1 1 120px"><label>Présentés</label><input name="presentes" type="number" min="1" required></div>
+          <div class="field" style="flex:1 1 120px"><label>Admis</label><input name="admis" type="number" min="0" required></div>
+          <button class="btn btn-navy" type="submit">Publier</button>
+        </form>
+      </div>
+      <div class="content-block">
+        <h3>Résultats publiés</h3>
+        <table>
+          <thead><tr><th>Année</th><th>Examen</th><th>Admis / présentés</th><th></th></tr></thead>
+          <tbody id="rpResBody"><tr><td colspan="4">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="content-block">
+        <h3>Ajouter un élève au palmarès</h3>
+        <form id="rpPalForm" class="row-form">
+          <div class="field" style="flex:1 1 200px"><label>Nom affiché</label><input name="nom" required maxlength="50" placeholder="Ex. Mariama D."></div>
+          <div class="field" style="flex:1 1 100px"><label>Année</label><input name="annee" required maxlength="9" placeholder="2026"></div>
+          <div class="field" style="flex:1 1 140px"><label>Examen</label><input name="examen" required maxlength="40" placeholder="BAC, BEPC…"></div>
+          <div class="field" style="flex:1 1 140px"><label>Mention</label>
+            <select name="mention"><option value="tb">Très bien</option><option value="b">Bien</option><option value="ab">Assez bien</option></select></div>
+          <div class="field" style="flex:1 1 100px"><label>Moyenne /20</label><input name="moyenne" maxlength="6" placeholder="15,2"></div>
+          <div class="field" style="flex:1 1 200px"><label>Établissement (facultatif)</label><input name="etablissement" maxlength="60"></div>
+          <div class="field" style="flex:1 1 240px"><label>Photo (lien, facultatif)</label><input name="photo" type="url" placeholder="https://…"></div>
+          <button class="btn btn-navy" type="submit">Publier</button>
+        </form>
+      </div>
+      <div class="content-block">
+        <h3>Palmarès</h3>
+        <table>
+          <thead><tr><th>Élève</th><th>Examen</th><th>Mention</th><th></th></tr></thead>
+          <tbody id="rpPalBody"><tr><td colspan="4">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="matiereEditOverlay">
+  <div class="modal-box">
+    <button class="modal-close" id="matiereEditClose" type="button">×</button>
+    <h3>Modifier la matière</h3>
+    <form id="matiereEditForm">
+      <input type="hidden" name="id">
+      <div class="grid-2">
+        <div class="field"><label>Nom</label><input name="nom" required></div>
+        <div class="field"><label>Encadreur</label><input name="prof"></div>
+        <div class="field"><label>Prix (GNF)</label><input name="prix" type="number" min="0"></div>
+      </div>
+      <button class="btn btn-navy" type="submit">Enregistrer</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="leconsOverlay">
+  <div class="modal-box">
+    <button class="modal-close" id="leconsClose" type="button">×</button>
+    <h3>Leçons — <span id="leconsMatiereNom"></span></h3>
+    <div id="leconsList"></div>
+    <form class="lecon-form" id="leconForm">
+      <input type="hidden" name="matiereId">
+      <div class="field"><label>Titre de la leçon</label><input name="titre" required placeholder="Ex. Les suites numériques"></div>
+      <div class="field" style="flex:0 0 140px">
+        <label>Type</label>
+        <select name="type">
+          <option value="video">Vidéo</option>
+          <option value="quiz">Quiz</option>
+          <option value="devoir">Devoir</option>
+        </select>
+      </div>
+      <div class="field" style="flex:1 1 220px">
+        <label>Lien Google Drive — document du cours (partage "Toute personne disposant du lien")</label>
+        <input name="lien" type="url" placeholder="https://drive.google.com/...">
+      </div>
+      <div class="field" style="flex:1 1 220px">
+        <label>Lien YouTube — vidéo de la leçon</label>
+        <input name="video" type="url" placeholder="https://www.youtube.com/watch?v=... ou https://youtu.be/...">
+      </div>
+      <button class="btn btn-navy" type="submit">Ajouter</button>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+import { fbAuth, fbDB, C_MATIERES, C_PAIEMENTS, C_ELEVES, C_EVENEMENTS, C_EVALUATIONS,
+         C_RESULTATS, C_OBJECTIFS, C_CONFIG, C_VIDEOS, C_EQUIPE, C_RESSOURCES, C_INSC, C_GAL,
+         C_TEMOIGNAGES, C_RES_EXAMENS, C_PALMARES, C_QUIZ_QUEST,
+         collection, doc, getDoc, setDoc, addDoc,
+         updateDoc, deleteDoc, orderBy, query, onSnapshot, signInWithEmailAndPassword, signOut,
+         onAuthStateChanged } from "./firebase.js";
+
+// ── Connexion au projet Firebase "emploi-temps" (même base que Chat_eleves.html) ──
+// Sert uniquement à créer le lien personnel (token) de l'élève lors de la validation de son compte.
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc as edtDoc, setDoc as edtSetDoc, serverTimestamp as edtServerTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const edtFirebaseConfig = {
+  apiKey: "AIzaSyBYeYPOptN2wEak_Ctcr4a8t5qXpj4riLE",
+  authDomain: "emploi-temps.firebaseapp.com",
+  projectId: "emploi-temps",
+  storageBucket: "emploi-temps.firebasestorage.app",
+  messagingSenderId: "665985283894",
+  appId: "1:665985283894:web:b0c4cb14824bb8fed9a597"
+};
+const edtDb = getFirestore(initializeApp(edtFirebaseConfig, "edtLink"));
+const CHAT_ELEVES_COL = 'chatEleves';
+// File d'attente lue par l'onglet "Groupes/Classes" d'Emploi_du_temps.html : dès qu'un
+// compte élève est validé ici, sa fiche (nom, tél, e-mail, classe) y est déposée, et
+// Emploi_du_temps.html se charge de l'ajouter automatiquement à la bonne classe.
+const SITE_SYNC_COL = 'siteEleveSync';
+function genChatToken(){ return 'el_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 9); }
+
+async function validerCompteEleve(uid, e){
+  const token = genChatToken();
+  await edtSetDoc(edtDoc(edtDb, CHAT_ELEVES_COL, token), {
+    nom: `${e.prenom||''} ${e.nom||''}`.trim(), classe: e.classe||'', tel: e.telephone||'',
+    createdAt: edtServerTimestamp(), lastAt: edtServerTimestamp(), lastMsg: '',
+    unreadAdmin: 0, unreadEleve: 0
+  });
+  // Dépose la fiche dans la file de synchronisation « Groupes/Classes »
+  await edtSetDoc(edtDoc(edtDb, SITE_SYNC_COL, uid), {
+    prenom: e.prenom||'', nom: e.nom||'', telephone: e.telephone||'', email: e.email||'',
+    classe: e.classe||'', uid, chatToken: token,
+    createdAt: edtServerTimestamp(), synced: false
+  });
+  await updateDoc(doc(fbDB, C_ELEVES, uid), { statut: 'valide', chatToken: token });
+}
+
+let eleves = [], evaluations = [], matieres = [];
+
+const loginView = document.getElementById('loginView');
+const adminView = document.getElementById('adminView');
+
+onAuthStateChanged(fbAuth, async user=>{
+  if(!user){ loginView.style.display='block'; adminView.style.display='none'; return; }
+  const snap = await getDoc(doc(fbDB, 'admins', user.uid));
+  if(!snap.exists()){
+    document.getElementById('loginErr').textContent = "Ce compte n'a pas les droits d'administration.";
+    await signOut(fbAuth);
+    return;
+  }
+  loginView.style.display='none'; adminView.style.display='block';
+  startListeners();
+  startTemoignages();
+  startRP();
+  startQuiz();
+});
+
+document.getElementById('loginForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const err = document.getElementById('loginErr');
+  err.textContent = '';
+  try{
+    await signInWithEmailAndPassword(fbAuth, fd.get('email').trim(), fd.get('password'));
+  }catch(ex){
+    err.textContent = "E-mail ou mot de passe incorrect.";
+  }
+});
+document.getElementById('logoutLink').onclick = e=>{ e.preventDefault(); signOut(fbAuth); };
+
+// Onglets
+document.querySelectorAll('.admin-tabs button').forEach(b=>{
+  b.onclick = ()=>{
+    if(b.dataset.tab==='olyjeu'){ const fr=document.getElementById('olyJeuFrame'); if(!fr.src) fr.src=fr.dataset.src; }
+    document.querySelectorAll('.admin-tabs button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
+    document.getElementById('tab-'+b.dataset.tab).style.display='block';
+  };
+});
+
+
+// ── Olympiades : page publique olympiades.html (document config/olympiades) ──
+const OLY_COLS = {
+  disc:   [['icone','Icône',60,'🧮'],['nom','Discipline',200,'Mathématiques'],['desc','Description',300,'Calcul, algèbre, géométrie…']],
+  etapes: [['titre','Étape',200,'Inscriptions'],['date','Date',160,'Du 10 au 30 mars'],['desc','Description',300,'Inscription et vérification']],
+  res:    [['nom','Nom d\'affichage',200,'Mariama D.'],['categorie','Catégorie',200,'Mathématiques — lycée'],['score','Score',80,'92']]
+};
+const OLY_BOX = { disc:'olyDisc', etapes:'olyEtapes', res:'olyRes' };
+function olyAddRow(kind, vals){
+  const row = document.createElement('div');
+  row.className = 'row-form'; row.dataset.kind = kind;
+  row.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:8px';
+  OLY_COLS[kind].forEach(([k,label,,ph])=>{
+    const f = document.createElement('div'); f.className='field';
+    if(k==='icone') f.style.width='70px'; else if(k==='score') f.style.width='90px'; else f.style.flex='1 1 180px';
+    const l = document.createElement('label'); l.textContent = label;
+    const i = document.createElement('input'); i.dataset.k = k; i.placeholder = ph; i.value = (vals && vals[k]!=null) ? vals[k] : '';
+    i.maxLength = OLY_COLS[kind].find(c=>c[0]===k)[2];
+    f.append(l,i); row.append(f);
+  });
+  const del = document.createElement('button');
+  del.type='button'; del.className='small-btn'; del.style.background='var(--red)'; del.textContent='Retirer';
+  del.onclick = ()=> row.remove();
+  row.append(del);
+  document.getElementById(OLY_BOX[kind]).append(row);
+}
+function olyRead(kind){
+  return [...document.querySelectorAll('#'+OLY_BOX[kind]+' .row-form')].map(r=>{
+    const o = {}; r.querySelectorAll('input').forEach(i=>{ o[i.dataset.k] = i.value.trim(); }); return o;
+  }).filter(o=>Object.values(o).some(v=>v));
+}
+document.getElementById('olyAddDisc').onclick   = ()=> olyAddRow('disc');
+document.getElementById('olyAddEtape').onclick  = ()=> olyAddRow('etapes');
+document.getElementById('olyAddRes').onclick    = ()=> olyAddRow('res');
+async function loadOly(){
+  try{
+    const snap = await getDoc(doc(fbDB, C_CONFIG, 'olympiades'));
+    const d = snap.exists() ? snap.data() : {};
+    document.querySelector('#olyForm [name=intro]').value = d.intro || '';
+    (d.disciplines||[]).forEach(x=>olyAddRow('disc',x));
+    (d.etapes||[]).forEach(x=>olyAddRow('etapes',x));
+    (d.resultats||[]).forEach(x=>olyAddRow('res',x));
+  }catch(e){ console.warn('Olympiades : lecture impossible', e); }
+}
+document.getElementById('olyForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const res = olyRead('res').map(x=>({...x, score: x.score===''?null:(isNaN(Number(x.score))?x.score:Number(x.score))}));
+  try{
+    await setDoc(doc(fbDB, C_CONFIG, 'olympiades'), {
+      intro: e.target.intro.value.trim(),
+      disciplines: olyRead('disc'),
+      etapes: olyRead('etapes'),
+      resultats: res
+    });
+    alert('Enregistré ✔');
+  }catch(ex){ alert("Enregistrement impossible : vérifie ta connexion et tes droits d'administration."); }
+});
+
+
+// ── Olympiades : inscriptions reçues (collection site_olympiades_inscriptions) ──
+const C_OLY_INSC = 'site_olympiades_inscriptions';
+const oEsc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const OLY_ST = { soumis:'Nouvelle', a_verifier:'À vérifier', valide:'Validée', refuse:'Refusée' };
+let olyInsc = [];
+function renderOlyInsc(){
+  const f = document.getElementById('olyInscFiltre').value;
+  const rows = olyInsc.filter(r => !f || (r.statut||'soumis') === f);
+  document.getElementById('olyInscCount').textContent = olyInsc.length + ' inscription(s) · ' + olyInsc.filter(r=>r.statut==='valide').length + ' validée(s)';
+  document.getElementById('olyInscBody').innerHTML = rows.length ? rows.map(r=>{
+    const st = r.statut || 'soumis';
+    const tel = String(r.telephone||'').replace(/[^0-9+]/g,'');
+    return `<tr>
+      <td><b>${oEsc(r.prenom)} ${oEsc(r.nom)}</b><br><small>${oEsc(r.ville)}</small></td>
+      <td>${oEsc(r.niveau)}<br><small>${oEsc(r.classe)}</small></td>
+      <td>${oEsc(r.etablissement)}</td>
+      <td><small>${(r.disciplines||[]).map(oEsc).join(', ')}</small></td>
+      <td>${oEsc(r.responsable)}<br><a href="tel:${oEsc(tel)}">${oEsc(r.telephone)}</a></td>
+      <td>${oEsc(OLY_ST[st]||st)}</td>
+      <td style="white-space:nowrap">
+        <button class="small-btn" data-oi="${oEsc(r.id)}" data-st="valide" style="background:var(--green)">Valider</button>
+        <button class="small-btn" data-oi="${oEsc(r.id)}" data-st="a_verifier" style="background:var(--gold);color:var(--navy-deep)">À vérifier</button>
+        <button class="small-btn" data-oi="${oEsc(r.id)}" data-st="refuse" style="background:var(--red)">Refuser</button>
+        <button class="small-btn" data-oidel="${oEsc(r.id)}" style="background:#64748b">Supprimer</button>
+      </td></tr>`;
+  }).join('') : '<tr><td colspan="7">Aucune inscription.</td></tr>';
+}
+document.getElementById('olyInscFiltre').onchange = renderOlyInsc;
+document.getElementById('olyInscBody').addEventListener('click', async e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  try{
+    if(b.dataset.oi) await updateDoc(doc(fbDB, C_OLY_INSC, b.dataset.oi), { statut: b.dataset.st, updatedAt: Date.now() });
+    else if(b.dataset.oidel && confirm('Supprimer définitivement cette inscription ?')) await deleteDoc(doc(fbDB, C_OLY_INSC, b.dataset.oidel));
+  }catch(ex){ alert("Action impossible : vérifie ta connexion et tes droits d'administration."); }
+});
+document.getElementById('olyInscCopy').onclick = async ()=>{
+  const names = olyInsc.filter(r=>r.statut==='valide').map(r=>((r.prenom||'')+' '+(r.nom||'')).trim()).join('\n');
+  if(!names){ alert('Aucune inscription validée pour le moment.'); return; }
+  try{ await navigator.clipboard.writeText(names); alert('Noms copiés ✔ — colle-les dans « Import multiple » de l\'application.'); }
+  catch(ex){ prompt('Copie ces noms :', names); }
+};
+function startOlyInsc(){
+  onSnapshot(query(collection(fbDB, C_OLY_INSC), orderBy('createdAt','desc')), snap=>{
+    olyInsc = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    renderOlyInsc();
+  }, ()=>{ document.getElementById('olyInscBody').innerHTML = '<tr><td colspan="7">Lecture impossible : vérifie les règles Firestore.</td></tr>'; });
+}
+let started = false;
+function startListeners(){
+  if(started) return; started = true;
+  loadOly();
+  startOlyInsc();
+
+  onSnapshot(query(collection(fbDB, C_MATIERES), orderBy('ordre','asc')), snap=>{
+    matieres = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    document.getElementById('matieresBody').innerHTML = matieres.length ? matieres.map(m=>
+      `<tr><td>${m.nom}</td><td>${m.prof||'—'}</td><td>${m.prix||0} GNF</td><td>${(m.lecons||[]).length}</td>
+       <td style="white-space:nowrap">
+         <button class="small-btn" data-editmat="${m.id}">Modifier</button>
+         <button class="small-btn" data-lecons="${m.id}" style="background:var(--gold);color:var(--navy-deep)">Leçons</button>
+         <button class="small-btn" data-delmat="${m.id}" style="background:var(--red)">Supprimer</button>
+       </td></tr>`
+    ).join('') : '<tr><td colspan="5">Aucune matière.</td></tr>';
+
+    document.querySelectorAll('[data-delmat]').forEach(b=>{
+      b.onclick = ()=> { if(confirm('Supprimer cette matière ? Les leçons associées seront perdues.')) deleteDoc(doc(fbDB, C_MATIERES, b.dataset.delmat)); };
+    });
+    document.querySelectorAll('[data-editmat]').forEach(b=>{
+      b.onclick = ()=> openMatiereEdit(b.dataset.editmat);
+    });
+    document.querySelectorAll('[data-lecons]').forEach(b=>{
+      b.onclick = ()=> openLecons(b.dataset.lecons);
+    });
+    if(leconsOverlay && leconsOverlay.classList.contains('open')) renderLeconsList();
+  });
+
+  onSnapshot(collection(fbDB, C_PAIEMENTS), snap=>{
+    window.__paiements = snap.docs.map(d=>({id:d.id, ...d.data()}))
+      .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    renderPaiements();
+  });
+
+  onSnapshot(collection(fbDB, C_ELEVES), snap=>{
+    eleves = snap.docs.map(d=>({uid:d.id, ...d.data()}));
+    document.getElementById('elevesBody').innerHTML = eleves.length ? eleves.map(e=>
+      `<tr><td>${e.prenom||''} ${e.nom||''}</td><td>${e.classe||'—'}</td><td>${e.telephone||'—'}</td><td>${e.email||'—'}</td>
+       <td><span class="pill ${e.statut==='valide'?'ok':'attente'}">${e.statut==='valide'?'Validé':'En attente'}</span></td>
+       <td>${e.statut!=='valide' ? `<button class="small-btn" data-valel="${e.uid}">Valider</button>` : ''}
+       <button class="small-btn" data-delel="${e.uid}" style="background:var(--red)">Supprimer</button></td></tr>`
+    ).join('') : '<tr><td colspan="6">Aucun élève inscrit.</td></tr>';
+
+    document.getElementById('eleveSelect').innerHTML = eleves.length ? eleves.map(e=>
+      `<option value="${e.uid}">${e.prenom||''} ${e.nom||''}</option>`
+    ).join('') : '<option value="">Aucun élève</option>';
+
+    renderObjectifs();
+    renderResultats();
+    renderPaiements();
+
+    document.querySelectorAll('[data-valel]').forEach(b=>{
+      b.onclick = async ()=>{
+        const e = eleves.find(x=>x.uid===b.dataset.valel);
+        if(!e) return;
+        b.disabled = true; b.textContent = 'Validation…';
+        try{ await validerCompteEleve(e.uid, e); }
+        catch(err){ alert('Erreur : ' + (err && err.message ? err.message : err)); b.disabled=false; b.textContent='Valider'; }
+      };
+    });
+    document.querySelectorAll('[data-delel]').forEach(b=>{
+      b.onclick = ()=> { if(confirm("Supprimer cet élève ? Cela ne supprime pas son compte de connexion, seulement sa fiche.")) deleteDoc(doc(fbDB, C_ELEVES, b.dataset.delel)); };
+    });
+  });
+
+  onSnapshot(query(collection(fbDB, C_EVENEMENTS), orderBy('date','asc')), snap=>{
+    const rows = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    const typeLabels = { concours:'Concours', conference:'Conférence', activite:'Activité' };
+    document.getElementById('evenementsBody').innerHTML = rows.length ? rows.map(e=>
+      `<tr><td>${e.date?new Date(e.date+'T00:00:00').toLocaleDateString('fr-FR'):'—'}</td><td>${e.titre||''}</td>
+       <td>${typeLabels[e.type]||e.type||''}</td><td>${e.lieu||'—'}</td>
+       <td><button class="small-btn" data-delevt="${e.id}" style="background:var(--red)">Supprimer</button></td></tr>`
+    ).join('') : '<tr><td colspan="5">Aucun événement.</td></tr>';
+
+    document.querySelectorAll('[data-delevt]').forEach(b=>{
+      b.onclick = ()=> { if(confirm('Supprimer cet événement ?')) deleteDoc(doc(fbDB, C_EVENEMENTS, b.dataset.delevt)); };
+    });
+  });
+
+  onSnapshot(query(collection(fbDB, C_EVALUATIONS), orderBy('date','asc')), snap=>{
+    evaluations = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    const typeLabels = { quiz:'Quiz', devoir:'Devoir', examen:'Examen blanc' };
+    document.getElementById('evaluationsBody').innerHTML = evaluations.length ? evaluations.map(e=>
+      `<tr><td>${e.date?new Date(e.date+'T00:00:00').toLocaleDateString('fr-FR'):'—'}</td><td>${e.titre||''}</td>
+       <td>${e.matiere||'—'}</td><td>${typeLabels[e.type]||e.type||''}</td>
+       <td><button class="small-btn" data-delevl="${e.id}" style="background:var(--red)">Supprimer</button></td></tr>`
+    ).join('') : '<tr><td colspan="5">Aucune évaluation.</td></tr>';
+
+    document.getElementById('evalSelect').innerHTML = evaluations.length ? evaluations.map(e=>
+      `<option value="${e.id}">${e.titre} (${e.date||'—'})</option>`
+    ).join('') : '<option value="">Aucune évaluation</option>';
+
+    document.querySelectorAll('[data-delevl]').forEach(b=>{
+      b.onclick = ()=> { if(confirm('Supprimer cette évaluation ?')) deleteDoc(doc(fbDB, C_EVALUATIONS, b.dataset.delevl)); };
+    });
+
+    renderResultats();
+  });
+
+  onSnapshot(collection(fbDB, C_RESULTATS), snap=>{
+    window.__resultats = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    renderResultats();
+  });
+
+  onSnapshot(collection(fbDB, C_OBJECTIFS), snap=>{
+    window.__objectifs = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    renderObjectifs();
+  });
+
+  ['accueil','apropos','videos','reseaux'].forEach(async docId=>{
+    const snap = await getDoc(doc(fbDB, C_CONFIG, docId));
+    if(!snap.exists()) return;
+    const form = document.getElementById('config'+docId.charAt(0).toUpperCase()+docId.slice(1)+'Form');
+    const data = snap.data();
+    Object.keys(data).forEach(k=>{
+      const input = form.elements.namedItem(k);
+      if(input) input.value = data[k];
+    });
+  });
+
+  onSnapshot(query(collection(fbDB, C_VIDEOS), orderBy('ordre','asc')), snap=>{
+    const rows = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    document.getElementById('videosBody').innerHTML = rows.length ? rows.map(v=>
+      `<tr><td>${v.titre||''}</td><td>${v.matiere||'—'}</td><td>${v.duree||'—'}</td>
+       <td><button class="small-btn" data-delvid="${v.id}" style="background:var(--red)">Supprimer</button></td></tr>`
+    ).join('') : '<tr><td colspan="4">Aucune vidéo.</td></tr>';
+
+    document.querySelectorAll('[data-delvid]').forEach(b=>{
+      b.onclick = ()=> { if(confirm('Supprimer cette vidéo ?')) deleteDoc(doc(fbDB, C_VIDEOS, b.dataset.delvid)); };
+    });
+  });
+
+  onSnapshot(query(collection(fbDB, C_EQUIPE), orderBy('ordre','asc')), snap=>{
+    const rows = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    document.getElementById('equipeBody').innerHTML = rows.length ? rows.map(m=>
+      `<tr><td>${m.nom||''}</td><td>${m.role||'—'}${m.categorie?' <span class="pill">'+({direction:'Direction',encadreur:'Encadreur',benevole:'Bénévole'}[m.categorie]||'')+'</span>':''}</td>
+       <td><button class="small-btn" data-delmem="${m.id}" style="background:var(--red)">Supprimer</button></td></tr>`
+    ).join('') : '<tr><td colspan="3">Aucun membre.</td></tr>';
+
+    document.querySelectorAll('[data-delmem]').forEach(b=>{
+      b.onclick = ()=> { if(confirm('Supprimer ce membre ?')) deleteDoc(doc(fbDB, C_EQUIPE, b.dataset.delmem)); };
+    });
+  });
+
+  onSnapshot(query(collection(fbDB, C_RESSOURCES), orderBy('ordre','asc')), snap=>{
+    const rows = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    document.getElementById('ressourcesBody').innerHTML = rows.length ? rows.map(r=>
+      `<tr><td>${r.couverture&&/^https:\/\//.test(r.couverture)?`<img src="${r.couverture}" alt="" referrerpolicy="no-referrer" style="width:32px;height:42px;object-fit:cover;border-radius:4px;vertical-align:middle;margin-right:8px">`:''}${r.titre||''}</td><td>${r.type||'—'}</td><td>${r.matiere||'—'}</td>
+       <td><button class="small-btn" data-delres="${r.id}" style="background:var(--red)">Supprimer</button></td></tr>`
+    ).join('') : '<tr><td colspan="4">Aucune ressource.</td></tr>';
+
+    document.querySelectorAll('[data-delres]').forEach(b=>{
+      b.onclick = ()=> { if(confirm('Supprimer cette ressource ?')) deleteDoc(doc(fbDB, C_RESSOURCES, b.dataset.delres)); };
+    });
+  });
+
+  onSnapshot(query(collection(fbDB, C_INSC), orderBy('dateInscription','desc')), snap=>{
+    const rows = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    const statutPill = s => `<span class="pill ${s==='traite'?'ok':'attente'}">${s==='traite'?'Traité':'Nouveau'}</span>`;
+    const decisionPill = d => d==='accepte' ? '<span class="pill accepte">Accepté</span>'
+                             : d==='refuse' ? '<span class="pill refuse">Refusé</span>'
+                             : '<span class="pill attente">En attente</span>';
+
+    function messageFor(i){
+      const prenom = i.prenom || '';
+      if(i.decision === 'accepte'){
+        return `Bonjour ${prenom}, bonne nouvelle : ta fiche d'inscription au Club Réussir Ensemble de Mamou est acceptée ! Tu peux maintenant créer ton compte élève sur ${location.origin}${location.pathname.replace('admin.html','espace-eleve.html')} pour accéder à tes cours. À bientôt au Club !`;
+      }
+      if(i.decision === 'refuse'){
+        return `Bonjour ${prenom}, merci pour ton intérêt pour le Club Réussir Ensemble de Mamou. Pour le moment nous ne pouvons pas donner suite à ta demande d'inscription. N'hésite pas à nous recontacter plus tard.`;
+      }
+      return `Bonjour ${prenom}, nous avons bien reçu ta fiche d'inscription au Club Réussir Ensemble de Mamou. Un formateur reviendra vers toi très bientôt.`;
+    }
+
+    function waNumber(tel){
+      let d = (tel||'').replace(/[^0-9]/g, '');
+      if(!d) return '';
+      if(d.startsWith('00')) d = d.slice(2);
+      if(d.startsWith('224')) return d;
+      if(d.startsWith('0')) d = d.slice(1);
+      return '224' + d;
+    }
+
+    document.getElementById('inscriptionsBody').innerHTML = rows.length ? rows.map(i=>{
+      const msg = messageFor(i);
+      const wa = waNumber(i.telephone);
+      const waHref = wa ? `https://wa.me/${wa}?text=${encodeURIComponent(msg)}` : '';
+      const mailHref = i.email ? `mailto:${i.email}?subject=${encodeURIComponent('Ton inscription au Club Réussir Ensemble')}&body=${encodeURIComponent(msg)}` : '';
+      return `
+      <tr>
+        <td>${i.prenom||''} ${i.nom||''}</td>
+        <td>${i.telephone||'—'}${i.email?'<br>'+i.email:''}</td>
+        <td>${i.classe||'—'}${i.filiere?' · '+i.filiere:''}</td>
+        <td style="max-width:220px">${i.message||'—'}</td>
+        <td>${statutPill(i.statut)}</td>
+        <td class="insc-actions">
+          ${decisionPill(i.decision)}
+          <select data-decision="${i.id}">
+            <option value="en_attente" ${i.decision==='en_attente'?'selected':''}>En attente</option>
+            <option value="accepte" ${i.decision==='accepte'?'selected':''}>Accepté</option>
+            <option value="refuse" ${i.decision==='refuse'?'selected':''}>Refusé</option>
+          </select>
+        </td>
+        <td>
+          ${waHref?`<a class="small-btn" style="background:#25D366;display:inline-block;margin-bottom:4px" href="${waHref}" target="_blank" rel="noopener">WhatsApp</a><br>`:''}
+          ${mailHref?`<a class="small-btn" style="background:var(--navy);display:inline-block" href="${mailHref}">E-mail</a>`:''}
+          ${!waHref && !mailHref ? '—' : ''}
+        </td>
+        <td><button class="small-btn" data-delinsc="${i.id}" style="background:var(--red)">Supprimer</button></td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="8">Aucune fiche d’inscription pour le moment.</td></tr>';
+
+    document.querySelectorAll('[data-decision]').forEach(sel=>{
+      sel.onchange = ()=> updateDoc(doc(fbDB, C_INSC, sel.dataset.decision), { decision: sel.value, statut: 'traite' });
+    });
+    document.querySelectorAll('[data-delinsc]').forEach(b=>{
+      b.onclick = ()=> { if(confirm('Supprimer cette fiche ?')) deleteDoc(doc(fbDB, C_INSC, b.dataset.delinsc)); };
+    });
+  });
+
+  onSnapshot(query(collection(fbDB, C_GAL), orderBy('ordre','asc')), snap=>{
+    const rows = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    document.getElementById('galerieBody').innerHTML = rows.length ? rows.map(p=>`
+      <tr>
+        <td><img class="gal-thumb" src="${p.url||''}" alt=""></td>
+        <td>${p.legende||'—'}</td>
+        <td>
+          <button class="gal-com-toggle" data-comtoggle="${p.id}">Voir les commentaires</button>
+          <div class="gal-com-panel" id="com-panel-${p.id}"></div>
+        </td>
+        <td><button class="small-btn" data-delphoto="${p.id}" style="background:var(--red)">Supprimer</button></td>
+      </tr>`).join('') : '<tr><td colspan="4">Aucune photo.</td></tr>';
+
+    document.querySelectorAll('[data-delphoto]').forEach(b=>{
+      b.onclick = ()=> { if(confirm('Supprimer cette photo et ses commentaires ?')) deleteDoc(doc(fbDB, C_GAL, b.dataset.delphoto)); };
+    });
+    document.querySelectorAll('[data-comtoggle]').forEach(b=>{
+      b.onclick = ()=>{
+        const id = b.dataset.comtoggle;
+        const panel = document.getElementById('com-panel-'+id);
+        const open = panel.classList.toggle('open');
+        b.textContent = open ? 'Masquer les commentaires' : 'Voir les commentaires';
+        if(open && !panel.dataset.loaded){
+          panel.dataset.loaded = '1';
+          onSnapshot(query(collection(fbDB, C_GAL, id, 'commentaires'), orderBy('createdAt','asc')), csnap=>{
+            const coms = csnap.docs.map(d=>({id:d.id, ...d.data()}));
+            panel.innerHTML = coms.length ? coms.map(c=>
+              `<div class="gal-com-item"><span><b>${c.nom||'Anonyme'}</b> — ${c.texte||''}</span><button class="small-btn" data-delcom="${id}|${c.id}" style="background:var(--red)">✕</button></div>`
+            ).join('') : '<p style="font-size:12.5px;color:var(--ink2)">Aucun commentaire.</p>';
+
+            panel.querySelectorAll('[data-delcom]').forEach(db=>{
+              db.onclick = ()=>{
+                const [pid, cid] = db.dataset.delcom.split('|');
+                deleteDoc(doc(fbDB, C_GAL, pid, 'commentaires', cid));
+              };
+            });
+          });
+        }
+      };
+    });
+  });
+}
+
+function nomEleve(uid){
+  const e = eleves.find(x=>x.uid===uid);
+  return e ? `${e.prenom||''} ${e.nom||''}`.trim() : uid.slice(0,8)+'…';
+}
+
+function renderResultats(){
+  const resultats = window.__resultats || [];
+  document.getElementById('resultatsBody').innerHTML = resultats.length ? resultats.map(r=>{
+    const ev = evaluations.find(e=>e.id===r.evaluationId);
+    return `<tr><td>${nomEleve(r.uid)}</td><td>${ev?ev.titre:(r.evaluationId||'—')}</td><td>${r.note}${ev?'/'+(ev.noteSur||20):''}</td>
+      <td><button class="small-btn" data-delres2="${r.id}" style="background:var(--red)">Supprimer</button></td></tr>`;
+  }).join('') : '<tr><td colspan="4">Aucun résultat saisi.</td></tr>';
+
+  document.querySelectorAll('[data-delres2]').forEach(b=>{
+    b.onclick = ()=> { if(confirm('Supprimer ce résultat ?')) deleteDoc(doc(fbDB, C_RESULTATS, b.dataset.delres2)); };
+  });
+}
+
+function renderPaiements(){
+  const rows = window.__paiements || [];
+  document.getElementById('paiementsBody').innerHTML = rows.length ? rows.map(p=>
+    `<tr><td>${nomEleve(p.uid||'')}</td><td>${p.matiereNom||p.matiereId||'—'}</td><td>${Number(p.montant||0).toLocaleString('fr-FR')} GNF</td>
+     <td>${p.createdAt?new Date(p.createdAt).toLocaleDateString('fr-FR'):'—'}</td>
+     <td><span class="pill ${p.statut==='valide'?'ok':'attente'}">${p.statut==='valide'?'Validé':'En attente'}</span></td>
+     <td>${p.statut!=='valide' ? `<button class="small-btn" data-valide="${p.id}">Valider</button>` : ''}
+     <button class="small-btn" data-delpaie="${p.id}" style="background:var(--red)">Supprimer</button></td></tr>`
+  ).join('') : '<tr><td colspan="6">Aucun paiement.</td></tr>';
+
+  document.querySelectorAll('[data-valide]').forEach(b=>{
+    b.onclick = ()=> updateDoc(doc(fbDB, C_PAIEMENTS, b.dataset.valide), { statut: 'valide' });
+  });
+  document.querySelectorAll('[data-delpaie]').forEach(b=>{
+    b.onclick = ()=> { if(confirm('Supprimer ce paiement ?')) deleteDoc(doc(fbDB, C_PAIEMENTS, b.dataset.delpaie)); };
+  });
+}
+
+function renderObjectifs(){
+  const objectifs = window.__objectifs || [];
+  document.getElementById('objectifsBody').innerHTML = objectifs.length ? objectifs.map(o=>
+    `<tr><td>${nomEleve(o.uid)}</td><td>${o.texte||''}</td><td><span class="pill ${o.fait?'ok':'attente'}">${o.fait?'Atteint':'En cours'}</span></td>
+     <td><button class="small-btn" data-delobj="${o.id}" style="background:var(--red)">Supprimer</button></td></tr>`
+  ).join('') : '<tr><td colspan="4">Aucun objectif enregistré.</td></tr>';
+
+  document.querySelectorAll('[data-delobj]').forEach(b=>{
+    b.onclick = ()=> { if(confirm('Supprimer cet objectif ?')) deleteDoc(doc(fbDB, C_OBJECTIFS, b.dataset.delobj)); };
+  });
+}
+
+document.getElementById('matiereForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const nomMatiere = fd.get('nom').trim();
+  const ref = await addDoc(collection(fbDB, C_MATIERES), {
+    nom: nomMatiere,
+    prof: (fd.get('prof')||'').trim(),
+    prix: Number(fd.get('prix'))||0,
+    ordre: Date.now(),
+    lecons: [],
+    createdAt: Date.now()
+  });
+  e.target.reset();
+  // Ouvre directement la fenêtre pour ajouter les leçons (lien Drive + vidéo YouTube)
+  openLecons(ref.id);
+  document.getElementById('leconsMatiereNom').textContent = nomMatiere;
+});
+
+// ── Modifier une matière (nom / encadreur / prix) ──
+const matiereEditOverlay = document.getElementById('matiereEditOverlay');
+const matiereEditForm = document.getElementById('matiereEditForm');
+
+function openMatiereEdit(id){
+  const m = matieres.find(x=>x.id===id);
+  if(!m) return;
+  matiereEditForm.elements['id'].value = id;
+  matiereEditForm.elements['nom'].value = m.nom||'';
+  matiereEditForm.elements['prof'].value = m.prof||'';
+  matiereEditForm.elements['prix'].value = m.prix||0;
+  matiereEditOverlay.classList.add('open');
+}
+document.getElementById('matiereEditClose').onclick = ()=> matiereEditOverlay.classList.remove('open');
+matiereEditOverlay.onclick = e=>{ if(e.target===matiereEditOverlay) matiereEditOverlay.classList.remove('open'); };
+
+matiereEditForm.addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const id = fd.get('id');
+  await updateDoc(doc(fbDB, C_MATIERES, id), {
+    nom: fd.get('nom').trim(),
+    prof: (fd.get('prof')||'').trim(),
+    prix: Number(fd.get('prix'))||0
+  });
+  matiereEditOverlay.classList.remove('open');
+});
+
+// ── Gérer les leçons d'une matière ──
+const leconsOverlay = document.getElementById('leconsOverlay');
+const leconForm = document.getElementById('leconForm');
+let leconsMatiereId = null;
+
+function renderLeconsList(){
+  const m = matieres.find(x=>x.id===leconsMatiereId);
+  const lecons = (m && m.lecons) || [];
+  const typeLabels = {video:'Vidéo', quiz:'Quiz', devoir:'Devoir'};
+  document.getElementById('leconsList').innerHTML = lecons.length ? lecons.map((l,i)=>
+    `<div class="lecon-item">
+       <span>${l.titre}</span>
+       <span class="type">${typeLabels[l.type]||l.type}</span>
+       ${l.lien ? `<a href="${l.lien}" target="_blank" rel="noopener" style="font-size:11px;font-weight:700;color:var(--navy-deep)">📄 Drive</a>` : ''}
+       ${l.video ? `<a href="${l.video}" target="_blank" rel="noopener" style="font-size:11px;font-weight:700;color:var(--red)">▶ YouTube</a>` : ''}
+       ${(!l.lien && !l.video) ? `<span style="font-size:11px;color:var(--ink2)">Pas de lien</span>` : ''}
+       <button type="button" data-editlecon="${i}" style="background:var(--gold);color:var(--navy-deep)">${(l.lien||l.video)?'✏️':'+ Liens'}</button>
+       <button type="button" data-dellecon="${i}">Suppr.</button>
+     </div>`
+  ).join('') : '<p style="color:var(--ink2);font-size:13px">Aucune leçon pour le moment.</p>';
+
+  document.querySelectorAll('[data-editlecon]').forEach(b=>{
+    b.onclick = async ()=>{
+      const m2 = matieres.find(x=>x.id===leconsMatiereId);
+      const lecons2 = (m2.lecons||[]).slice();
+      const idx = Number(b.dataset.editlecon);
+      const lien = prompt('Lien Google Drive du document (laisser vide pour retirer) :', lecons2[idx].lien || '');
+      if(lien === null) return; // annulé
+      const video = prompt('Lien YouTube de la vidéo (laisser vide pour retirer) :', lecons2[idx].video || '');
+      if(video === null) return; // annulé
+      lecons2[idx] = { ...lecons2[idx], lien: lien.trim(), video: video.trim() };
+      await updateDoc(doc(fbDB, C_MATIERES, leconsMatiereId), { lecons: lecons2 });
+    };
+  });
+  document.querySelectorAll('[data-dellecon]').forEach(b=>{
+    b.onclick = async ()=>{
+      const m2 = matieres.find(x=>x.id===leconsMatiereId);
+      const lecons2 = (m2.lecons||[]).slice();
+      lecons2.splice(Number(b.dataset.dellecon), 1);
+      await updateDoc(doc(fbDB, C_MATIERES, leconsMatiereId), { lecons: lecons2 });
+    };
+  });
+}
+
+function openLecons(id){
+  leconsMatiereId = id;
+  const m = matieres.find(x=>x.id===id);
+  document.getElementById('leconsMatiereNom').textContent = m ? m.nom : '';
+  leconForm.elements['matiereId'].value = id;
+  renderLeconsList();
+  leconsOverlay.classList.add('open');
+}
+document.getElementById('leconsClose').onclick = ()=> leconsOverlay.classList.remove('open');
+leconsOverlay.onclick = e=>{ if(e.target===leconsOverlay) leconsOverlay.classList.remove('open'); };
+
+leconForm.addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const id = fd.get('matiereId');
+  const m = matieres.find(x=>x.id===id);
+  const lecons = (m && m.lecons) ? m.lecons.slice() : [];
+  lecons.push({ titre: fd.get('titre').trim(), type: fd.get('type'), lien: (fd.get('lien')||'').trim(), video: (fd.get('video')||'').trim() });
+  await updateDoc(doc(fbDB, C_MATIERES, id), { lecons });
+  leconForm.reset();
+  leconForm.elements['matiereId'].value = id;
+});
+
+document.getElementById('evenementForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  await addDoc(collection(fbDB, C_EVENEMENTS), {
+    titre: fd.get('titre').trim(),
+    type: fd.get('type'),
+    date: fd.get('date'),
+    heure: (fd.get('heure')||'').trim(),
+    lieu: (fd.get('lieu')||'').trim(),
+    description: (fd.get('description')||'').trim(),
+    createdAt: Date.now()
+  });
+  e.target.reset();
+});
+
+document.getElementById('evaluationForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  await addDoc(collection(fbDB, C_EVALUATIONS), {
+    titre: fd.get('titre').trim(),
+    matiere: (fd.get('matiere')||'').trim(),
+    type: fd.get('type'),
+    date: fd.get('date'),
+    dureeMin: Number(fd.get('dureeMin'))||0,
+    noteSur: Number(fd.get('noteSur'))||20,
+    createdAt: Date.now()
+  });
+  e.target.reset();
+});
+
+document.getElementById('resultatForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  await addDoc(collection(fbDB, C_RESULTATS), {
+    uid: fd.get('uid'),
+    evaluationId: fd.get('evaluationId'),
+    note: Number(fd.get('note')),
+    date: Date.now()
+  });
+  e.target.reset();
+});
+
+function formToObject(form){
+  const fd = new FormData(form);
+  const o = {};
+  for(const [k,v] of fd.entries()) o[k] = v.trim();
+  return o;
+}
+
+['configAccueilForm','configAproposForm','configVideosForm','configReseauxForm'].forEach(id=>{
+  document.getElementById(id).addEventListener('submit', async e=>{
+    e.preventDefault();
+    const docId = id.replace('config','').replace('Form','').toLowerCase();
+    await setDoc(doc(fbDB, C_CONFIG, docId), formToObject(e.target), { merge: true });
+    alert('Enregistré ✔');
+  });
+});
+
+document.getElementById('videoForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  await addDoc(collection(fbDB, C_VIDEOS), {
+    titre: fd.get('titre').trim(),
+    matiere: (fd.get('matiere')||'').trim(),
+    duree: (fd.get('duree')||'').trim(),
+    lien: (fd.get('lien')||'').trim(),
+    description: (fd.get('description')||'').trim(),
+    ordre: Date.now(),
+    createdAt: Date.now()
+  });
+  e.target.reset();
+});
+
+document.getElementById('equipeForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  await addDoc(collection(fbDB, C_EQUIPE), {
+    nom: fd.get('nom').trim(),
+    role: (fd.get('role')||'').trim(),
+    photoUrl: (fd.get('photoUrl')||'').trim(),
+    bio: (fd.get('bio')||'').trim(),
+    categorie: fd.get('categorie'),
+    matiere: (fd.get('matiere')||'').trim(),
+    parcours: (fd.get('parcours')||'').trim(),
+    ordre: Date.now(),
+    createdAt: Date.now()
+  });
+  e.target.reset();
+});
+
+document.getElementById('ressourceForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  await addDoc(collection(fbDB, C_RESSOURCES), {
+    titre: fd.get('titre').trim(),
+    type: fd.get('type'),
+    matiere: (fd.get('matiere')||'').trim(),
+    pages: Number(fd.get('pages'))||0,
+    lien: (fd.get('lien')||'').trim(),
+    couverture: (fd.get('couverture')||'').trim(),
+    description: (fd.get('description')||'').trim(),
+    ordre: Date.now(),
+    createdAt: Date.now()
+  });
+  e.target.reset();
+});
+
+document.getElementById('galerieForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  await addDoc(collection(fbDB, C_GAL), {
+    url: fd.get('url').trim(),
+    legende: (fd.get('legende')||'').trim(),
+    ordre: Date.now(),
+    createdAt: Date.now()
+  });
+  e.target.reset();
+});
+
+// ── Témoignages et réussites (collection Firestore « temoignages », page publique temoignages.html) ──
+const TEM_COLL = C_TEMOIGNAGES;
+const escT = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function startTemoignages(){
+  onSnapshot(collection(fbDB, TEM_COLL), snap=>{
+    const rows = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    const attente = rows.filter(t=>t.approved!==true).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    const publies = rows.filter(t=>t.approved===true).sort((a,b)=>((a.ordre??9999)-(b.ordre??9999))||((b.createdAt||0)-(a.createdAt||0)));
+
+    document.querySelector('[data-tab="temoignages"]').textContent = 'Témoignages' + (attente.length ? ' ('+attente.length+')' : '');
+
+    document.getElementById('temAttenteBody').innerHTML = attente.length ? attente.map(t=>`
+      <tr>
+        <td><b>${escT(t.nom||'Anonyme')}</b><br><span style="color:var(--ink2);font-size:12px">${escT(t.statut||'')}</span></td>
+        <td>${escT(t.texte)}</td>
+        <td style="white-space:nowrap">
+          <button class="small-btn" data-temok="${t.id}" style="background:var(--green)">Publier</button>
+          <button class="small-btn" data-temdel="${t.id}" style="background:var(--red)">Supprimer</button>
+        </td>
+      </tr>`).join('') : '<tr><td colspan="3">Rien à valider.</td></tr>';
+
+    document.getElementById('temPubBody').innerHTML = publies.length ? publies.map(t=>`
+      <tr>
+        <td><b>${escT(t.nom||'Anonyme')}</b><br><span style="color:var(--ink2);font-size:12px">${escT(t.statut||'')}</span></td>
+        <td>
+          <select data-temtype="${t.id}" style="padding:6px 8px;border:1.5px solid var(--line);border-radius:6px;font-size:12.5px;font-family:inherit">
+            <option value="temoignage"${t.type!=='reussite'?' selected':''}>Témoignage</option>
+            <option value="reussite"${t.type==='reussite'?' selected':''}>Réussite</option>
+          </select>
+          ${t.type==='reussite' && t.resultat ? '<br><span class="pill ok" style="margin-top:4px">'+escT(t.resultat)+'</span>' : ''}
+        </td>
+        <td>${escT(t.texte)}</td>
+        <td style="white-space:nowrap">
+          <button class="small-btn" data-temhide="${t.id}">Dépublier</button>
+          <button class="small-btn" data-temdel="${t.id}" style="background:var(--red)">Supprimer</button>
+        </td>
+      </tr>`).join('') : '<tr><td colspan="4">Aucun témoignage publié.</td></tr>';
+
+    document.querySelectorAll('[data-temok]').forEach(b=>{
+      b.onclick = ()=> updateDoc(doc(fbDB, TEM_COLL, b.dataset.temok), { approved: true, ordre: -Date.now() });
+    });
+    document.querySelectorAll('[data-temhide]').forEach(b=>{
+      b.onclick = ()=> updateDoc(doc(fbDB, TEM_COLL, b.dataset.temhide), { approved: false });
+    });
+    document.querySelectorAll('[data-temdel]').forEach(b=>{
+      b.onclick = ()=> { if(confirm('Supprimer définitivement ce message ?')) deleteDoc(doc(fbDB, TEM_COLL, b.dataset.temdel)); };
+    });
+    document.querySelectorAll('[data-temtype]').forEach(sel=>{
+      sel.onchange = ()=>{
+        const data = { type: sel.value };
+        if(sel.value==='reussite'){
+          const r = prompt('Résultat à afficher (ex. BAC 2026 – Mention Bien) :', '');
+          if(r===null){ sel.value='temoignage'; return; }
+          data.resultat = r.trim();
+        }
+        updateDoc(doc(fbDB, TEM_COLL, sel.dataset.temtype), data);
+      };
+    });
+  });
+}
+
+document.getElementById('temForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const type = fd.get('type');
+  await addDoc(collection(fbDB, TEM_COLL), {
+    nom: fd.get('nom').trim(),
+    statut: (fd.get('statut')||'').trim(),
+    type,
+    resultat: type==='reussite' ? (fd.get('resultat')||'').trim() : '',
+    photo: (fd.get('photo')||'').trim(),
+    texte: fd.get('texte').trim(),
+    approved: true,
+    ordre: -Date.now(),
+    createdAt: Date.now()
+  });
+  e.target.reset();
+});
+
+// ── Résultats et palmarès (collections « site_resultats_examens » et « site_palmares », page publique resultats.html) ──
+const RP_MENTION = { tb:'Très bien', b:'Bien', ab:'Assez bien' };
+const rpSort = (a,b)=> String(b.annee||'').localeCompare(String(a.annee||'')) || String(a.examen||'').localeCompare(String(b.examen||''));
+
+function rpWatch(coll, bodyId, cols, cells){
+  onSnapshot(collection(fbDB, coll), snap=>{
+    const rows = snap.docs.map(d=>({id:d.id, ...d.data()})).sort(rpSort);
+    document.getElementById(bodyId).innerHTML = rows.length ? rows.map(r=>`
+      <tr${r.approved===true?'':' style="opacity:.55"'}>
+        ${cells(r)}
+        <td style="white-space:nowrap">
+          <button class="small-btn" data-rptog="${coll}|${r.id}|${r.approved===true?'0':'1'}"${r.approved===true?'':' style="background:var(--green)"'}>${r.approved===true?'Dépublier':'Publier'}</button>
+          <button class="small-btn" data-rpdel="${coll}|${r.id}" style="background:var(--red)">Supprimer</button>
+        </td>
+      </tr>`).join('') : `<tr><td colspan="${cols}">Rien pour le moment.</td></tr>`;
+    document.querySelectorAll('#'+bodyId+' [data-rptog]').forEach(b=>{
+      b.onclick = ()=>{ const [c,id,v] = b.dataset.rptog.split('|'); updateDoc(doc(fbDB, c, id), { approved: v==='1' }); };
+    });
+    document.querySelectorAll('#'+bodyId+' [data-rpdel]').forEach(b=>{
+      b.onclick = ()=>{ if(confirm('Supprimer définitivement cette ligne ?')){ const [c,id] = b.dataset.rpdel.split('|'); deleteDoc(doc(fbDB, c, id)); } };
+    });
+  });
+}
+
+function startRP(){
+  rpWatch(C_RES_EXAMENS,'rpResBody',4, r=>`<td>${escT(r.annee)}</td><td>${escT(r.examen)}</td><td>${escT(r.admis)} / ${escT(r.presentes)}</td>`);
+  rpWatch(C_PALMARES,'rpPalBody',4, r=>`<td><b>${escT(r.nom)}</b><br><span style="color:var(--ink2);font-size:12px">${escT(r.annee)}${r.moyenne?' · '+escT(r.moyenne)+'/20':''}</span></td><td>${escT(r.examen)}</td><td>${escT(RP_MENTION[r.mention]||'')}</td>`);
+}
+
+document.getElementById('rpResForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const presentes = +fd.get('presentes'), admis = +fd.get('admis');
+  if(admis > presentes){ alert('Le nombre d\'admis ne peut pas dépasser le nombre de présentés.'); return; }
+  await addDoc(collection(fbDB, C_RES_EXAMENS), {
+    annee: fd.get('annee').trim(), examen: fd.get('examen').trim(), presentes, admis,
+    approved: true, createdAt: Date.now()
+  });
+  e.target.reset();
+});
+
+document.getElementById('rpPalForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  await addDoc(collection(fbDB, C_PALMARES), {
+    nom: fd.get('nom').trim(), annee: fd.get('annee').trim(), examen: fd.get('examen').trim(),
+    mention: fd.get('mention'), moyenne: (fd.get('moyenne')||'').trim(),
+    etablissement: (fd.get('etablissement')||'').trim(), photo: (fd.get('photo')||'').trim(),
+    approved: true, createdAt: Date.now()
+  });
+  e.target.reset();
+});
+
+// ── Quiz « Teste ton niveau » (collection « site_quiz_questions », page publique quiz.html) ──
+function startQuiz(){
+  onSnapshot(collection(fbDB, C_QUIZ_QUEST), snap=>{
+    const rows = snap.docs.map(d=>({id:d.id, ...d.data()})).sort((x,y)=>(y.createdAt||0)-(x.createdAt||0));
+    document.getElementById('quizBody').innerHTML = rows.length ? rows.map(q=>`
+      <tr${q.approved===true?'':' style="opacity:.55"'}>
+        <td>${escT(q.question)}<br><span style="color:var(--ink2);font-size:12px">Bonne réponse : ${escT((q.choix||[])[q.bonne]||'')}</span></td>
+        <td>${q.niveau==='lycee'?'Lycée':'Collège'} · ${q.matiere==='pc'?'Phys.-Chimie':'Maths'}</td>
+        <td style="white-space:nowrap">
+          <button class="small-btn" data-quiztog="${q.id}|${q.approved===true?'0':'1'}"${q.approved===true?'':' style="background:var(--green)"'}>${q.approved===true?'Dépublier':'Publier'}</button>
+          <button class="small-btn" data-quizdel="${q.id}" style="background:var(--red)">Supprimer</button>
+        </td>
+      </tr>`).join('') : '<tr><td colspan="3">Aucune question ajoutée.</td></tr>';
+    document.querySelectorAll('[data-quiztog]').forEach(b=>{
+      b.onclick = ()=>{ const [id,v] = b.dataset.quiztog.split('|'); updateDoc(doc(fbDB, C_QUIZ_QUEST, id), { approved: v==='1' }); };
+    });
+    document.querySelectorAll('[data-quizdel]').forEach(b=>{
+      b.onclick = ()=>{ if(confirm('Supprimer cette question ?')) deleteDoc(doc(fbDB, C_QUIZ_QUEST, b.dataset.quizdel)); };
+    });
+  });
+}
+
+document.getElementById('quizForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const choix = ['c0','c1','c2','c3'].map(k=>(fd.get(k)||'').trim()).filter(Boolean);
+  if(choix.length < 2){ alert('Indique au moins deux choix.'); return; }
+  await addDoc(collection(fbDB, C_QUIZ_QUEST), {
+    niveau: fd.get('niveau'), matiere: fd.get('matiere'),
+    question: fd.get('question').trim(), choix, bonne: 0,
+    explication: (fd.get('explication')||'').trim(),
+    approved: true, createdAt: Date.now()
+  });
+  e.target.reset();
+});
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw-admin.js').catch(()=>{});
+}
+let deferredInstall = null;
+const installBtn = document.getElementById('installBtn');
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault();
+  deferredInstall = e;
+  installBtn.style.display = 'inline-block';
+});
+installBtn.addEventListener('click', async ()=>{
+  if(!deferredInstall) return;
+  deferredInstall.prompt();
+  await deferredInstall.userChoice;
+  deferredInstall = null;
+  installBtn.style.display = 'none';
+});
+window.addEventListener('appinstalled', ()=>{ installBtn.style.display = 'none'; });
+</script>
+</body>
+</html>
