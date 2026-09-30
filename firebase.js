@@ -49,6 +49,8 @@ export const C_PALMARES        = 'site_palmares';
 export const C_QUIZ_QUEST      = 'site_quiz_questions';
 export const C_BLOG_ATTENTE    = 'site_blog_commentaires_attente';
 export const C_TEMOIGNAGES     = 'site_temoignages';
+export const C_RES_MENS        = 'site_resultats_mensuels';
+export const C_RES_ELEVES      = 'site_resultats_eleves';
 
 /* ── Fonctions Firestore / Auth ré-exportées pour que les pages
    n'aient qu'un seul fichier à importer ── */
@@ -59,4 +61,5 @@ export {
   signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signOut, onAuthStateChanged
 };
+
 
