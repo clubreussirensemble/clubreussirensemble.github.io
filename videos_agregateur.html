@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Vidéos éducatives — Club Réussir Ensemble de Mamou</title>
-<meta name="description" content="Les dernières vidéos éducatives de plusieurs chaînes (maths, physique, chimie, SVT, documentaires), réunies au même endroit par le Club Réussir Ensemble de Mamou.">
+<meta name="description" content="Les dernières vidéos éducatives de plusieurs chaînes (maths, physique, chimie, SVT, français, philosophie, histoire, géographie, économie, documentaires), réunies au même endroit par le Club Réussir Ensemble de Mamou.">
 <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
 <link rel="apple-touch-icon" href="/icon-512.png">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
@@ -129,7 +129,6 @@ a{text-decoration:none;color:inherit}
 .page-hero h1{font-size:clamp(28px,4.5vw,40px)}
 .page-hero .hero-lead{max-width:600px}
 .vid-main{padding:34px 0 56px}
-.panel+.panel{margin-top:26px}
 
 #player{position:sticky;top:64px;z-index:6;margin-bottom:22px;padding:14px;background:var(--card);border-radius:20px;box-shadow:var(--shadow)}
 #player[hidden]{display:none}
@@ -167,15 +166,6 @@ input:focus,select:focus{outline:none;border-color:var(--blue)}
 .v .meta{color:var(--ink2);font-size:12px}
 #more{display:flex;margin:26px auto 0}
 
-.panel details>summary{cursor:pointer;font-family:'Poppins',sans-serif;font-weight:700;font-size:17px;list-style:none;display:flex;align-items:center;gap:10px}
-.panel details>summary::-webkit-details-marker{display:none}
-.panel details>summary::after{content:'▾';margin-left:auto;color:var(--ink2)}
-.panel details[open]>summary::after{content:'▴'}
-form{display:grid;gap:10px;margin-top:18px}
-#msg{font-size:13px;color:var(--ink2);min-height:1.2em}
-.mine{list-style:none;padding:0;margin:16px 0 0;display:grid;gap:8px}
-.mine li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;background:var(--paper2);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
-.mine button{border:0;background:none;color:var(--red);font:inherit;font-weight:700;cursor:pointer}
 :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 @media (max-width:600px){.panel{padding:20px 16px}#player{top:56px;padding:10px}}
 </style>
@@ -232,7 +222,7 @@ form{display:grid;gap:10px;margin-top:18px}
   <div class="wrap hero-inner">
     <div class="hero-tag">Rubrique</div>
     <h1>Vidéos <span class="hero-pill">éducatives</span></h1>
-    <p class="hero-lead">Les dernières vidéos de plusieurs chaînes (maths, physique, chimie, SVT, documentaires), réunies au même endroit.</p>
+    <p class="hero-lead">Les dernières vidéos de plusieurs chaînes (maths, physique, chimie, SVT, français, philosophie, histoire, géographie, économie, documentaires), réunies au même endroit.</p>
   </div>
 </section>
 
@@ -251,20 +241,6 @@ form{display:grid;gap:10px;margin-top:18px}
     <div id="status" role="status"></div>
     <section class="grid" id="grid"></section>
     <button class="btn btn-blue" id="more" type="button" hidden>Voir plus</button>
-  </div>
-
-  <div class="panel">
-    <details>
-      <summary>⚙️ Gérer les sources</summary>
-      <form id="addForm">
-        <input id="url" type="url" placeholder="Lien de playlist ou de chaîne (youtube.com/channel/UC…)" required>
-        <input id="name" type="text" placeholder="Nom de la source (facultatif)">
-        <select id="cat"></select>
-        <button class="btn btn-blue" type="submit" style="justify-content:center">➕ Ajouter la source</button>
-        <div id="msg" role="status"></div>
-      </form>
-      <ul class="mine" id="mine"></ul>
-    </details>
   </div>
 </main>
 
@@ -372,25 +348,41 @@ searchInput.addEventListener('input', () => {
 });
 </script>
 <script>
-const CATS=["Maths","Physique","Chimie","SVT","Documentaires"];
+/* ── Pour ajouter une chaîne : copier une ligne de BASE et changer cat, name et channel (identifiant UC…).
+      Pour une playlist : remplacer channel:"UC…" par playlist:"PL…".
+      Ou utiliser handle:"@NomDeLaChaine" (l'identifiant UC est retrouvé automatiquement). Pas de limite de chaînes. ── */
+const CATS=["Maths","Physique","Chimie","SVT","Français","Philosophie","Histoire","Géographie","Économie","Documentaires"];
 const BASE=[
   {cat:"Maths",name:"Yvan Monka",channel:"UCaDqmzanCq4ZYhdEm0Df9Qg"},
   {cat:"Maths",name:"Micmaths",channel:"UC4PasDd25MXqlXBogBw9CAg"},
   {cat:"Physique",name:"Science Étonnante",channel:"UCaNlbnghtwlsGF-KzAFThqA"},
   {cat:"Physique",name:"e-penser",channel:"UCcziTK2NKeWtWQ6kB5tmQ8Q"},
+  {cat:"Physique",name:"Scilabus",channel:"UCeR8BYZS7IHYjk_9Mh5JgkA"},
+  {cat:"Physique",name:"Dr Nozman",channel:"UCWnfDPdZw6A23UtuBpYBbAg"},
   {cat:"Chimie",name:"Mediachimie",channel:"UCzvI27-I2z1CJci77dtW9TA"},
   {cat:"SVT",name:"DirtyBiology",channel:"UCtqICqGbPSbTN09K1_7VZ3Q"},
+  {cat:"SVT",name:"Tania Louis (BioTCom)",channel:"UC9JQQll_r5k1O_Y18ymTp4g"},
+  {cat:"Français",name:"Mediaclasse",channel:"UCFyaA9LoooQrLiDvP0R7GpA"},
+  {cat:"Français",name:"Linguisticae",channel:"UCofQxJWd4qkqc7ZgaLkZfcw"},
+  {cat:"Philosophie",name:"Monsieur Phi",handle:"@MonsieurPhi"},
+  {cat:"Philosophie",name:"Philoxime",handle:"@Philoxime"},
+  {cat:"Histoire",name:"Nota Bene",channel:"UCP46_MXP_WG_auH88FnfS1A"},
+  {cat:"Géographie",name:"Mister Geopolitix",channel:"UCX9lsdsTKfTi1eqoyL-RS-Q"},
+  {cat:"Économie",name:"Heu?reka",handle:"@Heureka"},
+  {cat:"Économie",name:"Stupid Economics",handle:"@StupidEconomics"},
+  {cat:"Économie",name:"Dessine-moi l'éco",handle:"@Dessinemoileco"},
+  {cat:"Économie",name:"Décod'éco",handle:"@Decodeco"},
   {cat:"Documentaires",name:"ARTE",channel:"UCwI-JbGNsojunnHbFAc0M4Q"},
   {cat:"Documentaires",name:"Doc Seven",channel:"UC5Twj1Axp_-9HLsZ5o_cEQQ"}
 ];
 const KEY="vidagg_sources",TTL=30*60*1000,PAGE=12;
 const $=id=>document.getElementById(id);
-let custom=[];try{custom=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(e){}
+const custom=[];
 let videos=[],cat="Tout",shown=PAGE,curId=null,done=0,failed=[];
 
 const sources=()=>[...BASE,...custom];
 const feedUrl=s=>s.playlist?`https://www.youtube.com/feeds/videos.xml?playlist_id=${s.playlist}`:`https://www.youtube.com/feeds/videos.xml?channel_id=${s.channel}`;
-const sid=s=>s.playlist||s.channel;
+const sid=s=>s.playlist||s.channel||s.handle;
 const cget=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
 const cset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 
@@ -405,9 +397,23 @@ async function viaAllOrigins(url){
   const x=new DOMParser().parseFromString(await r.text(),"text/xml");
   return [...x.querySelectorAll("entry")].map(e=>({id:e.getElementsByTagName("yt:videoId")[0]?.textContent,title:e.querySelector("title")?.textContent,date:Date.parse(e.querySelector("published")?.textContent),author:e.querySelector("author name")?.textContent})).filter(v=>v.id);
 }
+// Retrouve l'identifiant UC… d'une chaîne à partir de son @handle (page YouTube lue via un relais), puis le garde en mémoire.
+async function resolveHandle(s){
+  if(s.channel)return;
+  const hk="vidagg_h_"+s.handle,h=cget(hk);
+  if(h){s.channel=h;return}
+  const page="https://www.youtube.com/"+s.handle;
+  let html;
+  try{html=await (await fetch("https://api.allorigins.win/raw?url="+encodeURIComponent(page))).text()}
+  catch(e){html=await (await fetch("https://corsproxy.io/?url="+encodeURIComponent(page))).text()}
+  const m=html.match(/"(?:channelId|externalId)":"(UC[\w-]{22})"/)||html.match(/channel_id=(UC[\w-]{22})/)||html.match(/youtube\.com\/channel\/(UC[\w-]{22})/);
+  if(!m)throw new Error("handle introuvable");
+  s.channel=m[1];cset(hk,s.channel);
+}
 async function loadSource(s,force){
   const k="vidagg_c_"+sid(s),c=cget(k);
   if(!force&&c&&Date.now()-c.t<TTL)return c.items;
+  if(s.handle&&!s.channel&&!s.playlist)await resolveHandle(s);
   let items;
   try{items=await viaRss2Json(feedUrl(s))}catch(e){items=await viaAllOrigins(feedUrl(s))}
   if(!items.length)throw new Error("vide");
@@ -450,26 +456,12 @@ function play(v){
   $("nowLink").href="https://www.youtube.com/watch?v="+v.id;
   render();window.scrollTo({top:0,behavior:"smooth"});
 }
-function renderMine(){
-  $("mine").innerHTML=custom.length?"":"<li><span>Aucune source ajoutée.</span></li>";
-  custom.forEach((s,i)=>{const li=document.createElement("li");li.innerHTML="<span></span><button type='button'>Retirer</button>";
-    li.firstChild.textContent=`${s.name} (${s.cat})`;li.lastChild.onclick=()=>{custom.splice(i,1);cset(KEY,custom);renderMine();loadAll()};$("mine").appendChild(li)});
-}
 
-$("cat").innerHTML=CATS.map(c=>`<option>${c}</option>`).join("");
 $("q").oninput=()=>{shown=PAGE;render()};
 $("more").onclick=()=>{shown+=PAGE;render()};
 $("refresh").onclick=()=>loadAll(true);
 $("close").onclick=()=>{$("player").hidden=true;$("frame").innerHTML="";curId=null;render()};
-$("addForm").onsubmit=e=>{
-  e.preventDefault();
-  const u=$("url").value.trim(),pl=u.match(/[?&]list=([\w-]+)/),ch=u.match(/\/channel\/(UC[\w-]{20,})/);
-  if(!pl&&!ch){$("msg").textContent="Lien non reconnu. Colle un lien de playlist (…list=PL…) ou de chaîne (…/channel/UC…). Les liens @nom ne contiennent pas l'identifiant.";return}
-  const s={cat:$("cat").value,name:$("name").value.trim()||(pl?"Playlist ajoutée":"Chaîne ajoutée")};
-  if(pl)s.playlist=pl[1];else s.channel=ch[1];
-  custom.push(s);cset(KEY,custom);$("addForm").reset();$("msg").textContent="Source ajoutée.";renderMine();loadAll();
-};
-renderTabs();renderMine();loadAll();
+renderTabs();loadAll();
 </script>
 </body>
 </html>
