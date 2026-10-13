@@ -410,5 +410,7 @@ onSnapshot(query(collection(fbDB,C_RES_MENS),where('publie','==',true)),s=>{
   if(!mens.some(m=>m.id===cur))choose(mens[0]?.id||null);else setMens();
 },()=>{$('rsHist').innerHTML='<span class="rs-empty">Résultats indisponibles pour le moment.</span>';});
 </script>
+<!-- Monetag (zone 12025962) -->
+<script>(function(s){s.dataset.zone='12025962',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
 </body>
 </html>
