@@ -685,6 +685,70 @@ var infolinks_pid = 3448261;
 var infolinks_wsid = 0;
 </script>
 <script type="text/javascript" src="//resources.infolinks.com/js/infolinks_main.js"></script>
+<!-- ═══ Voix Club Réussir Ensemble (partagée : chat + robot) ═══ -->
+<script>
+(function(){
+  const KEY='cre_voice';
+  const TTS='speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition||null;
+  let on=false, voice=null, rec=null;
+  try{ on=localStorage.getItem(KEY)==='1'; }catch(e){}
+  const subs=[];
+  const pick=()=>{ if(!TTS) return; const v=speechSynthesis.getVoices();
+    voice=v.find(x=>/^fr[-_]FR/i.test(x.lang))||v.find(x=>/^fr/i.test(x.lang))||null; };
+  if(TTS){ pick(); try{ speechSynthesis.addEventListener('voiceschanged',pick); }catch(e){ speechSynthesis.onvoiceschanged=pick; } }
+
+  /* Nettoie le texte pour qu'il soit bien lu (symboles de maths/physique, markdown, emojis) */
+  const clean=t=>String(t)
+    .replace(/```[\s\S]*?```/g,' ')
+    .replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g,'$1 sur $2')
+    .replace(/\\sqrt\{([^}]*)\}/g,'racine de $1')
+    .replace(/\\(times|cdot)/g,' fois ')
+    .replace(/[$\\{}`*#]/g,'')
+    .replace(/\^2/g,' au carré').replace(/\^3/g,' au cube')
+    .replace(/²/g,' au carré').replace(/³/g,' au cube')
+    .replace(/√/g,' racine de ').replace(/×/g,' fois ').replace(/÷/g,' divisé par ')
+    .replace(/≤/g,' inférieur ou égal à ').replace(/≥/g,' supérieur ou égal à ')
+    .replace(/π/g,' pi ').replace(/Δ/g,' delta ').replace(/°/g,' degrés ').replace(/Ω/g,' ohms ')
+    .replace(/→/g,' donne ')
+    .replace(/(\w)_(\w)/g,'$1 indice $2')
+    .replace(/[\u{1F000}-\u{1FFFF}\u2600-\u27BF\uFE0F]/gu,'')
+    .replace(/\s+/g,' ').trim();
+
+  /* Découpe en phrases (évite la coupure des longs textes sur Chrome Android) */
+  const chunk=t=>{ const out=[]; (t.match(/[^.!?;:]+[.!?;:]*\s*/g)||[t]).forEach(s=>{
+      const l=out.length-1; if(l>=0&&(out[l]+s).length<180) out[l]+=s; else out.push(s); });
+    return out.map(s=>s.trim()).filter(Boolean); };
+
+  const stop=()=>{ if(TTS) try{ speechSynthesis.cancel(); }catch(e){} };
+  const speak=t=>{ if(!TTS||!t) return; stop();
+    chunk(clean(t)).forEach(p=>{ const u=new SpeechSynthesisUtterance(p);
+      u.lang='fr-FR'; if(voice) u.voice=voice; u.rate=.97; speechSynthesis.speak(u); }); };
+
+  const stopListen=()=>{ if(rec){ try{ rec.stop(); }catch(e){} } };
+  const listen=o=>{ if(!SR) return false; stop(); stopListen();
+    const r=new SR(); rec=r; r.lang='fr-FR'; r.interimResults=true; r.continuous=false; r.maxAlternatives=1;
+    let fin='', last='';
+    r.onstart=()=>o.onstart&&o.onstart();
+    r.onresult=e=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){
+        const x=e.results[i]; if(x.isFinal) fin+=x[0].transcript; else interim+=x[0].transcript; }
+      last=fin+interim; o.onresult&&o.onresult(last); };
+    r.onerror=e=>o.onerror&&o.onerror(e.error);
+    r.onend=()=>{ if(rec===r) rec=null; o.onend&&o.onend((fin||last).trim()); };
+    try{ r.start(); }catch(e){ rec=null; return false; }
+    return true; };
+
+  window.CREVoice={
+    canSpeak:TTS, canListen:!!SR,
+    enabled:()=>on&&TTS,
+    setEnabled(v){ on=!!v; try{ localStorage.setItem(KEY,on?'1':'0'); }catch(e){} if(!on) stop(); subs.forEach(f=>f()); },
+    onChange:f=>subs.push(f),
+    speak, stop, listen, stopListen
+  };
+  addEventListener('pagehide',stop);
+})();
+</script>
+<!-- ═══ Fin voix ═══ -->
 <!-- ═══ Assistant IA Réussir Ensemble (widget) ═══ -->
 <style>
 #ai-fab{position:fixed;right:18px;bottom:18px;z-index:9998;display:flex;align-items:center;gap:8px;padding:7px 18px 7px 7px;border:none;border-radius:999px;background:var(--blue);color:#fff;font:700 14px 'Work Sans',sans-serif;cursor:pointer;box-shadow:0 8px 24px rgba(37,99,235,.4)}
@@ -712,6 +776,11 @@ var infolinks_wsid = 0;
 #ai-send{padding:0 16px;border:none;border-radius:12px;background:var(--blue);color:#fff;font-weight:700;cursor:pointer}
 #ai-send:disabled{opacity:.5}
 .ai-note{padding:0 12px 8px;font-size:11px;color:var(--ink2);text-align:center;background:var(--card)}
+.ai-head .ai-hbtns{display:flex;align-items:center;gap:2px}
+#ai-mic{border:none;background:var(--paper2);color:var(--ink);border-radius:12px;padding:0 12px;font-size:18px;cursor:pointer}
+#ai-mic.on{background:var(--red);color:#fff;animation:aiPulse 1.1s ease-in-out infinite}
+@keyframes aiPulse{0%,100%{box-shadow:0 0 0 0 rgba(217,6,12,.5)}50%{box-shadow:0 0 0 7px rgba(217,6,12,0)}}
+.ai-say{display:block;margin-top:6px;border:none;background:var(--paper2);color:var(--ink2);border-radius:999px;padding:4px 11px;font:600 12px 'Work Sans',sans-serif;cursor:pointer}
 .btn-ia{background:var(--gold);color:var(--navy-deep);box-shadow:0 8px 20px rgba(0,0,0,.25);padding:7px 24px 7px 7px}
 .btn-ia:hover{transform:translateY(-2px)}
 .main-nav a.nav-ia{color:var(--gold)}
@@ -726,12 +795,13 @@ var infolinks_wsid = 0;
 </style>
 <button id="ai-fab" aria-label="Ouvrir l'assistant IA"><img class="ai-logo" alt=""><span>Club IA</span></button>
 <div id="ai-box" role="dialog" aria-label="Assistant IA">
-  <div class="ai-head"><div style="display:flex;align-items:center;gap:10px"><img class="ai-logo" alt=""><div><b>Club IA</b><small>Votre assistant intelligent</small></div></div><button id="ai-close" aria-label="Fermer">✕</button></div>
+  <div class="ai-head"><div style="display:flex;align-items:center;gap:10px"><img class="ai-logo" alt=""><div><b>Club IA</b><small>Votre assistant intelligent</small></div></div><div class="ai-hbtns"><button id="ai-voice" type="button" aria-label="Activer la voix" title="Lire les réponses à voix haute" style="display:none">🔇</button><button id="ai-close" aria-label="Fermer">✕</button></div></div>
   <div id="ai-msgs"></div>
   <div class="ai-prev" id="ai-prev"><span id="ai-prev-info"></span><button type="button" id="ai-prev-x" aria-label="Retirer le fichier">✕</button></div>
   <form class="ai-form" id="ai-form">
     <button type="button" id="ai-clip" aria-label="Joindre une image ou un PDF" style="display:none">📎</button>
     <input type="file" id="ai-file" accept="image/*,application/pdf" hidden>
+    <button type="button" id="ai-mic" aria-label="Parler au micro" title="Parler" style="display:none">🎤</button>
     <textarea id="ai-in" rows="1" maxlength="1000" placeholder="Écris ta question…"></textarea>
     <button id="ai-send" type="submit">Envoyer</button>
   </form>
@@ -753,7 +823,7 @@ var infolinks_wsid = 0;
     if (img) { const i = document.createElement('img'); i.src = img; d.appendChild(i); }
     d.appendChild(document.createTextNode(txt)); msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight; return d; };
   add('bot', "Bonjour ! Je suis Club IA, ton assistant du Club Réussir Ensemble. Pose-moi n'importe quelle question (recopie ton exercice en texte) : je t'explique pas à pas. 📚");
-  const toggle = o => { box.classList.toggle('open', o); if (o) input.focus(); };
+  const toggle = o => { box.classList.toggle('open', o); if (o) input.focus(); else { CREVoice.stop(); CREVoice.stopListen(); } };
   document.getElementById('ai-fab').onclick = () => toggle(!box.classList.contains('open'));
   document.getElementById('ai-close').onclick = () => toggle(false);
   const heroIA = document.getElementById('heroIA');
@@ -764,6 +834,27 @@ var infolinks_wsid = 0;
     const nl = document.getElementById('navLinks'); if (nl) nl.classList.remove('open');
     toggle(true);
   });
+
+  /* ── Voix : lecture des réponses + dictée au micro ── */
+  const V = window.CREVoice, vBtn = document.getElementById('ai-voice'), mic = document.getElementById('ai-mic'),
+        defPh = input.placeholder;
+  let micSent = false, listening = false;
+  const syncV = () => { if (!V.canSpeak) { vBtn.style.display = 'none'; return; }
+    vBtn.style.display = ''; const o = V.enabled(); vBtn.textContent = o ? '🔊' : '🔇';
+    vBtn.setAttribute('aria-label', o ? 'Couper la voix' : 'Activer la voix'); vBtn.title = o ? 'Couper la voix' : 'Lire les réponses à voix haute'; };
+  vBtn.onclick = () => V.setEnabled(!V.enabled());
+  V.onChange(syncV); syncV();
+  if (V.canListen) mic.style.display = '';
+  mic.onclick = () => {
+    if (listening) { V.stopListen(); return; }
+    V.listen({
+      onstart: () => { listening = true; mic.classList.add('on'); input.placeholder = 'Je t\u2019écoute…'; },
+      onresult: t => { input.value = t; },
+      onerror: c => { if (c === 'not-allowed' || c === 'service-not-allowed') alert("Autorise le micro dans ton navigateur pour parler au chat."); },
+      onend: t => { listening = false; mic.classList.remove('on'); input.placeholder = defPh;
+        if (t) { input.value = t; micSent = true; form.requestSubmit(); } }
+    });
+  };
   input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
 
   const clearAtt = () => { att = null; fileIn.value = ''; prev.classList.remove('on'); prevInfo.textContent = ''; };
@@ -795,6 +886,7 @@ var infolinks_wsid = 0;
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
+    const vocal = micSent; micSent = false; V.stop();
     const q = input.value.trim(); if ((!q && !att) || busy) return;
     busy = true; send.disabled = true; input.value = '';
     const a = att; clearAtt();
@@ -809,6 +901,8 @@ var infolinks_wsid = 0;
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || 'Erreur');
       w.className = 'ai-m bot'; w.textContent = j.reply;
+      if (V.canSpeak) { const rp = document.createElement('button'); rp.type = 'button'; rp.className = 'ai-say'; rp.textContent = '🔊 Écouter'; rp.onclick = () => V.speak(j.reply); w.appendChild(rp); }
+      if (V.enabled() || (vocal && V.canSpeak)) V.speak(j.reply);
       hist.push({ role: 'assistant', content: j.reply });
     } catch (err) {
       w.className = 'ai-m bot'; w.textContent = (err && err.message && /Limite/.test(err.message)) ? err.message : "Désolé, je n'arrive pas à répondre pour le moment. Réessaie dans un instant.";
@@ -828,7 +922,8 @@ body.rb-on #ai-fab{display:none}
 #rb-bubble{position:relative;width:max-content;max-width:min(270px,calc(100vw - 24px));background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;border-bottom-left-radius:4px;padding:10px 12px;box-shadow:0 10px 30px rgba(10,42,87,.25);font:500 13.5px/1.45 'Work Sans',sans-serif}
 #rb-bubble[hidden]{display:none}
 #rb-x{position:absolute;top:3px;right:7px;border:none;background:none;color:var(--ink2);font-size:17px;line-height:1;cursor:pointer;padding:2px}
-#rb-text{padding-right:16px}
+#rb-text{padding-right:40px}
+#rb-v{position:absolute;top:2px;right:26px;border:none;background:none;font-size:15px;line-height:1;cursor:pointer;padding:3px}
 #rb-step{display:block;font-size:11px;font-weight:700;color:var(--ink2);margin-bottom:2px}
 #rb-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
 .rb-b{border:none;border-radius:999px;padding:7px 12px;min-height:34px;font:700 12.5px 'Work Sans',sans-serif;cursor:pointer;background:var(--blue);color:#fff;text-decoration:none;display:inline-flex;align-items:center}
@@ -862,6 +957,7 @@ body.rb-on #ai-fab{display:none}
 </style>
 <div id="rb" aria-label="Robot guide du club">
   <div id="rb-bubble" role="status" aria-live="polite" hidden>
+    <button id="rb-v" type="button" aria-label="Activer la voix du robot" title="Voix du robot" style="display:none">🔇</button>
     <button id="rb-x" type="button" aria-label="Fermer la bulle">×</button>
     <div id="rb-text"></div>
     <div id="rb-btns"></div>
@@ -918,6 +1014,8 @@ body.rb-on #ai-fab{display:none}
         txt=document.getElementById('rb-text'), btns=document.getElementById('rb-btns'), objG=document.getElementById('rb-obj'),
         aiBox=document.getElementById('ai-box'), aiFab=document.getElementById('ai-fab');
   if(!rb||!aiBox||!aiFab) return;
+  const V=window.CREVoice||{canSpeak:false,enabled:()=>false,speak(){},stop(){},setEnabled(){},onChange(){}};
+  let lastText='';
   document.body.classList.add('rb-on');
   const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -983,25 +1081,26 @@ body.rb-on #ai-fab{display:none}
   const hop=()=>{ if(reduce) return; rb.classList.remove('rb-hop','rb-wave'); void rb.offsetWidth; rb.classList.add('rb-hop','rb-wave'); setTimeout(()=>rb.classList.remove('rb-hop'),600); setTimeout(()=>rb.classList.remove('rb-wave'),2700); };
   const openChat=()=>{ if(!aiBox.classList.contains('open')) aiFab.click(); };
   const mk=(label,cls,fn,href)=>{ const e=document.createElement(href?'a':'button'); e.className='rb-b '+(cls||''); e.textContent=label; if(href) e.href=href; else { e.type='button'; e.onclick=fn; } return e; };
-  const closeBub=()=>{ bub.hidden=true; clearTimeout(hideT); };
+  const closeBub=()=>{ bub.hidden=true; clearTimeout(hideT); V.stop(); };
 
-  function show(text,buttons,stepLabel){
-    txt.textContent=''; 
+  function show(text,buttons,stepLabel,say){
+    V.stop(); lastText=text; txt.textContent=''; 
     if(stepLabel){ const s=document.createElement('span'); s.id='rb-step'; s.textContent=stepLabel; txt.appendChild(s); }
     txt.appendChild(document.createTextNode(text));
     btns.textContent=''; buttons.forEach(b=>btns.appendChild(b));
     bub.hidden=false; clearTimeout(hideT);
-    if(tour<0) hideT=setTimeout(closeBub,9000);
+    if(tour<0) hideT=setTimeout(closeBub,say&&V.enabled()?30000:9000);
+    if(say&&V.enabled()) V.speak(text);
   }
   const normalButtons=()=>[mk('🧭 Visite guidée','gold',startTour),mk('💬 Poser une question','',openChat)];
-  function showSection(){ const s=SEC[cur]; setObj(s.obj); show(s.t,normalButtons()); }
+  function showSection(say){ const s=SEC[cur]; setObj(s.obj); show(s.t,normalButtons(),null,say); }
 
   /* Visite guidée */
   function clearHl(){ if(hl){ hl.classList.remove('rb-hl'); hl=null; } }
   function startTour(){ tour=0; muted=false; step(); }
   function stopTour(msg){
     tour=-1; clearHl();
-    if(msg){ setObj('loupe'); show(msg,normalButtons()); } else { showSection(); }
+    if(msg){ setObj('loupe'); show(msg,normalButtons(),null,true); } else { showSection(); }
   }
   function step(){
     if(tour>=TOUR.length){ stopTour("C'est tout ! Une question ? Demande-moi dans le chat."); hop(); return; }
@@ -1012,7 +1111,7 @@ body.rb-on #ai-fab{display:none}
       mk('Y aller →','gold',null,it.href),
       mk(tour===TOUR.length-1?'Terminer':'Suivant ▶','',()=>{ tour++; step(); }),
       mk('✕ Arrêter','alt',()=>stopTour())
-    ],'Rubrique '+(tour+1)+' / '+TOUR.length);
+    ],'Rubrique '+(tour+1)+' / '+TOUR.length,true);
   }
 
   /* Section visible → objet + bulle */
@@ -1046,7 +1145,14 @@ body.rb-on #ai-fab{display:none}
 
   /* Interactions */
   document.getElementById('rb-x').onclick=()=>{ closeBub(); muted=true; if(tour>=0) stopTour(); closeBub(); };
-  btn.onclick=()=>{ if(bub.hidden){ muted=false; if(tour>=0) step(); else showSection(); } else closeBub(); };
+  btn.onclick=()=>{ if(bub.hidden){ muted=false; if(tour>=0) step(); else showSection(true); } else closeBub(); };
+
+  /* Bouton voix du robot */
+  const vb=document.getElementById('rb-v');
+  const syncRV=()=>{ if(!V.canSpeak){ vb.style.display='none'; return; } vb.style.display=''; const o=V.enabled();
+    vb.textContent=o?'🔊':'🔇'; vb.setAttribute('aria-label',o?'Couper la voix du robot':'Activer la voix du robot'); vb.title=o?'Couper la voix':'Activer la voix'; };
+  vb.onclick=()=>{ V.setEnabled(!V.enabled()); if(V.enabled()) V.speak(lastText); };
+  V.onChange(syncRV); syncRV();
 
   /* Cache le robot quand le chat est ouvert */
   new MutationObserver(()=>{ const o=aiBox.classList.contains('open'); rb.classList.toggle('rb-off',o); if(o){ closeBub(); } }).observe(aiBox,{attributes:true,attributeFilter:['class']});
