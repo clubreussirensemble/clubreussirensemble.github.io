@@ -719,6 +719,34 @@ const CHAT_ELEVES_COL = 'chatEleves';
 const SITE_SYNC_COL = 'siteEleveSync';
 function genChatToken(){ return 'el_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 9); }
 
+
+/* ===== Salle de classe : accès automatique après paiement validé ===== */
+async function classroomAjouter(p){
+  const e = eleves.find(x=>x.uid===p.uid) || {};
+  const nom = `${e.prenom||''} ${e.nom||''}`.trim() || e.email || 'Élève';
+  const me = fbAuth.currentUser;
+  let k = (window.__classes||[]).find(c=>c.matiereId===p.matiereId);
+  if(!k){
+    const mat = (typeof matieres!=="undefined"?matieres:[]).find(m=>m.id===p.matiereId) || {};
+    const code = Math.random().toString(36).slice(2,8).toUpperCase();
+    const cl = ['#12284c','#1f7a4d','#b3261e','#8a6d0b','#5b3b8c','#0b6b7a'];
+    await addDoc(collection(fbDB,'site_classes'), {
+      nom: p.matiereNom || mat.nom || 'Cours', matiere: p.matiereNom || mat.nom || '', matiereId: p.matiereId || '',
+      niveau: 'Tous niveaux', code, couleur: cl[Math.floor(Math.random()*cl.length)],
+      profId: me.uid, profNom: mat.prof || 'Club Réussir Ensemble',
+      membres: [me.uid, p.uid], noms: { [me.uid]: 'Club Réussir Ensemble', [p.uid]: nom }, created: Date.now()
+    });
+  } else {
+    const membres = Array.from(new Set([...(k.membres||[]), p.uid]));
+    await updateDoc(doc(fbDB,'site_classes',k.id), { membres, ['noms.'+p.uid]: nom });
+  }
+}
+async function classroomRetirer(p){
+  const k = (window.__classes||[]).find(c=>c.matiereId===p.matiereId);
+  if(!k) return;
+  await updateDoc(doc(fbDB,'site_classes',k.id), { membres: (k.membres||[]).filter(u=>u!==p.uid) });
+}
+
 async function validerCompteEleve(uid, e){
   const token = genChatToken();
   await edtSetDoc(edtDoc(edtDb, CHAT_ELEVES_COL, token), {
@@ -913,6 +941,10 @@ function startListeners(){
     });
     if(leconsOverlay && leconsOverlay.classList.contains('open')) renderLeconsList();
   });
+
+  onSnapshot(collection(fbDB, 'site_classes'), snap=>{
+    window.__classes = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  }, ()=>{});
 
   onSnapshot(collection(fbDB, C_PAIEMENTS), snap=>{
     window.__paiements = snap.docs.map(d=>({id:d.id, ...d.data()}))
@@ -1178,10 +1210,25 @@ function renderPaiements(){
   ).join('') : '<tr><td colspan="6">Aucun paiement.</td></tr>';
 
   document.querySelectorAll('[data-valide]').forEach(b=>{
-    b.onclick = ()=> updateDoc(doc(fbDB, C_PAIEMENTS, b.dataset.valide), { statut: 'valide' });
+    b.onclick = async ()=>{
+      const p = (window.__paiements||[]).find(x=>x.id===b.dataset.valide);
+      if(!p) return;
+      const el = eleves.find(x=>x.uid===p.uid);
+      if(el && el.statut!=='valide' && !confirm("Le compte de cet élève n'est pas encore validé. Valider quand même le paiement ?")) return;
+      b.disabled = true; b.textContent = 'Validation…';
+      try{
+        await updateDoc(doc(fbDB, C_PAIEMENTS, p.id), { statut: 'valide' });
+        await classroomAjouter(p);   // ouvre la salle de classe de la matière
+      }catch(err){ alert('Erreur : ' + (err && err.message ? err.message : err)); b.disabled=false; b.textContent='Valider'; }
+    };
   });
   document.querySelectorAll('[data-delpaie]').forEach(b=>{
-    b.onclick = ()=> { if(confirm('Supprimer ce paiement ?')) deleteDoc(doc(fbDB, C_PAIEMENTS, b.dataset.delpaie)); };
+    b.onclick = async ()=> {
+      if(!confirm('Supprimer ce paiement ? Si le paiement était validé, l\'élève perdra l\'accès à la salle de classe.')) return;
+      const p = (window.__paiements||[]).find(x=>x.id===b.dataset.delpaie);
+      try{ if(p && p.statut==='valide') await classroomRetirer(p); }catch(err){ console.warn(err); }
+      deleteDoc(doc(fbDB, C_PAIEMENTS, b.dataset.delpaie));
+    };
   });
 }
 
