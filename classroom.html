@@ -134,7 +134,12 @@ ul.pers li{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
 .imgs{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
 .imgs img{height:96px;width:auto;max-width:100%;border-radius:8px;border:1.5px solid var(--line);object-fit:cover;display:block}
 @media(max-width:520px){.row{grid-template-columns:1fr}.rendu .row{grid-template-columns:1fr}}
+/* Affichage intégré dans admin.html : on masque l'en-tête et le pied de page du site */
+html.integre .site-nav,html.integre .flag-rule,html.integre .site-footer,html.integre .page-head{display:none}
+html.integre body{background:#fff}
+html.integre main{padding-top:12px}
 </style>
+<script>try{if(window.self!==window.top)document.documentElement.classList.add('integre')}catch(e){document.documentElement.classList.add('integre')}</script>
 </head>
 <body>
 

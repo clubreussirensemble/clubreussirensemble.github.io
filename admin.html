@@ -172,6 +172,7 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
       <button data-tab="olympiades" style="background:#FFF6DA;border-color:#FAB202;color:#0A2A57">🏆 Page Olympiades</button>
       <button class="active" data-tab="matieres">Matières</button>
       <button data-tab="paiements">Paiements</button>
+      <button data-tab="classroom" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">🎓 Salle de classe</button>
       <button data-tab="eleves">Élèves</button>
       <button data-tab="evenements">Événements</button>
       <button data-tab="evaluations">Évaluations</button>
@@ -189,6 +190,11 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
       <button data-tab="liens">Réseaux sociaux</button>
       <button data-tab="espace">Espace élève (Chat, devoirs…)</button>
       <button data-tab="blog">Blog</button>
+    </div>
+
+    <div id="tab-classroom" class="panel" style="display:none;padding:0">
+      <p style="margin:14px 0;color:var(--ink2);font-size:13px">Publier des annonces, devoirs, évaluations et QCM, démarrer un cours en direct, noter les rendus. Un élève entre dans la classe d'une matière dès que vous validez son paiement. <a href="classroom.html" target="_blank" rel="noopener" style="color:var(--navy);font-weight:700">Ouvrir en plein écran ↗</a></p>
+      <iframe id="classroomFrame" data-src="classroom.html" src="about:blank" style="width:100%;height:85vh;min-height:640px;border:0;border-radius:var(--radius);box-shadow:var(--shadow);background:#fff" title="Salle de classe" allow="camera; microphone; clipboard-write"></iframe>
     </div>
 
     <div id="tab-espace" class="panel" style="display:none;padding:0">
@@ -799,6 +805,7 @@ document.getElementById('logoutLink').onclick = e=>{ e.preventDefault(); signOut
 // Onglets
 document.querySelectorAll('.admin-tabs button').forEach(b=>{
   b.onclick = ()=>{
+    if(b.dataset.tab==='classroom'){ const fr=document.getElementById('classroomFrame'); if(fr.src==='about:blank'||!fr.src) fr.src=fr.dataset.src; }
     if(b.dataset.tab==='olyjeu'){ const fr=document.getElementById('olyJeuFrame'); if(!fr.src) fr.src=fr.dataset.src; }
     document.querySelectorAll('.admin-tabs button').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
