@@ -387,7 +387,25 @@ async function listView() {
 let unsubLive = null;
 const salle = k => 'ClubReussirEnsemble-' + k.id;
 const jitsi = (k, audio) => 'https://meet.jit.si/' + salle(k) + '#userInfo.displayName=' + encodeURIComponent(nomDe(S.user)) + '&config.prejoinPageEnabled=false&config.startWithVideoMuted=true' + (audio ? '&config.startAudioOnly=true' : '');
-function liveHtml() {
+/* ---------- Cours Google Meet (lien partagé par le professeur) ---------- */
+const MEET_RE = /^https:\/\/meet\.google\.com\/[a-z0-9?=&_\-\/]+/i;
+const quandFr = q => { const d = new Date(q); return isNaN(d) ? '' : d.toLocaleString('fr-FR', {weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit'}); };
+const inpMeet = 'width:100%;padding:9px 10px;border-radius:8px;border:0;font:inherit;color:#0a2a57;background:#fff;box-sizing:border-box';
+function meetHtml() {
+  const k = S.cur, m = k && k.meet && k.meet.lien ? k.meet : null;
+  if (S.prof) return m
+    ? `<div class="live on"><b>📹 Cours Google Meet publié${m.quand ? ' — ' + esc(quandFr(m.quand)) : ''}</b><div class="act"><a class="btn sm or" href="${esc(m.lien)}" target="_blank" rel="noopener">Ouvrir Google Meet</a><button class="btn sm ghost" data-act="meetoff" style="color:#fff">Retirer le lien</button></div></div>`
+    : `<div class="live"><b>📹 Cours Google Meet</b>
+        <input id="mlien" type="url" placeholder="Lien Meet : https://meet.google.com/abc-defg-hij" style="${inpMeet}">
+        <input id="mquand" type="datetime-local" style="${inpMeet}">
+        <div class="act"><button class="btn sm or" data-act="meeton">Publier pour les élèves</button><span class="err" id="mer" style="color:#ffd0d0"></span></div>
+        <span class="meta" style="color:#cfd8e3">Sur meet.google.com : « Nouvelle réunion » → « Créer une réunion pour plus tard », puis copiez le lien ici. La date et l'heure sont facultatives.</span></div>`;
+  return m
+    ? `<div class="live on"><b>📹 Cours Google Meet${m.quand ? ' — ' + esc(quandFr(m.quand)) : ''}</b><div class="act"><a class="btn sm or" href="${esc(m.lien)}" target="_blank" rel="noopener">🎥 Rejoindre Google Meet</a></div></div>`
+    : '';
+}
+const liveHtml = () => liveJitsi() + meetHtml();
+function liveJitsi() {
   const k = S.cur; if (!k) return '';
   if (S.prof) return k.live
     ? `<div class="live on"><b>🔴 Cours en direct en cours</b><div class="act"><a class="btn sm or" href="${jitsi(k)}" target="_blank" rel="noopener">Ouvrir la salle</a><button class="btn sm ghost" data-act="liveoff" style="color:#fff">Terminer le direct</button></div></div>`
@@ -482,6 +500,12 @@ document.addEventListener('click', async e => {
     else if (a === 'back') { if (unsubLive) { unsubLive(); unsubLive = null; } listView(); }
     else if (a === 'liveon') await updateDoc(doc(db,'site_classes',S.cur.id), {live:true, liveDebut:Date.now()});
     else if (a === 'liveoff') await updateDoc(doc(db,'site_classes',S.cur.id), {live:false});
+    else if (a === 'meeton') {
+      const lien = val('mlien');
+      if (!MEET_RE.test(lien)) return $('#mer').textContent = 'Collez un lien Google Meet valide (https://meet.google.com/…).';
+      await updateDoc(doc(db,'site_classes',S.cur.id), {meet:{lien, quand:val('mquand'), at:Date.now()}});
+    }
+    else if (a === 'meetoff') await updateDoc(doc(db,'site_classes',S.cur.id), {meet:null});
     else if (a === 'open') openClass(id);
     else if (a === 'tab') { S.tab = b.dataset.t; classView(); }
     else if (a === 'new') {
