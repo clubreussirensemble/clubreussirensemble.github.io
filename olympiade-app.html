@@ -567,6 +567,28 @@
   .admin-section { display:none; }
   .admin-section.active { display:block; }
 
+  /* MENU ADMIN MOBILE (tiroir) */
+  .admin-burger{ display:none; width:40px; height:40px; flex-shrink:0; border-radius:10px;
+    border:1px solid var(--border); background:rgba(0,229,255,0.08); color:var(--accent);
+    font-size:1.3rem; line-height:1; cursor:pointer; align-items:center; justify-content:center; }
+  .admin-backdrop{ display:none; }
+  .sidebar-head{ display:none; }
+  @media(max-width:800px){
+    .admin-burger{ display:inline-flex; }
+    .admin-sidebar{ position:fixed; top:0; left:0; bottom:0; width:80%; max-width:300px; z-index:1000;
+      background:#050a14; display:flex; flex-direction:column; overflow-y:auto;
+      transform:translateX(-105%); transition:transform .25s ease; box-shadow:6px 0 30px rgba(0,0,0,.6); padding-top:0; }
+    .admin-sidebar.open{ transform:none; }
+    .sidebar-head{ display:flex; justify-content:space-between; align-items:center; padding:18px 22px;
+      font-family:'Orbitron',sans-serif; font-size:.8rem; letter-spacing:2px; color:var(--gold);
+      border-bottom:1px solid var(--border); margin-bottom:8px; }
+    .sidebar-head span{ cursor:pointer; font-size:1.2rem; color:var(--silver); }
+    .admin-backdrop.open{ display:block; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:999; }
+    .admin-main{ padding:14px; }
+    #s-dashboard > div[style*="grid-template-columns:1fr 1fr"]{ grid-template-columns:1fr !important; }
+  }
+  body.light-mode .admin-sidebar{ background:#e3ebfa; }
+
   .section-title {
     font-family:'Orbitron',sans-serif;
     font-size:1.1rem; font-weight:700;
@@ -1013,7 +1035,7 @@
   /* FORM GRID */
   .form-grid { display:grid; gap:14px; }
   .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-  @media(max-width:500px){ .form-row{ grid-template-columns:1fr; } .admin-sidebar{ display:none; } }
+  @media(max-width:500px){ .form-row{ grid-template-columns:1fr; } }
 
   /* STATS MINI */
   .stats-bar {
@@ -1761,6 +1783,7 @@
     background:linear-gradient(135deg,rgba(5,10,20,0.98),rgba(13,27,46,0.98));
     border-bottom:2px solid rgba(255,215,0,0.2);position:sticky;top:0;z-index:100;box-shadow:0 4px 24px rgba(0,0,0,0.5);">
     <div style="display:flex;align-items:center;gap:14px;">
+      <button class="admin-burger" onclick="toggleAdminMenu()" aria-label="Menu">☰</button>
       <div style="width:38px;height:38px;border-radius:10px;flex-shrink:0;
         background:linear-gradient(135deg,var(--gold),var(--gold2));
         display:flex;align-items:center;justify-content:center;font-size:1.2rem;
@@ -1789,8 +1812,11 @@
     </div>
   </div>
   <div class="admin-layout">
-    <div class="admin-sidebar">
+    <div class="admin-backdrop" id="admin-backdrop" onclick="closeAdminMenu()"></div>
+    <div class="admin-sidebar" id="admin-sidebar">
+      <div class="sidebar-head">MENU <span onclick="closeAdminMenu()">✕</span></div>
       <div class="sidebar-item active" onclick="showAdminSection('s-dashboard')">📊 Tableau de bord</div>
+      <div class="sidebar-item" data-live="1" onclick="showAdminSection('s-dashboard');setTimeout(()=>document.getElementById('dash-live').scrollIntoView({behavior:'smooth',block:'center'}),80)">⚡ Réponses en direct</div>
       <div class="sidebar-item" onclick="showAdminSection('s-players')">👥 Joueurs</div>
       <div class="sidebar-item" onclick="showAdminSection('s-questions')">❓ Questions</div>
       <div class="sidebar-item" onclick="showAdminSection('s-classement')">🏆 Classement</div>
@@ -5169,11 +5195,22 @@ function adminLogout(){
   }).catch(()=>{ showScreen('screen-landing'); });
 }
 
+function toggleAdminMenu(){
+  document.getElementById('admin-sidebar').classList.toggle('open');
+  document.getElementById('admin-backdrop').classList.toggle('open');
+}
+function closeAdminMenu(){
+  document.getElementById('admin-sidebar').classList.remove('open');
+  document.getElementById('admin-backdrop').classList.remove('open');
+}
 function showAdminSection(id){
   document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  document.querySelectorAll('.sidebar-item').forEach(s=>s.classList.remove('active'));
-  event.target.classList.add('active');
+  document.querySelectorAll('.sidebar-item').forEach(s=>{
+    s.classList.toggle('active', !s.dataset.live && (s.getAttribute('onclick')||'').includes("'"+id+"'"));
+  });
+  closeAdminMenu();
+  window.scrollTo(0,0);
   if(id==='s-dashboard') renderDashboard();
   if(id==='s-classement') renderClassement();
   if(id==='s-competition') genCompetition();
