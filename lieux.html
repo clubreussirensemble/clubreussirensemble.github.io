@@ -337,6 +337,10 @@ a{text-decoration:none;color:inherit}
       <label>Catégorie *</label><select name="cat" id="formCat" required></select>
       <label>Ville / région *</label><input name="ville" required placeholder="Ex : Conakry, Mamou, Labé…" maxlength="60">
       <label>Quartier / adresse</label><input name="adresse" maxlength="120">
+      <label>Position sur la carte (GPS)</label>
+      <input name="coords" id="coords" inputmode="decimal" placeholder="Ex : 10.3846, -12.0912" maxlength="40">
+      <button class="btn btn-line" id="btnGps" type="button" style="margin:6px 0 2px">📍 Utiliser ma position actuelle</button>
+      <p class="note" id="gpsNote" style="margin:2px 0 8px">Sur Google Maps : appuie longuement sur le lieu, copie les deux nombres affichés et colle-les ici. Facultatif.</p>
       <label>Téléphone</label><input name="tel" inputmode="tel" placeholder="+224 …" maxlength="25">
       <label>Horaires</label><input name="horaires" placeholder="Ex : 8h – 22h" maxlength="60">
       <label>Lien d'une photo (facultatif)</label><input name="img" type="url" placeholder="https://…" maxlength="300">
@@ -418,8 +422,12 @@ a{text-decoration:none;color:inherit}
   <div class="foot-bottom">© <span id="y"></span> Club Réussir Ensemble de Mamou. Tous droits réservés. · <a href="mentions-legales.html" style="color:inherit;text-decoration:underline">Mentions légales</a> · <a href="politique-confidentialite.html" style="color:inherit;text-decoration:underline">Politique de confidentialité</a></div>
 </footer>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script type="module">
+/* Même projet Firebase que admin.html (fichier ./firebase.js du site) */
+import { fbDB, collection, addDoc, onSnapshot } from "./firebase.js";
+window.FB = { db: fbDB, collection, addDoc, onSnapshot };
+window.dispatchEvent(new Event("fb-ready"));
+</script>
 <script>
 window.SEARCH_INDEX = [
   {title:'Accueil', url:'index.html', kw:'accueil bienvenue'},
@@ -449,10 +457,11 @@ window.SEARCH_INDEX = [
   {title:'Contact', url:'contact.html', kw:'contact whatsapp email adresse'},
 ];
 
-/* ========= CONFIGURATION FIREBASE (à remplacer par ta config) =========
-   Collection : "lieux" — champs : nom, cat, ville, adresse, tel, horaires, img, desc, statut ("valide" | "en_attente")
-   Tant que la config est vide, la page affiche les lieux recensés ci-dessous. */
-const FIREBASE_CONFIG = { apiKey:"", authDomain:"", projectId:"" };
+/* ========= FIREBASE =========
+   Propositions : collection "site_lieux_propositions" (dépôt public, lecture admin uniquement)
+   Lieux validés : collection "site_lieux" (lecture publique, écriture admin) — copiés depuis admin.html, onglet « Lieux »
+   Champs : nom, cat, ville, adresse, tel, horaires, img, desc, lat, lng, statut, date
+   Les lieux recensés ci-dessous restent toujours affichés ; les lieux validés s'y ajoutent. */
 
 const $ = s => document.querySelector(s);
 const esc = t => String(t||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -562,21 +571,33 @@ const incomplet = l => l.cat!=="tourisme" && !l.tel && !l.web;
 
 let LIEUX = [], catActive = "", db = null;
 
+const fbPret = () => new Promise(res=>{
+  if(window.FB) return res();
+  window.addEventListener("fb-ready", ()=>res(), {once:true});
+  setTimeout(res, 4000); /* si firebase.js est introuvable : on garde les lieux recensés */
+});
+
 async function charger(){
-  const ok = FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId && window.firebase;
-  if(ok){
-    try{
-      firebase.initializeApp(FIREBASE_CONFIG);
-      db = firebase.firestore();
-      const snap = await db.collection("lieux").where("statut","==","valide").get();
-      LIEUX = snap.docs.map(d=>({id:d.id,...d.data()}));
-    }catch(e){ console.error(e); LIEUX = EXEMPLES.slice(); }
-  } else { LIEUX = EXEMPLES.slice(); }
+  LIEUX = EXEMPLES.slice();
   initFiltres();
   const p = new URLSearchParams(location.search);
   if(p.get("q")) $("#q").value = p.get("q");
   if(p.get("cat") && CATS[p.get("cat")]) selCat(p.get("cat"));
   afficher();
+
+  await fbPret();
+  if(!window.FB) return;
+  db = window.FB.db;
+  try{
+    /* temps réel : un lieu validé dans l'admin apparaît sans recharger la page */
+    window.FB.onSnapshot(window.FB.collection(db,"site_lieux"), snap=>{
+      const valides = snap.docs.map(d=>({id:d.id,...d.data()})).filter(l=>l.nom);
+      LIEUX = EXEMPLES.concat(valides);
+      const v = $("#ville").value;
+      initFiltres(); selCat(catActive); $("#ville").value = v;
+      afficher();
+    }, err=>console.error("Lieux :", err));
+  }catch(e){ console.error(e); }
 }
 
 function selCat(c){
@@ -634,7 +655,7 @@ function ouvrirFiche(id){
     <div class="ln"><b>À savoir</b>${esc(l.desc)||"Aucune description."}</div>
     <p class="note">${l.src?"Source : "+esc(l.src)+". ":""}Recensé le 17/10/2026 : vérifie horaires, tarifs et contacts avant de te déplacer.</p>
     <div class="acts">
-      <a class="btn btn-blue" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${adr}">🗺️ Voir sur la carte</a>
+      <a class="btn btn-blue" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${(l.lat!=null && l.lng!=null) ? encodeURIComponent(l.lat+","+l.lng) : adr}">🗺️ Voir sur la carte</a>
       ${tel?`<a class="btn btn-line" href="tel:${tel}">📞 Appeler</a><a class="btn btn-line" target="_blank" rel="noopener" href="https://wa.me/${wa}">💬 WhatsApp</a>`:""}
       ${l.web?`<a class="btn btn-line" target="_blank" rel="noopener" href="https://${esc(l.web)}">🌐 Site web</a>`:""}
       <button class="btn btn-line" id="partager" type="button">↗ Partager</button>
@@ -657,12 +678,32 @@ document.addEventListener("click",e=>{
 });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") document.querySelectorAll(".modal").forEach(m=>m.classList.remove("open")); });
 
+$("#btnGps").onclick = ()=>{
+  const note = $("#gpsNote");
+  if(!navigator.geolocation){ note.textContent = "La géolocalisation n'est pas disponible sur cet appareil : saisis les coordonnées à la main."; return; }
+  note.textContent = "Recherche de ta position…";
+  navigator.geolocation.getCurrentPosition(
+    p=>{ $("#coords").value = p.coords.latitude.toFixed(6)+", "+p.coords.longitude.toFixed(6); note.textContent = "Position ajoutée. Utilise ce bouton seulement si tu es sur place."; },
+    ()=>{ note.textContent = "Position refusée ou introuvable : saisis les coordonnées à la main."; },
+    {enableHighAccuracy:true, timeout:15000}
+  );
+};
+function lireCoords(t){
+  const m = String(t||"").match(/(-?\d{1,3}(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:[.,]\d+)?)/);
+  if(!m) return null;
+  const lat = parseFloat(m[1].replace(",",".")), lng = parseFloat(m[2].replace(",","."));
+  return (Math.abs(lat)<=90 && Math.abs(lng)<=180) ? {lat,lng} : null;
+}
+
 $("#form").onsubmit = async e=>{
   e.preventDefault();
   const d = Object.fromEntries(new FormData(e.target).entries());
+  const c = lireCoords(d.coords); delete d.coords;
+  if(c){ d.lat = c.lat; d.lng = c.lng; }
+  else if($("#coords").value.trim()){ alert("Coordonnées non reconnues. Exemple : 10.3846, -12.0912 (ou laisse vide)."); return; }
   d.statut = "en_attente"; d.date = new Date().toISOString();
   try{
-    if(db) await db.collection("lieux").add(d);
+    if(db) await window.FB.addDoc(window.FB.collection(db,"site_lieux_propositions"), d);
     else { const a = JSON.parse(localStorage.getItem("lieux_propositions")||"[]"); a.push(d); localStorage.setItem("lieux_propositions",JSON.stringify(a)); }
     alert("Merci ! Ta proposition sera vérifiée avant publication.");
     e.target.reset(); $("#modalForm").classList.remove("open");

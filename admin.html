@@ -184,6 +184,7 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
       <button data-tab="inscriptions">Inscriptions</button>
       <button data-tab="galerie">Galerie</button>
       <button data-tab="temoignages">Témoignages</button>
+      <button data-tab="lieux">Lieux</button>
       <button data-tab="resultatspal">Résultats & palmarès</button>
       <button data-tab="resultatsmens">Résultats mensuels</button>
       <button data-tab="quizq">Quiz</button>
@@ -554,6 +555,23 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
         </table>
       </div>
     </div>
+    <div id="tab-lieux" class="panel" style="display:none">
+      <div class="content-block">
+        <h3>Lieux proposés à valider</h3>
+        <table>
+          <thead><tr><th>Lieu</th><th>Détails</th><th></th></tr></thead>
+          <tbody id="lieuxAttenteBody"><tr><td colspan="3">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="content-block">
+        <h3>Lieux publiés (propositions validées)</h3>
+        <table>
+          <thead><tr><th>Lieu</th><th>Détails</th><th></th></tr></thead>
+          <tbody id="lieuxPubBody"><tr><td colspan="3">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <div id="tab-quizq" class="panel" style="display:none">
       <div class="content-block">
         <h3>Ajouter une question au quiz « Teste ton niveau »</h3>
@@ -785,6 +803,7 @@ onAuthStateChanged(fbAuth, async user=>{
   loginView.style.display='none'; adminView.style.display='block';
   startListeners();
   startTemoignages();
+  startLieux();
   startRP();
   startQuiz();
 });
@@ -1543,6 +1562,75 @@ function startTemoignages(){
       };
     });
   });
+}
+
+// ── Lieux : propositions (site_lieux_propositions) -> validation -> site_lieux (page publique lieux.html) ──
+const LIEUX_PROP = 'site_lieux_propositions', LIEUX_PUB = 'site_lieux';
+const LIEUX_CATS = {restaurant:'Restaurant',hotel:'Hôtel',motel:'Motel / auberge',entreprise:'Entreprise',ecole:'École',tourisme:'Site touristique'};
+const LIEUX_CHAMPS = ['nom','cat','ville','adresse','tel','horaires','img','desc','lat','lng','date'];
+const pickLieu = l => { const o = {}; LIEUX_CHAMPS.forEach(k=>{ if(l[k]!==undefined) o[k]=l[k]; }); return o; };
+let lieuxAttente = [], lieuxPub = [];
+
+async function lieuValider(l){
+  await setDoc(doc(fbDB, LIEUX_PUB, l.id), { ...pickLieu(l), statut:'valide', dateValidation:new Date().toISOString() });
+  await deleteDoc(doc(fbDB, LIEUX_PROP, l.id));
+}
+async function lieuDepublier(l){
+  await setDoc(doc(fbDB, LIEUX_PROP, l.id), { ...pickLieu(l), statut:'en_attente' });
+  await deleteDoc(doc(fbDB, LIEUX_PUB, l.id));
+}
+
+function lieuxRender(){
+  document.querySelector('[data-tab="lieux"]').textContent = 'Lieux' + (lieuxAttente.length ? ' ('+lieuxAttente.length+')' : '');
+  const detail = l => `
+    <span class="pill ok">${escT(LIEUX_CATS[l.cat]||l.cat||'Lieu')}</span><br>
+    📍 ${escT(l.ville||'')}${l.adresse?' — '+escT(l.adresse):''}
+    ${(l.lat!=null && l.lng!=null)?'<br>🗺️ <a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(l.lat+','+l.lng)+'" target="_blank" rel="noopener">Vérifier sur la carte</a> <span style="color:var(--ink2);font-size:12px">('+escT(Number(l.lat).toFixed(5))+', '+escT(Number(l.lng).toFixed(5))+')</span>':''}
+    ${l.tel?'<br>📞 '+escT(l.tel):''}${l.horaires?'<br>🕒 '+escT(l.horaires):''}
+    ${l.desc?'<br><span style="color:var(--ink2);font-size:12px">'+escT(l.desc)+'</span>':''}
+    ${l.img?'<br><a href="'+escT(l.img)+'" target="_blank" rel="noopener" style="font-size:12px">Voir la photo</a>':''}`;
+
+  document.getElementById('lieuxAttenteBody').innerHTML = lieuxAttente.length ? lieuxAttente.map(l=>`
+    <tr>
+      <td><b>${escT(l.nom||'Sans nom')}</b><br><span style="color:var(--ink2);font-size:12px">${l.date?new Date(l.date).toLocaleDateString('fr-FR'):''}</span></td>
+      <td>${detail(l)}</td>
+      <td style="white-space:nowrap">
+        <button class="small-btn" data-lieuok="${l.id}" style="background:var(--green)">Valider</button>
+        <button class="small-btn" data-lieudel="${l.id}" data-src="prop" style="background:var(--red)">Refuser</button>
+      </td>
+    </tr>`).join('') : '<tr><td colspan="3">Aucune proposition à valider.</td></tr>';
+
+  document.getElementById('lieuxPubBody').innerHTML = lieuxPub.length ? lieuxPub.map(l=>`
+    <tr>
+      <td><b>${escT(l.nom||'')}</b></td>
+      <td>${detail(l)}</td>
+      <td style="white-space:nowrap">
+        <button class="small-btn" data-lieuhide="${l.id}">Dépublier</button>
+        <button class="small-btn" data-lieudel="${l.id}" data-src="pub" style="background:var(--red)">Supprimer</button>
+      </td>
+    </tr>`).join('') : '<tr><td colspan="3">Aucun lieu publié depuis les propositions.</td></tr>';
+
+  document.querySelectorAll('[data-lieuok]').forEach(b=>{
+    b.onclick = async ()=>{ b.disabled = true; try{ await lieuValider(lieuxAttente.find(x=>x.id===b.dataset.lieuok)); }catch(e){ alert('Validation impossible : '+e.message); b.disabled = false; } };
+  });
+  document.querySelectorAll('[data-lieuhide]').forEach(b=>{
+    b.onclick = async ()=>{ b.disabled = true; try{ await lieuDepublier(lieuxPub.find(x=>x.id===b.dataset.lieuhide)); }catch(e){ alert('Action impossible : '+e.message); b.disabled = false; } };
+  });
+  document.querySelectorAll('[data-lieudel]').forEach(b=>{
+    b.onclick = ()=>{ if(confirm('Supprimer définitivement ce lieu ?')) deleteDoc(doc(fbDB, b.dataset.src==='pub' ? LIEUX_PUB : LIEUX_PROP, b.dataset.lieudel)); };
+  });
+}
+
+function startLieux(){
+  const erreur = ()=>{ document.getElementById('lieuxAttenteBody').innerHTML = '<tr><td colspan="3">Lecture impossible : vérifie les règles Firestore (site_lieux et site_lieux_propositions).</td></tr>'; };
+  onSnapshot(collection(fbDB, LIEUX_PROP), snap=>{
+    lieuxAttente = snap.docs.map(d=>({id:d.id, ...d.data()})).sort((x,y)=>String(y.date||'').localeCompare(String(x.date||'')));
+    lieuxRender();
+  }, erreur);
+  onSnapshot(collection(fbDB, LIEUX_PUB), snap=>{
+    lieuxPub = snap.docs.map(d=>({id:d.id, ...d.data()})).sort((x,y)=>String(x.nom||'').localeCompare(String(y.nom||''),'fr'));
+    lieuxRender();
+  }, erreur);
 }
 
 document.getElementById('temForm').addEventListener('submit', async e=>{
