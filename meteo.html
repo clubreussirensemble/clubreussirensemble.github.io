@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Météo en Guinée — Club Réussir Ensemble de Mamou</title>
-<meta name="description" content="Météo en direct pour toute la Guinée : 8 régions, 34 préfectures et 340 sous-préfectures. Prévisions heure par heure et sur 7 jours.">
+<meta name="description" content="Météo en direct pour toute la Guinée : 10 régions, 45 préfectures et 340 sous-préfectures. Prévisions heure par heure et sur 7 jours.">
 <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
 <link rel="apple-touch-icon" href="/icon-512.png">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
@@ -322,7 +322,7 @@ a{text-decoration:none;color:inherit}
   <div class="wrap hero-inner">
     <div class="hero-tag">Rubrique</div>
     <h1>Météo<br><span class="hero-pill">en Guinée</span></h1>
-    <p class="hero-lead">8 régions · 34 préfectures · 340 sous-préfectures et communes. Prévisions en direct, heure par heure et sur 7 jours.</p>
+    <p class="hero-lead">10 régions · 45 préfectures · 340 sous-préfectures et communes. Prévisions en direct, heure par heure et sur 7 jours.</p>
   </div>
 </section>
 
@@ -348,7 +348,7 @@ a{text-decoration:none;color:inherit}
   <h2 id="titreSP"></h2>
   <div class="chips" id="chips"></div>
 
-  <h2>Les 34 préfectures en un coup d'œil</h2>
+  <h2>Les 45 préfectures en un coup d'œil</h2>
   <div class="grille" id="grille"></div>
 
   <p class="note">Données : Open-Meteo. Heure de Guinée (GMT). Les prévisions peuvent évoluer ; en cas d'alerte, suivez les consignes des autorités locales.</p>
@@ -478,13 +478,15 @@ searchInput.addEventListener('input', () => {
 /* Régions → codes de préfectures */
 const REGIONS = {
   "Conakry":["CK"],
-  "Boké":["BK","BF","FR","GA","KN"],
+  "Boké":["BK","BF","FR","GA","KN","KM"],
   "Kindia":["KD","CO","DU","FO","TE"],
-  "Mamou":["MM","DL","PI"],
+  "Mamou":["MM","DL","PI","TB"],
   "Labé":["LA","KB","LE","ML","TO"],
   "Faranah":["FA","DB","DI","KS"],
-  "Kankan":["KA","KE","KO","MD","SI"],
-  "N'Zérékoré":["NZ","BE","GU","LO","MC","YO"]
+  "Kankan":["KA","KE","KO","MD","TK","DK","SB"],
+  "Siguiri":["SI","DO","SG","KT"],
+  "N'Zérékoré":["NZ","GU","LO","MC","YO"],
+  "Beyla":["BE","SK","KU","KR"]
 };
 /* Préfectures : code → [nom, latitude, longitude du chef-lieu] */
 const PREF = {
@@ -501,12 +503,20 @@ const PREF = {
   KA:["Kankan",10.3854,-9.3057], KE:["Kérouané",9.2667,-9.0167], KO:["Kouroussa",10.6500,-9.8833],
   MD:["Mandiana",10.6167,-8.6833], SI:["Siguiri",11.4167,-9.1667],
   NZ:["N'Zérékoré",7.7562,-8.8179], BE:["Beyla",8.6833,-8.6333], GU:["Guéckédou",8.5667,-10.1333],
-  LO:["Lola",7.8000,-8.5333], MC:["Macenta",8.5416,-9.4733], YO:["Yomou",7.5667,-9.2667]
+  LO:["Lola",7.8000,-8.5333], MC:["Macenta",8.5416,-9.4733], YO:["Yomou",7.5667,-9.2667],
+  /* Nouvelles préfectures (décret du 20 août 2026) — anciennes sous-préfectures.
+     Les coordonnées sont affinées au démarrage (voir affinerNouvelles). */
+  KM:["Kamsar",10.6500,-14.6000], TB:["Timbo",10.6333,-11.8333],
+  TK:["Tokounou",10.3854,-9.3057], DK:["Dialakoro",10.6167,-8.6833], SB:["Sabadou-Baranama",10.3854,-9.3057],
+  DO:["Doko",11.4167,-9.1667], SG:["Siguirini",11.4167,-9.1667], KT:["Kintinian",11.4167,-9.1667],
+  SK:["Sinko",8.6833,-8.6333], KU:["Kouankan",8.5416,-9.4733], KR:["Karala",8.6833,-8.6333]
 };
+/* Nouvelle préfecture → ancienne préfecture d'origine (pour la recherche des coordonnées) */
+const NOUVELLES = {KM:"BK", TB:"MM", TK:"KA", DK:"MD", SB:"KA", DO:"SI", SG:"SI", KT:"SI", SK:"BE", KU:"MC", KR:"BE"};
 /* Sous-préfectures et communes par préfecture */
 const SP = {
   CK:["Kaloum","Dixinn","Matam","Ratoma","Matoto"],
-  BK:["Boké-Centre","Bintimodiya","Dabiss","Kamsar","Kanfarandé","Kolaboui","Malapouyah","Sangarédi","Sansalé","Tanéné"],
+  BK:["Boké-Centre","Bintimodiya","Dabiss","Kanfarandé","Kolaboui","Malapouyah","Sangarédi","Sansalé","Tanéné"],
   BF:["Boffa-Centre","Colia","Douprou","Koba-Tatema","Lisso","Mankountan","Tamita","Tougnifili"],
   FR:["Fria-Centre","Baguinet","Banguigny","Tormélin"],
   GA:["Gaoual-Centre","Foulamory","Kakony","Koumbia","Kounsitel","Malanta","Touba","Wendou M'Bour"],
@@ -516,7 +526,7 @@ const SP = {
   DU:["Dubréka-Centre","Badi","Faléssadé","Khorira","Ouassou","Tanéné","Tondon"],
   FO:["Forécariah-Centre","Alassoya","Benty","Farmoriah","Kaback","Kakossa","Kallia","Maférinya","Moussayah","Sikhourou"],
   TE:["Télimélé-Centre","Bourouwal","Daramagnaky","Gougoudjé","Koba","Kollet","Konsotami","Missira","Santou","Sarékaly","Sinta","Sogolon","Tarihoye","Thionthian"],
-  MM:["Mamou-Centre","Bouliwel","Dounet","Gongoret","Kégnéko","Konkouré","Nyagara","Ouré-Kaba","Porédaka","Saramoussayah","Soyah","Téguéréyah","Timbo","Tolo"],
+  MM:["Mamou-Centre","Bouliwel","Dounet","Gongoret","Kégnéko","Konkouré","Nyagara","Ouré-Kaba","Porédaka","Saramoussayah","Soyah","Téguéréyah","Tolo"],
   DL:["Dalaba-Centre","Bodié","Ditinn","Kaala","Kankalabé","Kébali","Koba","Mafara","Mitty","Mombéyah"],
   PI:["Pita-Centre","Bantignel","Bourouwal-Tappé","Dongol-Touma","Gongore","Ley-Miro","Maci","Ninguélandé","Sangaréah","Sintali","Timbi-Madina","Timbi-Touni"],
   LA:["Labé-Centre","Dalein","Daralabé","Diari","Dionfo","Garambé","Hafia","Kaalan","Kouramangui","Noussy","Popodara","Sannou","Tountourou"],
@@ -528,17 +538,22 @@ const SP = {
   DB:["Dabola-Centre","Arfamoussaya","Banko","Bissikrima","Dogomet","Kankama","Kindoyé","Konindou","N'Déma"],
   DI:["Dinguiraye-Centre","Banora","Dialakoro","Diatiféré","Gagnakaly","Kalinko","Lansanya","Sélouma"],
   KS:["Kissidougou-Centre","Albadariah","Banama","Bardou","Beindou","Fermessadou-Pombo","Firawa","Gbangbadou","Kondiadou","Manfran","Sangardo","Yendé-Millimou","Yombiro"],
-  KA:["Kankan-Centre","Balandougou","Baté-Nafadji","Boula","Gbérédou-Baranama","Kanfamoriyah","Koumban","Mamouroudou","Missamana","Moribayah","Sabadou-Baranama","Tinti-Oulen","Tokounou"],
+  KA:["Kankan-Centre","Balandougou","Baté-Nafadji","Boula","Gbérédou-Baranama","Kanfamoriyah","Koumban","Mamouroudou","Missamana","Moribayah","Tinti-Oulen"],
   KE:["Kérouané-Centre","Banankoro","Damaro","Komodou","Kounsankoro","Linko","Sibiribaro","Soromaya"],
   KO:["Kouroussa-Centre","Babila","Balato","Banfélé","Baro","Cisséla","Douako","Doura","Kiniéro","Komola-Khoura","Koumana","Sanguiana"],
-  MD:["Mandiana-Centre","Balandougouba","Dialakoro","Faralako","Kantoumanina","Kiniéran","Koundian","Koundianakoro","Morodou","Niantanina","Saladou","Sansando"],
-  SI:["Siguiri-Centre","Bankon","Doko","Franwalia","Kiniébakoura","Kintinian","Maléah","Naboun","Niagassola","Niandankoro","Norassoba","Siguirini"],
+  MD:["Mandiana-Centre","Balandougouba","Faralako","Kantoumanina","Kiniéran","Koundian","Koundianakoro","Morodou","Niantanina","Saladou","Sansando"],
+  SI:["Siguiri-Centre","Bankon","Franwalia","Kiniébakoura","Maléah","Naboun","Niagassola","Niandankoro","Norassoba"],
   NZ:["N'Zérékoré-Centre","Bounouma","Gouécké","Kobéla","Koropara","Koulé","Palé","Samoé","Soulouta","Womey","Yalenzou"],
-  BE:["Beyla-Centre","Boola","Diaraguéréla","Diassodou","Fouala","Gbakédou","Gbessoba","Karala","Koumandou","Moussadou","Nionsomoridou","Samana","Sinko","Sokourala"],
+  BE:["Beyla-Centre","Boola","Diaraguéréla","Diassodou","Fouala","Gbakédou","Gbessoba","Koumandou","Moussadou","Nionsomoridou","Samana","Sokourala"],
   GU:["Guéckédou-Centre","Bolodou","Fangamadou","Guendembou","Kassadou","Koundou","Nongoa","Ouendé-Kénéma","Termessadou-Dibo","Tékoulo"],
   LO:["Lola-Centre","Bossou","Foumbadou","Gama-Béréma","Guéassou","Kokota","Lainé","N'Zoo","Tounkarata"],
-  MC:["Macenta-Centre","Balizia","Binikala","Bofossou","Daro","Fassankoni","Kouankan","Koyamah","N'Zébéla","Ourémaï","Panziazou","Sengbédou","Sérédou","Vassérédou","Watanka"],
-  YO:["Yomou-Centre","Banié","Bheeta","Bignamou","Bowé","Diécké","Péla"]
+  MC:["Macenta-Centre","Balizia","Binikala","Bofossou","Daro","Fassankoni","Koyamah","N'Zébéla","Ourémaï","Panziazou","Sengbédou","Sérédou","Vassérédou","Watanka"],
+  YO:["Yomou-Centre","Banié","Bheeta","Bignamou","Bowé","Diécké","Péla"],
+  /* Nouvelles préfectures : la liste de leurs sous-préfectures sera complétée
+     quand l'acte réglementaire du ministère sera publié. */
+  KM:["Kamsar-Centre"], TB:["Timbo-Centre"], TK:["Tokounou-Centre"], DK:["Dialakoro-Centre"], SB:["Sabadou-Baranama-Centre"],
+  DO:["Doko-Centre"], SG:["Siguirini-Centre"], KT:["Kintinian-Centre"],
+  SK:["Sinko-Centre"], KU:["Kouankan-Centre"], KR:["Karala-Centre"]
 };
 /* Positions des communes de Conakry (approximatives) */
 const COMMUNES = {Kaloum:[9.5092,-13.7122], Dixinn:[9.5453,-13.6840], Matam:[9.5330,-13.6520], Ratoma:[9.5800,-13.6320], Matoto:[9.5700,-13.6100]};
@@ -740,7 +755,7 @@ function majChips(){
   $("chips").querySelectorAll(".chip").forEach(el=>el.onclick=()=>{ aller(code, el.dataset.s); window.scrollTo({top:0,behavior:"smooth"}); });
 }
 
-/* ================= GRILLE DES 34 PRÉFECTURES ================= */
+/* ================= GRILLE DES 45 PRÉFECTURES ================= */
 const ORDRE = Object.values(REGIONS).flat();
 async function chargerGrille(){
   const g = $("grille");
@@ -790,6 +805,29 @@ $("q").addEventListener("input", e=>{
 });
 document.addEventListener("click", e=>{ if(!e.target.closest(".recherche")) $("sugg").style.display="none"; });
 
+/* ================= COORDONNÉES DES NOUVELLES PRÉFECTURES ================= */
+/* Cherchées une seule fois via le géocodeur Open-Meteo (près de l'ancienne préfecture),
+   puis gardées en mémoire. Sinon on garde les coordonnées de départ. */
+async function affinerNouvelles(){
+  for(const c of Object.keys(NOUVELLES)){
+    const cle = "geoPref_"+c;
+    const k = lire(cle);
+    if(k){ PREF[c][1]=k.lat; PREF[c][2]=k.lon; continue; }
+    const vieux = PREF[NOUVELLES[c]];
+    try{
+      const nom = PREF[c][0];
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(nom)}&count=15&language=fr&countryCode=GN`);
+      const d = await res.json();
+      let best=null;
+      (d.results||[]).forEach(x=>{
+        const dist = Math.hypot(x.latitude-vieux[1], x.longitude-vieux[2]);
+        if(dist<1.5 && (!best || dist<best.dist)) best={lat:x.latitude, lon:x.longitude, dist};
+      });
+      if(best){ PREF[c][1]=best.lat; PREF[c][2]=best.lon; ecrire(cle,{lat:best.lat,lon:best.lon}); }
+    }catch(e){ break; }
+  }
+}
+
 /* ================= INITIALISATION ================= */
 function init(){
     
@@ -817,7 +855,7 @@ function init(){
   const s = lire("meteo_lieu");
   if(s && PREF[s.code] && (!s.sp || SP[s.code].includes(s.sp))) aller(s.code, s.sp);
   else aller("MM", null);
-  chargerGrille();
+  affinerNouvelles().then(()=>{ chargerGrille(); if(courant && !courant.sp && NOUVELLES[courant.code]){ courant.lat=PREF[courant.code][1]; courant.lon=PREF[courant.code][2]; charger(); } });
   setInterval(()=>{ if(courant){charger();} chargerGrille(); }, 30*60*1000);
 }
 init();
