@@ -186,6 +186,7 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
       <button data-tab="temoignages">Témoignages</button>
       <button data-tab="lieux">Lieux</button>
       <button data-tab="resultatspal">Résultats & palmarès</button>
+      <button data-tab="respv" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">📢 Résultats examens (PV)</button>
       <button data-tab="resultatsmens">Résultats mensuels</button>
       <button data-tab="quizq">Quiz</button>
       <button data-tab="liens">Réseaux sociaux</button>
@@ -665,6 +666,36 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
           <thead><tr><th>Élève</th><th>Examen</th><th>Mention</th><th></th></tr></thead>
           <tbody id="rpPalBody"><tr><td colspan="4">Chargement…</td></tr></tbody>
         </table>
+      </div>
+    </div>
+    <div id="tab-respv" class="panel" style="display:none">
+      <div class="content-block">
+        <h3>Importer les résultats par candidat (consultables avec le numéro de PV)</h3>
+        <p style="font-size:12.5px;color:var(--ink2);margin-bottom:12px">Une ligne par candidat, la 1re ligne contient les titres. Colonnes reconnues : <b>pv</b> (obligatoire), nom, prenom, decision, moyenne, mention, etablissement, naissance (facultatif : si elle est remplie, l'élève devra aussi la saisir). Les autres colonnes sont gardées et affichées. Publie seulement après la proclamation officielle.</p>
+        <div class="row-form" style="margin-bottom:0">
+          <div class="field" style="flex:1 1 160px"><label>Examen</label><select id="rxEx"></select></div>
+          <div class="field" style="flex:1 1 120px"><label>Année</label><select id="rxAn"></select></div>
+        </div>
+        <div class="field" style="margin-top:12px;display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:700;color:var(--ink2)">Fichier CSV (Excel : Enregistrer sous → CSV)</label><input type="file" id="rxFile" accept=".csv,.txt,text/csv,text/plain"></div>
+        <div class="field" style="margin-top:12px;display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:700;color:var(--ink2)">… ou colle la liste ici</label><textarea id="rxTxt" rows="6" style="padding:9px 11px;border:1.5px solid var(--line);border-radius:7px;font-size:12.5px;font-family:ui-monospace,Menlo,monospace;background:var(--paper2)" placeholder="pv;nom;prenom;decision;moyenne;mention&#10;12345;DIALLO;Mamadou;Admis;12,5;Assez bien"></textarea></div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-navy" type="button" id="rxPrev">Vérifier</button>
+          <button class="btn" type="button" id="rxGo" style="background:var(--green);color:#fff;display:none">Importer</button>
+        </div>
+        <p id="rxMsg" style="margin-top:10px;font-size:13.5px"></p>
+        <div id="rxTable" style="overflow-x:auto"></div>
+      </div>
+      <div class="content-block">
+        <h3>Vérifier ou supprimer un résultat</h3>
+        <div class="row-form">
+          <div class="field" style="flex:1 1 140px"><label>Examen</label><select id="rxDEx"></select></div>
+          <div class="field" style="flex:1 1 100px"><label>Année</label><select id="rxDAn"></select></div>
+          <div class="field" style="flex:1 1 140px"><label>PV</label><input id="rxDPv" maxlength="30"></div>
+          <div class="field" style="flex:1 1 150px"><label>Naissance (si utilisée)</label><input id="rxDNa" type="date"></div>
+          <button class="small-btn" type="button" id="rxView" style="padding:10px 14px">Voir</button>
+          <button class="small-btn" type="button" id="rxDel" style="padding:10px 14px;background:var(--red)">Supprimer</button>
+        </div>
+        <p id="rxDMsg" style="font-size:13.5px"></p>
       </div>
     </div>
   </div>
@@ -1703,6 +1734,117 @@ document.getElementById('rpPalForm').addEventListener('submit', async e=>{
   });
   e.target.reset();
 });
+
+// ── Résultats d'examens par PV (collection « site_resultats_pv », consultée sur actus-education.html) ──
+const RX_COL = 'site_resultats_pv';
+const RX_EXAMENS = ["BEPC","Baccalauréat","CEE","BEP","CAP","BTS","Concours"];
+// IMPORTANT : ces 3 fonctions doivent rester identiques à celles de actus-education.html
+function rxSlug(s){ return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""); }
+function rxCleanPv(s){ return String(s).trim().toUpperCase().replace(/\s+/g,"").replace(/[\/\\.#?\[\]]/g,"-"); }
+function rxDocId(exam, annee, pv, naiss){ return rxSlug(exam) + "_" + annee + "_" + rxCleanPv(pv) + (naiss ? "_" + naiss : ""); }
+(function(){
+  const y = new Date().getFullYear();
+  ['rxEx','rxDEx'].forEach(id=>{ const s = document.getElementById(id); RX_EXAMENS.forEach(x=>{ const o = document.createElement('option'); o.value = o.textContent = x; s.append(o); }); });
+  ['rxAn','rxDAn'].forEach(id=>{ const s = document.getElementById(id); for(let k=0;k<4;k++){ const o = document.createElement('option'); o.value = o.textContent = String(y-k); s.append(o); } });
+})();
+function rxParseCSV(t){
+  t = t.replace(/^\uFEFF/, '');
+  const first = t.split(/\r?\n/)[0] || '';
+  const sep = first.split(';').length > first.split(',').length ? ';' : (first.indexOf('\t') > -1 ? '\t' : ',');
+  const rows = []; let row = [], cur = '', q = false;
+  const push = ()=>{ row.push(cur); cur = ''; };
+  const flush = ()=>{ if(row.some(x=>x.trim()!=='')) rows.push(row); row = []; };
+  for(let i=0;i<t.length;i++){
+    const c = t[i];
+    if(q){ if(c==='"'){ if(t[i+1]==='"'){ cur += '"'; i++; } else q = false; } else cur += c; }
+    else if(c==='"') q = true;
+    else if(c===sep) push();
+    else if(c==='\n' || c==='\r'){ if(c==='\r' && t[i+1]==='\n') i++; push(); flush(); }
+    else cur += c;
+  }
+  push(); flush();
+  return rows;
+}
+const RX_SYN = { pv:'pv', n_pv:'pv', num_pv:'pv', numero_pv:'pv', numero_de_pv:'pv', n_de_pv:'pv',
+  nom:'nom', prenom:'prenom', prenoms:'prenom', decision:'decision', resultat:'decision',
+  naissance:'naissance', date_naissance:'naissance', date_de_naissance:'naissance', ne_le:'naissance' };
+function rxKey(s){ const k = String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,""); return RX_SYN[k] || k; }
+function rxNaiss(s){
+  s = String(s||'').trim(); if(!s) return '';
+  let m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+  if(m) return m[3] + ('0'+m[2]).slice(-2) + ('0'+m[1]).slice(-2);
+  m = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
+  if(m) return m[1] + ('0'+m[2]).slice(-2) + ('0'+m[3]).slice(-2);
+  return '';
+}
+let RX = [];
+document.getElementById('rxFile').addEventListener('change', e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader(); r.onload = ()=>{ document.getElementById('rxTxt').value = r.result; }; r.readAsText(f, 'utf-8');
+});
+document.getElementById('rxPrev').onclick = ()=>{
+  const msg = document.getElementById('rxMsg'), tb = document.getElementById('rxTable'), go = document.getElementById('rxGo');
+  msg.style.color = 'var(--ink2)'; tb.innerHTML = ''; go.style.display = 'none'; RX = [];
+  const exam = document.getElementById('rxEx').value, annee = document.getElementById('rxAn').value;
+  const txt = document.getElementById('rxTxt').value.trim();
+  if(!txt){ msg.style.color = 'var(--red)'; msg.textContent = 'Choisis un fichier ou colle la liste.'; return; }
+  const rows = rxParseCSV(txt);
+  if(rows.length < 2){ msg.style.color = 'var(--red)'; msg.textContent = 'Il faut une ligne de titres puis au moins un candidat.'; return; }
+  const keys = rows[0].map(rxKey);
+  if(keys.indexOf('pv') < 0){ msg.style.color = 'var(--red)'; msg.textContent = 'Colonne « pv » introuvable. Titres lus : ' + rows[0].join(', '); return; }
+  let skipped = 0; const seen = {};
+  rows.slice(1).forEach(r=>{
+    const d = {};
+    keys.forEach((k,i)=>{ if(k && r[i] != null && String(r[i]).trim() !== '') d[k] = String(r[i]).trim(); });
+    if(!d.pv){ skipped++; return; }
+    const naiss = rxNaiss(d.naissance); delete d.naissance;
+    d.examen = exam; d.annee = annee;
+    const id = rxDocId(exam, annee, d.pv, naiss);
+    if(seen[id]){ skipped++; return; }
+    seen[id] = 1; RX.push({ id, data: d });
+  });
+  msg.style.color = 'var(--green)';
+  msg.textContent = RX.length + ' candidat(s) prêts' + (skipped ? ' · ' + skipped + ' ligne(s) ignorée(s) (PV vide ou doublon)' : '') + '. Vérifie l\'aperçu puis importe.';
+  const cols = RX.length ? Object.keys(RX[0].data) : [];
+  tb.innerHTML = '<table><thead><tr>' + cols.map(c=>'<th>'+escT(c)+'</th>').join('') + '</tr></thead><tbody>' +
+    RX.slice(0,5).map(r=>'<tr>' + cols.map(c=>'<td>'+escT(r.data[c]||'')+'</td>').join('') + '</tr>').join('') + '</tbody></table>';
+  if(RX.length) go.style.display = '';
+};
+document.getElementById('rxGo').onclick = async ()=>{
+  if(!RX.length) return;
+  const btn = document.getElementById('rxGo'), msg = document.getElementById('rxMsg');
+  btn.disabled = true; msg.style.color = 'var(--ink2)';
+  let done = 0;
+  try{
+    for(let i=0;i<RX.length;i+=20){
+      await Promise.all(RX.slice(i,i+20).map(r=>setDoc(doc(fbDB, RX_COL, r.id), r.data)));
+      done = Math.min(i+20, RX.length); msg.textContent = done + ' / ' + RX.length + '…';
+    }
+    msg.style.color = 'var(--green)';
+    msg.textContent = done + ' résultat(s) importé(s). Les élèves peuvent les consulter sur actus-education.html.';
+  }catch(ex){
+    msg.style.color = 'var(--red)';
+    msg.textContent = 'Échec après ' + done + ' : ' + (ex && ex.code === 'permission-denied' ? 'droits refusés (ajoute la règle Firestore « site_resultats_pv »).' : 'erreur réseau.');
+  }
+  btn.disabled = false;
+};
+function rxDId(){ return rxDocId(document.getElementById('rxDEx').value, document.getElementById('rxDAn').value, document.getElementById('rxDPv').value, document.getElementById('rxDNa').value.replace(/-/g,'')); }
+document.getElementById('rxView').onclick = async ()=>{
+  const m = document.getElementById('rxDMsg');
+  if(!document.getElementById('rxDPv').value.trim()){ m.style.color='var(--red)'; m.textContent='Saisis un PV.'; return; }
+  try{
+    const s = await getDoc(doc(fbDB, RX_COL, rxDId()));
+    m.style.color = s.exists() ? 'var(--ink)' : 'var(--red)';
+    m.textContent = s.exists() ? Object.entries(s.data()).map(([k,v])=>k+' : '+v).join(' · ') : 'Aucun résultat pour ce PV (vérifie examen, année et date de naissance).';
+  }catch(ex){ m.style.color='var(--red)'; m.textContent='Lecture impossible.'; }
+};
+document.getElementById('rxDel').onclick = async ()=>{
+  const m = document.getElementById('rxDMsg');
+  if(!document.getElementById('rxDPv').value.trim()){ m.style.color='var(--red)'; m.textContent='Saisis un PV.'; return; }
+  if(!confirm('Supprimer définitivement ce résultat ?')) return;
+  try{ await deleteDoc(doc(fbDB, RX_COL, rxDId())); m.style.color='var(--green)'; m.textContent='Résultat supprimé.'; }
+  catch(ex){ m.style.color='var(--red)'; m.textContent='Suppression impossible (droits ou réseau).'; }
+};
 
 // ── Quiz « Teste ton niveau » (collection « site_quiz_questions », page publique quiz.html) ──
 function startQuiz(){
