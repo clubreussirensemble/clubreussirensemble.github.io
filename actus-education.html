@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<meta name="monetag" content="62309d15ad4e218ed5eb4991f37b994a">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Actus de l’éducation · Club Réussir Ensemble</title>
@@ -184,6 +185,12 @@ main{padding:34px 0 10px}
 .foot-bottom{border-top:1px solid rgba(255,255,255,.1);padding:16px 24px;text-align:center;font-size:12.5px;color:#8496B0}
 @media (max-width:600px){.wrap{padding:0 16px}.res form{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.item,.btn{transition:none}}
+/* ── Bannière publicitaire (Monetag) ── */
+.ad-banner{max-width:1240px;margin:28px auto 0;padding:0 24px;display:none}
+.ad-banner.on{display:block}
+.ad-banner .ad-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin-bottom:6px;text-align:center}
+.ad-banner .ad-slot{background:var(--card);border:1.5px dashed var(--line);border-radius:14px;padding:10px;min-height:90px;display:flex;align-items:center;justify-content:center;overflow:hidden;max-width:100%}
+.ad-banner .ad-slot>*{max-width:100%}
 </style>
 </head>
 <body>
@@ -273,6 +280,27 @@ main{padding:34px 0 10px}
 
   <p class="note">Les informations viennent de sources officielles et de médias guinéens. Vérifie toujours sur le site de la source avant de t’y fier.</p>
 </div>
+
+<!-- ═══ Bannière publicitaire Monetag ═══
+     Collez le code fourni par Monetag (zone « Banner ») à l'emplacement indiqué ci-dessous.
+     Le cadre reste invisible tant qu'aucune publicité ne s'affiche. -->
+<div class="ad-banner" id="adBanner" aria-label="Publicité">
+  <div class="ad-label">Publicité</div>
+  <div class="ad-slot" id="adSlot">
+    <!-- ▼▼▼ CODE MONETAG (zone 12025962) ▼▼▼ -->
+    <script>(function(s){s.dataset.zone='12025962',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+    <!-- ▲▲▲ FIN DU CODE MONETAG ▲▲▲ -->
+  </div>
+</div>
+<script>
+/* Affiche le cadre seulement quand la pub a réellement chargé du contenu */
+(function(){
+  var b=document.getElementById('adBanner'),s=document.getElementById('adSlot');
+  function check(){ if(s.querySelector('iframe,img,ins,a,div,video')) b.classList.add('on'); }
+  new MutationObserver(check).observe(s,{childList:true,subtree:true});
+  window.addEventListener('load',function(){setTimeout(check,2500)});
+})();
+</script>
 
 <footer class="site-footer">
   <div class="wrap foot-grid">
