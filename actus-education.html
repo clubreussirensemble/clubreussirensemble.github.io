@@ -563,7 +563,8 @@ var EXAMENS = ["BEPC","Baccalauréat","CEE","BEP","CAP","BTS","Concours"];
   var ex = document.getElementById("ex"), an = document.getElementById("an");
   EXAMENS.forEach(function(x){ var o = el("option", null, x); o.value = x; ex.appendChild(o); });
   var y = now.getFullYear();
-  for(var k = 0; k < 4; k++){ var o = el("option", null, String(y - k)); o.value = String(y - k); an.appendChild(o); }
+  for(var yr = Math.max(2030, y + 4); yr >= y - 3; yr--){ var o = el("option", null, String(yr)); o.value = String(yr); an.appendChild(o); }
+  an.value = String(y);
 })();
 /* IMPORTANT : ces deux fonctions doivent rester identiques à celles de admin-resultats.html */
 function slug(s){ return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""); }

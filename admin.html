@@ -1745,7 +1745,7 @@ function rxDocId(exam, annee, pv, naiss){ return rxSlug(exam) + "_" + annee + "_
 (function(){
   const y = new Date().getFullYear();
   ['rxEx','rxDEx'].forEach(id=>{ const s = document.getElementById(id); RX_EXAMENS.forEach(x=>{ const o = document.createElement('option'); o.value = o.textContent = x; s.append(o); }); });
-  ['rxAn','rxDAn'].forEach(id=>{ const s = document.getElementById(id); for(let k=0;k<4;k++){ const o = document.createElement('option'); o.value = o.textContent = String(y-k); s.append(o); } });
+  ['rxAn','rxDAn'].forEach(id=>{ const s = document.getElementById(id); for(let yr=Math.max(2030,y+4);yr>=y-3;yr--){ const o = document.createElement('option'); o.value = o.textContent = String(yr); s.append(o); } s.value = String(y); });
 })();
 function rxParseCSV(t){
   t = t.replace(/^\uFEFF/, '');
