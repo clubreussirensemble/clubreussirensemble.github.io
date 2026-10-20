@@ -210,6 +210,8 @@ a{text-decoration:none;color:inherit}
 .game-grid .blog-body .meta{margin-top:-2px}
 .game-grid .blog-body p{flex:1}
 .game-grid .blog-body .more:hover{text-decoration:underline}
+.game-grid .links{margin-top:auto;display:flex;flex-wrap:wrap;gap:6px 16px}
+.game-grid .links .more{margin-top:0}
 .note{font-size:12.5px;color:var(--ink2);max-width:880px;margin:6px auto 0;padding:0 24px;text-align:center}
 .note a{color:var(--blue);font-weight:700}
 .empty{padding:34px 0;color:var(--ink2);text-align:center}
@@ -308,7 +310,7 @@ a{text-decoration:none;color:inherit}
   <div class="wrap hero-inner">
     <div class="hero-tag">Rubrique · Jeux</div>
     <h1>Jeux de<br><span class="hero-pill">mondes virtuels</span></h1>
-    <p class="hero-lead">Des mondes virtuels où l'on travaille, construit, voyage et rencontre du monde comme dans la vraie vie. Chaque jeu indique son âge conseillé.</p>
+    <p class="hero-lead">Des mondes virtuels où l'on travaille, construit, voyage et rencontre du monde comme dans la vraie vie, avec des jeux jouables sur Android. Chaque jeu indique son âge conseillé.</p>
     <div class="quick-links">
       <a class="pill-ghost" href="jeux-educatifs.html">🎮 Jeux éducatifs</a>
       <a class="pill-ghost" href="jeux-adultes.html">🧠 Jeux adultes</a>
@@ -322,6 +324,7 @@ a{text-decoration:none;color:inherit}
   <div class="panel tools-panel">
     <input class="search-box" id="q" type="search" placeholder="Chercher un jeu (ex. Sims, camion, VR)" aria-label="Chercher un jeu">
     <div class="tool-row"><span class="lbl">Âge</span><span id="ages" role="group" aria-label="Filtre d’âge" style="display:flex;flex-wrap:wrap;gap:10px"></span></div>
+    <div class="tool-row"><span class="lbl">Appareil</span><span id="devs" role="group" aria-label="Filtre d’appareil" style="display:flex;flex-wrap:wrap;gap:10px"></span></div>
     <div class="tool-row cats" id="cats" role="group" aria-label="Catégories"></div>
     <p style="margin:14px 0 0;font-size:13px;color:var(--ink2)">Les jeux 18+ restent masqués tant que tu ne confirmes pas que tu es majeur.</p>
   </div>
@@ -537,25 +540,37 @@ searchInput.addEventListener('input', () => {
 <script>
 (function(){
 var CATS=[
+{id:"travail",nom:"Travailler, acheter, vivre ensemble",sub:"Des jeux avec de vrais joueurs : trouve un métier, gagne de l’argent virtuel, achète une maison ou une voiture.",jeux:[
+["Welcome to Bloxburg (Roblox)","Construis ta maison, travaille (cuisinier, mécanicien, pizzaiolo…) et gagne de l’argent pour t’équiper. Accès payant en Robux.",13,"Android, iOS, PC","https://www.roblox.com/games/185655149/Welcome-to-Bloxburg"],
+["Brookhaven RP (Roblox)","Une ville où l’on choisit sa maison, sa voiture et son rôle (habitant, commerçant, policier…) avec d’autres joueurs.",13,"Android, iOS, PC","https://www.roblox.com/games/4924922222/Brookhaven-RP"],
+["Avakin Life","Gagne de l’argent virtuel, achète et décore ton appartement et rencontre des joueurs du monde entier.",13,"Android, iOS","https://avakin.com"],
+["Car Parking Multiplayer","Achète et personnalise des voitures dans un monde ouvert, avec des joueurs en ligne.",3,"Android, iOS","https://play.google.com/store/apps/details?id=com.olzhas.carparking.multyplayer"],
+["GTA V en RP (FiveM)","Des serveurs communautaires où chacun joue un métier (policier, médecin, mécanicien…), passe des entretiens, achète voitures et maisons. Nécessite GTA V.",18,"PC","https://fivem.net"],
+["Second Life","Un monde créé par ses habitants : on y tient une boutique, on y cherche un emploi, on achète ou loue une maison. Réservé aux adultes.",18,"PC, Mac","https://secondlife.com"]]},
 {id:"social",nom:"Mondes virtuels sociaux",sub:"Crée ton avatar, explore des mondes créés par les joueurs et discute en direct.",jeux:[
-["Second Life","Un monde créé par ses habitants : maisons, boutiques, métiers, événements. Réservé aux adultes.",18,"PC, Mac","https://secondlife.com"],
-["VRChat","Des milliers de mondes sociaux à visiter, avec ou sans casque VR.",13,"PC, VR","https://vrchat.com"],
-["Roblox","Des millions d’expériences, dont des jeux de vie en ville et de jeu de rôle.",13,"Mobile, PC, console","https://www.roblox.com"],
-["Horizon Worlds","Le monde social de Meta pour casque Quest, avec événements et créations.",13,"VR, mobile","https://horizon.meta.com"]]},
+["VRChat","Des milliers de mondes sociaux à visiter, avec ou sans casque VR.",13,"Android, PC, VR","https://vrchat.com"],
+["Roblox","Des millions d’expériences, dont des jeux de vie en ville et de jeu de rôle.",13,"Android, iOS, PC, console","https://www.roblox.com"],
+["Horizon Worlds","Le monde social de Meta pour casque Quest, avec événements et créations.",13,"VR, Android, iOS","https://horizon.meta.com"],
+["ZEPETO","Un monde 3D où tu crées ton avatar, visites des mondes et retrouves tes amis.",13,"Android, iOS","https://zepeto.me"],
+["Rec Room","Des salles et des mini-jeux créés par les joueurs, avec ou sans casque VR.",13,"Android, iOS, PC, VR","https://recroom.com"]]},
 {id:"vie",nom:"Simulation de vie",sub:"Gère ta maison, ton métier, ta famille et ton quotidien.",jeux:[
 ["The Sims 4","Le grand classique : crée des personnages, construis leur maison et dirige leur vie.",12,"PC, Mac, console","https://www.ea.com/games/the-sims/the-sims-4"],
 ["inZOI","Simulation de vie très réaliste, avec des villes inspirées du monde réel.",16,"PC","https://playinzoi.com"],
-["Stardew Valley","Reprends une ferme, cultive, pêche et fais-toi des amis au village.",12,"PC, mobile, console","https://www.stardewvalley.net"],
-["Animal Crossing","Une vie paisible sur une île : maison, voisins, jardin, saisons.",3,"Nintendo Switch","https://www.animal-crossing.com"]]},
+["Stardew Valley","Reprends une ferme, cultive, pêche et fais-toi des amis au village.",12,"Android, iOS, PC, console","https://www.stardewvalley.net"],
+["Animal Crossing","Une vie paisible sur une île : maison, voisins, jardin, saisons.",3,"Nintendo Switch","https://www.animal-crossing.com"],
+["The Sims Mobile","La vie des Sims dans ta poche : métier, maison, famille et histoires à vivre.",12,"Android, iOS","https://www.ea.com/games/the-sims/the-sims-mobile"],
+["Toca Life World","Un grand monde à explorer avec des maisons, des écoles, des magasins et des personnages à créer.",3,"Android, iOS","https://tocaboca.com/app/toca-life-world/"]]},
 {id:"rp",nom:"Jeu de rôle réaliste (RP)",sub:"Joue un citoyen, un policier, un commerçant sur des serveurs animés par de vrais joueurs.",jeux:[
-["GTA V en RP (FiveM)","Des serveurs communautaires où chacun joue un métier ou un personnage. Nécessite GTA V.",18,"PC","https://fivem.net"],
 ["Red Dead en RP (RedM)","Le même principe dans l’Ouest américain. Nécessite Red Dead Redemption 2.",18,"PC","https://redm.net"],
 ["Garry’s Mod (DarkRP)","Serveurs de jeu de rôle où l’on choisit un métier dans une ville.",16,"PC","https://gmod.facepunch.com"]]},
 {id:"mmo",nom:"MMORPG et mondes ouverts",sub:"Des mondes persistants où des milliers de joueurs vivent leur aventure en même temps.",jeux:[
 ["World of Warcraft","Le MMORPG de référence : quêtes, métiers, guildes, commerce.",12,"PC, Mac","https://worldofwarcraft.blizzard.com"],
 ["Final Fantasy XIV","Un monde riche, une grande communauté et une histoire très suivie.",12,"PC, console","https://www.finalfantasyxiv.com"],
 ["Guild Wars 2","Exploration libre, événements dynamiques et peu d’abonnement.",12,"PC","https://www.guildwars2.com"],
-["The Elder Scrolls Online","Le monde de Skyrim en ligne, avec maisons et métiers.",16,"PC, console","https://www.elderscrollsonline.com"]]},
+["The Elder Scrolls Online","Le monde de Skyrim en ligne, avec maisons et métiers.",16,"PC, console","https://www.elderscrollsonline.com"],
+["Albion Online","Un MMORPG où tout est fabriqué et vendu par les joueurs : métiers, commerce et guildes.",12,"Android, iOS, PC","https://albiononline.com"],
+["Old School RuneScape","Le grand MMORPG classique avec de nombreux métiers, quêtes et compétences.",12,"Android, iOS, PC","https://oldschool.runescape.com"],
+["Genshin Impact","Un vaste monde ouvert à explorer, avec une grande histoire et des amis en ligne.",12,"Android, iOS, PC, console","https://genshin.hoyoverse.com"]]},
 {id:"vr",nom:"Réalité virtuelle",sub:"Entre dans le jeu avec un casque et bouge pour de vrai.",jeux:[
 ["Beat Saber","Coupe des blocs au rythme de la musique : sport et jeu à la fois.",3,"Quest, PC VR, PS VR","https://beatsaber.com"],
 ["Job Simulator","Essaie des métiers (cuisinier, bureau, garagiste) dans un monde drôle.",7,"Quest, PC VR, PS VR","https://jobsimulatorgame.com"],
@@ -564,10 +579,11 @@ var CATS=[
 ["Euro Truck Simulator 2","Livre des marchandises à travers l’Europe en camion.",3,"PC, Mac","https://eurotrucksimulator2.com"],
 ["Farming Simulator 25","Gère une exploitation agricole avec de vrais engins.",3,"PC, console","https://www.farming-simulator.com"],
 ["Cities: Skylines II","Construis et gère une ville : routes, services, budget.",3,"PC, console","https://www.paradoxinteractive.com/games/cities-skylines-ii/about"],
-["Microsoft Flight Simulator","Pilote de vrais avions au-dessus d’une Terre reconstituée.",3,"PC, Xbox","https://www.flightsimulator.com"]]},
+["Microsoft Flight Simulator","Pilote de vrais avions au-dessus d’une Terre reconstituée.",3,"PC, Xbox","https://www.flightsimulator.com"],
+["Farming Simulator 23","La version mobile : conduis des engins agricoles et gère ta ferme sur téléphone.",3,"Android, iOS","https://www.farming-simulator.com"]]},
 {id:"sandbox",nom:"Sandbox et construction",sub:"Construis ce que tu veux, seul ou à plusieurs.",jeux:[
-["Minecraft","Explore, construis et survis dans des mondes infinis.",7,"Tous supports","https://www.minecraft.net"],
-["Terraria","Creuse, construis et combats dans un monde en 2D.",12,"Tous supports","https://terraria.org"],
+["Minecraft","Explore, construis et survis dans des mondes infinis.",7,"Android, iOS, PC, console","https://www.minecraft.net"],
+["Terraria","Creuse, construis et combats dans un monde en 2D.",12,"Android, iOS, PC, console","https://terraria.org"],
 ["Satisfactory","Construis des usines géantes dans un monde 3D.",7,"PC","https://www.satisfactorygame.com"],
 ["Valheim","Survie et construction entre amis dans un monde viking.",12,"PC","https://www.valheimgame.com"]]}
 ];
@@ -587,8 +603,9 @@ function loadImg(name,img){
   }
   imgCache[name].then(function(u){if(u){img.src=u;img.hidden=false}});
 }
-var EMO={social:"🌐",vie:"🏡",rp:"🎭",mmo:"⚔️",vr:"🥽",sim:"🚛",sandbox:"⛏️"};
-var state={q:"",age:12,cat:"tous",adultOk:false};
+var EMO={travail:"💼",social:"🌐",vie:"🏡",rp:"🎭",mmo:"⚔️",vr:"🥽",sim:"🚛",sandbox:"⛏️"};
+var state={q:"",age:12,cat:"tous",adultOk:false,android:false};
+var DEVS=[[false,"Tous les appareils"],[true,"📱 Android"]];
 var AGES=[[12,"Tout public (jusqu’à 12 ans)"],[16,"Jusqu’à 16 ans"],[99,"18+ (adultes)"]];
 function mk(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e}
 function chips(host,items,get,set){host.textContent="";items.forEach(function(it){var b=mk("button","chip",it[1]);b.type="button";b.setAttribute("aria-pressed",get()===it[0]);b.onclick=function(){set(it[0])};host.appendChild(b)})}
@@ -597,6 +614,7 @@ function render(){
   chips(document.getElementById("ages"),AGES,function(){return state.age},function(v){
     if(v===99&&!state.adultOk){if(!confirm("Ces jeux sont réservés aux adultes. Confirmes-tu avoir 18 ans ou plus ?"))return;state.adultOk=true}
     state.age=v;render()});
+  chips(document.getElementById("devs"),DEVS,function(){return state.android},function(v){state.android=v;render()});
   chips(document.getElementById("cats"),[["tous","Toutes"]].concat(CATS.map(function(c){return [c.id,c.nom]})),function(){return state.cat},function(v){state.cat=v;render()});
   var host=document.getElementById("list");host.textContent="";var total=0,q=norm(state.q);
   CATS.forEach(function(c){
@@ -604,7 +622,8 @@ function render(){
     var js=c.jeux.filter(function(j){
       var okAge=state.age===99?j[2]>=18:j[2]<=state.age;
       var okQ=!q||norm(j[0]+" "+j[1]+" "+j[3]+" "+c.nom).indexOf(q)>-1;
-      return okAge&&okQ});
+      var okDev=!state.android||/android/i.test(j[3]);
+      return okAge&&okQ&&okDev});
     if(!js.length)return;total+=js.length;
     var s=mk("section","panel cat"),ph=mk("div","panel-head"),hd=mk("div");
     hd.appendChild(mk("h2","",(EMO[c.id]||"🎮")+" "+c.nom));hd.appendChild(mk("p","",c.sub));
@@ -617,7 +636,10 @@ function render(){
       card.appendChild(cover);
       var b=mk("div","blog-body");
       b.appendChild(mk("h3","",j[0]));b.appendChild(mk("div","meta","Sur : "+j[3]));b.appendChild(mk("p","",j[1]));
-      var a=mk("a","more","Site officiel →");a.href=j[4];a.target="_blank";a.rel="noopener noreferrer";b.appendChild(a);
+      var lk=mk("div","links");
+      var a=mk("a","more","Site officiel →");a.href=j[4];a.target="_blank";a.rel="noopener noreferrer";lk.appendChild(a);
+      if(/android/i.test(j[3])){var g=mk("a","more","Google Play →");g.href="https://play.google.com/store/search?c=apps&q="+encodeURIComponent(j[0]);g.target="_blank";g.rel="noopener noreferrer";lk.appendChild(g)}
+      b.appendChild(lk);
       card.appendChild(b);grid.appendChild(card)});
     s.appendChild(grid);host.appendChild(s)});
   if(!total)host.appendChild(mk("p","empty","Aucun jeu ne correspond. Change l’âge, la catégorie ou ta recherche."))
