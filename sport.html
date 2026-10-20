@@ -169,6 +169,47 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offse
 .notice{color:var(--ink2);font-size:12.5px;text-align:center;margin-top:28px}
 .notice a{color:var(--blue);font-weight:700}
 
+
+/* ── Fiche statistiques d'équipe ── */
+.eq.clic{cursor:pointer;border-radius:10px;padding:4px;margin:-4px;transition:background .15s var(--ease)}
+.eq.clic:hover,.eq.clic:focus-visible{background:var(--paper2)}
+.eq.clic span{text-decoration:underline dotted var(--ink2);text-underline-offset:3px}
+.astuce{font-size:12.5px;color:var(--ink2);margin:0 0 10px}
+.fond{position:fixed;inset:0;z-index:100;background:rgba(5,13,26,.65);display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:700px){.fond{align-items:center;padding:20px}}
+.fiche{background:var(--card);color:var(--ink);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:20px 20px 0 0;box-shadow:0 20px 60px rgba(0,0,0,.4);border-top:5px solid var(--gold)}
+@media(min-width:700px){.fiche{border-radius:20px}}
+.fiche-tete{display:flex;align-items:center;gap:12px;padding:16px 18px 10px;position:sticky;top:0;background:var(--card);z-index:1}
+.fiche-tete img{width:48px;height:48px;object-fit:contain;flex:none}
+.fiche-tete h2{font-size:19px;flex:1}
+.fiche-tete small{display:block;font:500 12.5px 'Work Sans',sans-serif;color:var(--ink2);margin-top:3px}
+.fermer{width:36px;height:36px;border-radius:50%;border:none;background:var(--paper2);color:var(--ink);font-size:16px;cursor:pointer;flex:none}
+.fiche-corps{padding:0 18px 22px}
+.fiche h3{font-size:14px;margin:16px 0 8px}
+.forme{display:flex;gap:6px}
+.forme b,.pastille{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12.5px;flex:none}
+.V{background:var(--green)}.N{background:#8A97AB}.D{background:var(--red)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kpi{background:var(--paper2);border-radius:12px;padding:10px 6px;text-align:center}
+.kpi b{display:block;font:800 19px 'Poppins',sans-serif}
+.kpi span{font-size:11.5px;color:var(--ink2)}
+.dernier{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.dernier:last-child{border:0}
+.dernier .pastille{width:24px;height:24px;font-size:11px}
+.dernier .sc{font-weight:700}
+
+/* ── Spécial Syli National ── */
+.syli{background:var(--card);border:1.5px solid var(--line);border-top:5px solid var(--gn-green);border-radius:20px;padding:18px;margin-bottom:18px;box-shadow:var(--shadow)}
+.syli h2{font-size:clamp(20px,3.6vw,26px)}
+.syli .drapeau{height:4px;border-radius:4px;margin:10px 0 4px;background:linear-gradient(90deg,var(--gn-red) 33%,var(--gn-yellow) 33% 66%,var(--gn-green) 66%)}
+.syli h3{font-size:14px;margin:16px 0 8px}
+.syli .prochain{background:var(--paper2);border-radius:12px;padding:12px;margin:12px 0 0;font-weight:600;font-size:14.5px}
+.syli .prochain small{display:block;font-weight:500;color:var(--ink2);margin-top:3px;font-size:12.5px}
+.syli .dernier{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.syli .dernier:last-child{border:0}
+.syli .dernier .pastille{width:24px;height:24px;font-size:11px}
+.syli .dernier .sc{font-weight:700}
+.syli .forme b{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12.5px}
 </style>
 </head>
 <body>
@@ -390,7 +431,7 @@ function lien(a,cls){
 }
 function dessiner(){
   var box=$("contenu");box.textContent="";
-  if(!liste.length){box.appendChild(el("p","etat","Aucun article pour le moment dans cette rubrique."));$("plus").hidden=true;return}
+  if(!liste.length){box.appendChild(el("p","etat","Aucun article pour le moment dans cette rubrique."));$("plus").hidden=true;if(courant.id==="syli")panneauSyli(box);return}
   var g=el("div","grille");
   liste.slice(0,affiche).forEach(function(a,i){
     if(i===0){
@@ -404,6 +445,198 @@ function dessiner(){
   });
   box.appendChild(g);
   $("plus").hidden=affiche>=liste.length;
+  if(courant.id==="syli")panneauSyli(box);
+}
+
+/* ── Statistiques d'une équipe ── */
+function nb(x){
+  if(x===undefined||x===null)return NaN;
+  if(typeof x==="object")x=(x.value!==undefined?x.value:x.displayValue);
+  return parseFloat(x);
+}
+async function jsonUrl(u){var r=await fetch(u);if(!r.ok)throw new Error("http");return r.json()}
+function aplat(n,out){
+  ((n.standings&&n.standings.entries)||[]).forEach(function(e){out.push({e:e,g:n.name||""})});
+  (n.children||[]).forEach(function(c){aplat(c,out)});
+  return out;
+}
+function kpis(items){
+  var g=el("div","kpis");
+  items.forEach(function(x){var k=el("div","kpi");k.appendChild(el("b",null,String(x[1])));k.appendChild(el("span",null,x[0]));g.appendChild(k)});
+  return g;
+}
+var STAT_FOOT=[["rank","Rang"],["points","Points"],["gamesPlayed","Joués"],["wins","Victoires"],["ties","Nuls"],["losses","Défaites"],["pointsFor","Buts pour"],["pointsAgainst","Buts contre"],["pointDifferential","Différence"]];
+var STAT_BASKET=[["playoffSeed","Rang"],["wins","Victoires"],["losses","Défaites"],["winPercent","% victoires"],["avgPointsFor","Pts / match"],["avgPointsAgainst","Pts encaissés"],["streak","Série"]];
+async function chargerClassement(p,id){
+  var j=await jsonUrl("https://site.api.espn.com/apis/v2/sports/"+p+"/standings");
+  var t=aplat(j,[]).filter(function(x){return x.e.team&&String(x.e.team.id)===id})[0];
+  if(!t)return null;
+  var m={};(t.e.stats||[]).forEach(function(s){m[s.name]=(s.displayValue!==undefined?s.displayValue:s.value)});
+  return{m:m,g:t.g};
+}
+async function chargerResultats(p,id){
+  var j=await jsonUrl("https://site.api.espn.com/apis/site/v2/sports/"+p+"/teams/"+id+"/schedule");
+  var evs=(j.events||[]).map(function(e){
+    var comp=(e.competitions||[])[0]||{},eqs=comp.competitors||[];
+    var moi=eqs.filter(function(x){return x.team&&String(x.team.id)===id})[0];
+    var adv=eqs.filter(function(x){return x!==moi})[0];
+    if(!moi||!adv)return null;
+    var st=(comp.status&&comp.status.type)||(e.status&&e.status.type)||{};
+    return{date:new Date(e.date).getTime(),fini:st.completed===true||st.state==="post",moi:nb(moi.score),adv:nb(adv.score),dom:moi.homeAway==="home",advNom:(adv.team&&(adv.team.displayName||adv.team.shortDisplayName))||"?"};
+  }).filter(function(x){return x&&x.fini&&!isNaN(x.moi)&&!isNaN(x.adv)});
+  evs.sort(function(a,b){return b.date-a.date});
+  evs.forEach(function(x){x.r=x.moi>x.adv?"V":(x.moi===x.adv?"N":"D")});
+  return evs;
+}
+async function ficheEquipe(team,p,nomLigue){
+  var id=String(team.id),basket=p.indexOf("basketball")===0,prec=document.activeElement;
+  var fond=el("div","fond");fond.setAttribute("role","dialog");fond.setAttribute("aria-modal","true");
+  var fiche=el("div","fiche"),tete=el("div","fiche-tete");
+  if(team.logo&&/^https:\/\//.test(team.logo)){var im=el("img");im.src=team.logo;im.alt="";tete.appendChild(im)}
+  var h=el("h2",null,team.displayName||team.name||"Équipe");h.appendChild(el("small",null,nomLigue));
+  var x=el("button","fermer","✕");x.type="button";x.setAttribute("aria-label","Fermer");
+  tete.appendChild(h);tete.appendChild(x);
+  var corps=el("div","fiche-corps");corps.appendChild(el("p","etat charge","Chargement des statistiques…"));
+  fiche.appendChild(tete);fiche.appendChild(corps);fond.appendChild(fiche);
+  document.body.appendChild(fond);document.body.style.overflow="hidden";
+  function touche(ev){if(ev.key==="Escape")fermer()}
+  function fermer(){fond.remove();document.body.style.overflow="";document.removeEventListener("keydown",touche);if(prec&&prec.focus)prec.focus()}
+  document.addEventListener("keydown",touche);
+  x.onclick=fermer;fond.onclick=function(ev){if(ev.target===fond)fermer()};x.focus();
+
+  var res=await Promise.all([
+    chargerClassement(p,id).catch(function(){return null}),
+    chargerResultats(p,id).catch(function(){return null})
+  ]);
+  if(!fond.isConnected)return;
+  var cl=res[0],ev=res[1]||[];
+  corps.textContent="";
+  if(!cl&&!ev.length){corps.appendChild(el("p","etat","Aucune statistique disponible pour cette équipe dans cette compétition."));return}
+
+  if(cl){
+    corps.appendChild(el("h3",null,"Classement"+(cl.g&&/group|conf|div/i.test(cl.g)?" · "+cl.g:"")));
+    var its=[];
+    (basket?STAT_BASKET:STAT_FOOT).forEach(function(s){var v=cl.m[s[0]];if(v!==undefined&&v!=="")its.push([s[1],v])});
+    if(its.length)corps.appendChild(kpis(its));
+  }
+  if(ev.length){
+    var n=ev.length,V=0,N=0,D=0,bp=0,bc=0,cs=0;
+    ev.forEach(function(m){if(m.r==="V")V++;else if(m.r==="N")N++;else D++;bp+=m.moi;bc+=m.adv;if(m.adv===0)cs++});
+    corps.appendChild(el("h3",null,"Forme (5 derniers matchs)"));
+    var f=el("div","forme");
+    ev.slice(0,5).reverse().forEach(function(m){f.appendChild(el("b",m.r,m.r))});
+    corps.appendChild(f);
+    corps.appendChild(el("h3",null,"Bilan en "+nomLigue+" · "+n+" match"+(n>1?"s":"")+" joué"+(n>1?"s":"")));
+    var pct=Math.round(V/n*100)+" %";
+    corps.appendChild(kpis(basket
+      ?[["Victoires",V],["Défaites",D],["% victoires",pct],["Pts / match",(bp/n).toFixed(1)],["Pts encaissés / match",(bc/n).toFixed(1)]]
+      :[["Victoires",V],["Nuls",N],["Défaites",D],["Buts marqués",bp],["Buts encaissés",bc],["Buts / match",(bp/n).toFixed(2)],["Matchs sans but encaissé",cs],["% victoires",pct]]));
+    corps.appendChild(el("h3",null,"Derniers résultats"));
+    ev.slice(0,5).forEach(function(m){
+      var r=el("div","dernier");
+      r.appendChild(el("span","pastille "+m.r,m.r));
+      var t=el("div");t.appendChild(el("div",null,(m.dom?"vs ":"à ")+m.advNom));
+      t.appendChild(el("div","stat",new Date(m.date).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"})));
+      r.appendChild(t);r.appendChild(el("span","sc",m.moi+" – "+m.adv));
+      corps.appendChild(r);
+    });
+  }
+  corps.appendChild(el("p","notice","Statistiques limitées à cette compétition. Source : ESPN."));
+}
+
+/* ── Spécial Syli National ── */
+var SYLI_COMPS=[["fifa.worldq.caf","Éliminatoires Coupe du monde"],["caf.nations","CAN"],["caf.nations_qual","Éliminatoires CAN"],["fifa.friendly","Match amical"],["fifa.world","Coupe du monde"]];
+var syliNode=null;
+async function trouverSyli(){
+  try{var c=JSON.parse(localStorage.getItem("sport_syli_id"));if(c&&c.id)return c}catch(e){}
+  for(var i=0;i<SYLI_COMPS.length;i++){
+    try{
+      var j=await jsonUrl("https://site.api.espn.com/apis/site/v2/sports/soccer/"+SYLI_COMPS[i][0]+"/teams?limit=200");
+      var l=((((j.sports||[{}])[0]||{}).leagues||[{}])[0]||{}).teams||[];
+      var t=l.map(function(x){return x.team}).filter(function(x){return x&&x.displayName==="Guinea"})[0];
+      if(t){var r={id:String(t.id)};try{localStorage.setItem("sport_syli_id",JSON.stringify(r))}catch(e){}return r}
+    }catch(e){}
+  }
+  return null;
+}
+function lireEvents(j,id,label,out){
+  (j.events||[]).forEach(function(e){
+    var comp=(e.competitions||[])[0]||{},eqs=comp.competitors||[];
+    var moi=eqs.filter(function(x){return x.team&&String(x.team.id)===id})[0];
+    var adv=eqs.filter(function(x){return x!==moi})[0];
+    if(!moi||!adv)return;
+    var st=(comp.status&&comp.status.type)||(e.status&&e.status.type)||{};
+    var date=new Date(e.date).getTime();
+    out[e.id||String(date)]={date:date,etat:st.state||"pre",moi:nb(moi.score),adv:nb(adv.score),dom:moi.homeAway==="home",advNom:(adv.team&&(adv.team.displayName||adv.team.shortDisplayName))||"?",comp:label};
+  });
+}
+async function matchsSyli(id){
+  var out={},base="https://site.api.espn.com/apis/site/v2/sports/soccer/";
+  await Promise.all(SYLI_COMPS.map(function(c){
+    return Promise.all(["","?fixture=true"].map(function(q){
+      return jsonUrl(base+c[0]+"/teams/"+id+"/schedule"+q).then(function(j){lireEvents(j,id,c[1],out)}).catch(function(){});
+    }));
+  }));
+  return Object.keys(out).map(function(k){return out[k]});
+}
+function heureMatch(m){
+  return new Date(m.date).toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"})+" · "+new Date(m.date).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+}
+async function construireSyli(node){
+  var tete=el("h2",null,"🇬🇳 Syli National de Guinée");
+  node.appendChild(tete);node.appendChild(el("div","drapeau"));
+  var corps=el("div");corps.appendChild(el("p","etat charge","Chargement des statistiques du Syli National…"));
+  node.appendChild(corps);
+  var eq=await trouverSyli(),tous=eq?await matchsSyli(eq.id):[];
+  corps.textContent="";
+  var finis=tous.filter(function(m){return m.etat==="post"&&!isNaN(m.moi)&&!isNaN(m.adv)}).sort(function(a,b){return b.date-a.date});
+  var direct=tous.filter(function(m){return m.etat==="in"});
+  var avenir=tous.filter(function(m){return m.etat==="pre"&&m.date>Date.now()-36e5}).sort(function(a,b){return a.date-b.date});
+  finis.forEach(function(m){m.r=m.moi>m.adv?"V":(m.moi===m.adv?"N":"D")});
+  if(!finis.length&&!avenir.length&&!direct.length){
+    corps.appendChild(el("p","etat","Les statistiques du Syli National ne sont pas disponibles pour le moment."));return;
+  }
+  var pro=direct[0]||avenir[0];
+  if(pro){
+    var b=el("div","prochain",(direct[0]?"🔴 En direct : ":"Prochain match : ")+(pro.dom?"Guinée – ":"")+pro.advNom+(pro.dom?"":" – Guinée"));
+    b.appendChild(el("small",null,(direct[0]?pro.moi+" – "+pro.adv+" · ":"")+heureMatch(pro)+" · "+pro.comp));
+    corps.appendChild(b);
+  }
+  if(finis.length){
+    var n=finis.length,V=0,N=0,D=0,bp=0,bc=0,cs=0;
+    finis.forEach(function(m){if(m.r==="V")V++;else if(m.r==="N")N++;else D++;bp+=m.moi;bc+=m.adv;if(m.adv===0)cs++});
+    corps.appendChild(el("h3",null,"Forme (5 derniers matchs)"));
+    var f=el("div","forme");
+    finis.slice(0,5).reverse().forEach(function(m){f.appendChild(el("b",m.r,m.r))});
+    corps.appendChild(f);
+    corps.appendChild(el("h3",null,"Bilan récent · "+n+" match"+(n>1?"s":"")));
+    corps.appendChild(kpis([["Victoires",V],["Nuls",N],["Défaites",D],["Buts marqués",bp],["Buts encaissés",bc],["Buts / match",(bp/n).toFixed(2)],["Matchs sans but encaissé",cs],["% victoires",Math.round(V/n*100)+" %"]]));
+    corps.appendChild(el("h3",null,"Derniers résultats"));
+    finis.slice(0,5).forEach(function(m){
+      var r=el("div","dernier");
+      r.appendChild(el("span","pastille "+m.r,m.r));
+      var t=el("div");t.appendChild(el("div",null,(m.dom?"Guinée – ":"")+m.advNom+(m.dom?"":" – Guinée")));
+      t.appendChild(el("div","stat",new Date(m.date).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"})+" · "+m.comp));
+      r.appendChild(t);r.appendChild(el("span","sc",(m.dom?m.moi+" – "+m.adv:m.adv+" – "+m.moi)));
+      corps.appendChild(r);
+    });
+  }
+  if(avenir.length>(direct[0]?0:1)){
+    corps.appendChild(el("h3",null,"Prochains matchs"));
+    avenir.slice(direct[0]?0:1,4).forEach(function(m){
+      var r=el("div","dernier");
+      r.appendChild(el("span","pastille N","⚽"));
+      var t=el("div");t.appendChild(el("div",null,(m.dom?"Guinée – ":"")+m.advNom+(m.dom?"":" – Guinée")));
+      t.appendChild(el("div","stat",m.comp));
+      r.appendChild(t);r.appendChild(el("span","stat",heureMatch(m)));
+      corps.appendChild(r);
+    });
+  }
+  corps.appendChild(el("p","notice","Matchs officiels et amicaux de la saison. Source : ESPN."));
+}
+function panneauSyli(box){
+  if(!syliNode){syliNode=el("section","syli");construireSyli(syliNode)}
+  box.insertBefore(syliNode,box.firstChild);
 }
 
 var minuteur=null;
@@ -480,6 +713,7 @@ async function majMatchs(zone,c){
     zone.textContent="";
     if(!ev.length)zone.appendChild(el("p","etat","Aucun match dans cette compétition sur cette période. Essaie « 7 prochains jours » ou « 7 derniers jours »."));
     var live=false;
+    if(ev.length)zone.appendChild(el("p","astuce","👆 Touche une équipe pour voir ses statistiques."));
     ev.forEach(function(m){
       var row=el("div","match"+(m.etat==="in"?" direct":""));
       [m.dom,m.ext].forEach(function(t,i){
@@ -488,6 +722,12 @@ async function majMatchs(zone,c){
         if(logo&&/^https:\/\//.test(logo)){img=el("img");img.src=logo;img.alt="";img.loading="lazy"}
         var nom=el("span",null,(t.team&&t.team.displayName)||"?");
         if(i){d.appendChild(nom);if(img)d.appendChild(img)}else{if(img)d.appendChild(img);d.appendChild(nom)}
+        if(t.team&&t.team.id){
+          d.className+=" clic";d.setAttribute("role","button");d.tabIndex=0;d.title="Voir les statistiques";
+          var lp=ligue.p,ln=ligue.n,tm=t.team;
+          d.onclick=function(){ficheEquipe(tm,lp,ln)};
+          d.onkeydown=function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();ficheEquipe(tm,lp,ln)}};
+        }
         t._d=d;
       });
       var jr=multi?new Date(m.date).toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"}):"";
@@ -513,6 +753,7 @@ async function majMatchs(zone,c){
 }
 async function aller(c,force){
   courant=c;$("plus").hidden=true;clearTimeout(minuteur);
+  if(force)syliNode=null;
   if(c.special){matchs(c);return}
   var box=$("contenu");box.textContent="";
   box.appendChild(el("p","etat charge","Chargement des articles…"));
@@ -525,6 +766,7 @@ async function aller(c,force){
     box.textContent="";
     var p=el("p","etat","Impossible de charger les articles. Vérifie ta connexion puis réessaie.");
     box.appendChild(p);$("maj-info").textContent="";
+    if(c.id==="syli")panneauSyli(box);
   }
 }
 CATS.forEach(function(c,i){
