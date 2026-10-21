@@ -319,6 +319,10 @@ const SOURCES=[
  {id:'education',label:'Éducation',url:B+'categories/education.m3u'},
  {id:'culture',label:'Culture',url:B+'categories/culture.m3u'},
  {id:'animation',label:'Animation',url:B+'categories/animation.m3u'},
+ {id:'anime',label:'Animé & manga',union:[B+'categories/animation.m3u',B+'categories/kids.m3u'],re:/anime|manga|otaku|shonen|sh[oô]nen|toei|animax|crunchyroll|ani-?one|muse |gundam|naruto|one piece|dragon ?ball|pok[eé]mon|yu-?gi-?oh|japan/i},
+ {id:'animefr',label:'Animation en français',inter:[B+'categories/animation.m3u',B+'languages/fra.m3u']},
+ {id:'series',label:'Séries',url:B+'categories/series.m3u'},
+ {id:'seriesfr',label:'Séries en français',inter:[B+'categories/series.m3u',B+'languages/fra.m3u']},
  {id:'weather',label:'Météo',url:B+'categories/weather.m3u'},
  {id:'travel',label:'Voyage',url:B+'categories/travel.m3u'},
  {id:'cooking',label:'Cuisine',url:B+'categories/cooking.m3u'},
@@ -363,6 +367,13 @@ function parse(t){
   }
   return out.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
 }
+async function getList(u){const r=await fetch(u);if(!r.ok)throw 0;return parse(await r.text());}
+async function fetchSource(s){
+  if(s.inter){const [a,b]=await Promise.all(s.inter.map(getList));const set=new Set(b.map(c=>c.url));return a.filter(c=>set.has(c.url));}
+  if(s.union){const ls=await Promise.all(s.union.map(getList));const seen=new Set();
+    return ls.flat().filter(c=>{if(seen.has(c.url))return false;seen.add(c.url);return !s.re||s.re.test(c.name+' '+c.group);}).sort((x,y)=>x.name.localeCompare(y.name,'fr'));}
+  return getList(s.url);
+}
 async function load(id){
   src=id;store.set('tv_src',id);shown=60;renderChips();
   if(id==='fav'){all=favs.slice();return render();}
@@ -370,8 +381,7 @@ async function load(id){
   if(cache[id]){all=cache[id];return render();}
   list.innerHTML='<li class="msg">Chargement des chaînes…</li>';$('count').textContent='';
   try{
-    const r=await fetch(s.url);if(!r.ok)throw 0;
-    all=cache[id]=parse(await r.text());
+    all=cache[id]=await fetchSource(s);
   }catch(e){all=[];list.innerHTML='<li class="msg">Impossible de charger cette liste. Vérifiez votre connexion et réessayez.</li>';return;}
   render();
 }
