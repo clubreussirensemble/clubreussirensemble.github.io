@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Podcasts éducatifs — Club Réussir Ensemble de Mamou</title>
-<meta name="description" content="Les derniers épisodes de podcasts éducatifs (sciences, philosophie, histoire, économie, Afrique et monde, culture générale), réunis au même endroit par le Club Réussir Ensemble de Mamou.">
+<meta name="description" content="Les derniers épisodes de podcasts éducatifs (sciences, physique, mathématiques, chimie, technologie, innovations et inventions, histoire des civilisations, philosophie, histoire, économie, Afrique et monde, culture générale), réunis au même endroit par le Club Réussir Ensemble de Mamou.">
 <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
 <link rel="apple-touch-icon" href="/icon-512.png">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
@@ -231,7 +231,7 @@ input:focus,select:focus{outline:none;border-color:var(--blue)}
   <div class="wrap hero-inner">
     <div class="hero-tag">Rubrique</div>
     <h1>Podcasts <span class="hero-pill">éducatifs</span></h1>
-    <p class="hero-lead">Les derniers épisodes de podcasts sur les sciences, la philosophie, l'histoire, l'économie et l'actualité du monde, à écouter gratuitement.</p>
+    <p class="hero-lead">Les derniers épisodes de podcasts sur les sciences, la physique (tous niveaux), les mathématiques, la chimie, la technologie, les innovations et inventions, l'histoire des civilisations, la philosophie, l'histoire, l'économie et l'actualité du monde, à écouter gratuitement.</p>
   </div>
 </section>
 
@@ -325,7 +325,7 @@ window.SEARCH_INDEX = [
   {title:'Annales et sujets d\'examen', url:'annales.html', kw:'annales sujets examen bepc bac cee corriges epreuves concours'},
   {title:'Vidéos', url:'videos.html', kw:'videos tutoriels direct'},
   {title:'Vidéos éducatives', url:'videos_agregateur.html', kw:'videos educatives youtube maths physique chimie svt documentaires chaines cours'},
-  {title:'Podcasts éducatifs', url:'podcasts_agregateur.html', kw:'podcasts podcast audio ecouter emissions radio sciences philosophie histoire economie afrique'},
+  {title:'Podcasts éducatifs', url:'podcasts_agregateur.html', kw:'podcasts podcast audio ecouter emissions radio sciences physique mathematiques maths chimie technologie innovation inventions civilisations antiquite egypte rome afrique empires philosophie histoire economie afrique'},
   {title:'Événements', url:'evenements.html', kw:'evenements concours conferences activites'},
   {title:'Blog', url:'blog.html', kw:'blog articles conseils methodes motivation actualites'},
   {title:'Olympiades Réussir Ensemble', url:'olympiades.html', kw:'olympiades olympiade concours competition quiz classement disciplines'},
@@ -367,6 +367,10 @@ const BASE=[
   {cat:"Sciences",name:"La Science, CQFD",q:"La Science, CQFD France Culture"},
   {cat:"Sciences",name:"Sur les épaules de Darwin",q:"Sur les épaules de Darwin"},
   {cat:"Sciences",name:"Choses à Savoir Sciences",q:"Choses à Savoir SCIENCES"},
+  {cat:"Histoire des civilisations",name:"Histoire et archéologie des mondes africains",q:"Histoire et archéologie des mondes africains François-Xavier Fauvelle"},
+  {cat:"Histoire des civilisations",name:"Storiavoce — Histoire & Civilisations",q:"Storiavoce"},
+  {cat:"Histoire des civilisations",name:"Les Odyssées (grandes civilisations)",q:"Les Odyssées France Inter"},
+  {cat:"Histoire des civilisations",name:"Au cœur de l'histoire",q:"Au cœur de l'histoire Europe 1"},
   {cat:"Philosophie",name:"Les Chemins de la philosophie",q:"Les Chemins de la philosophie France Culture"},
   {cat:"Histoire",name:"Le Cours de l'histoire",q:"Le Cours de l'histoire France Culture"},
   {cat:"Histoire",name:"Affaires sensibles",q:"Affaires sensibles France Inter"},
@@ -378,11 +382,25 @@ const BASE=[
   {cat:"Afrique et monde",name:"Le Débat africain (RFI)",q:"Le débat africain RFI"},
   {cat:"Afrique et monde",name:"Cultures Monde",q:"Cultures Monde France Culture"},
   {cat:"Afrique et monde",name:"Le Dessous des cartes",q:"Le Dessous des cartes"},
+  {cat:"Physique",name:"Douze Clefs pour la Physique (initiation)",q:"Douze Clefs pour la Physique"},
+  {cat:"Physique",name:"Physique quantique — Serge Haroche (université)",q:"Physique quantique Serge Haroche Collège de France"},
+  {cat:"Physique",name:"Dernières nouvelles des étoiles (astrophysique)",q:"Dernières nouvelles des étoiles"},
+  {cat:"Physique",name:"La Tête au carré (collège et lycée)",q:"La Tête au carré France Inter"},
+  {cat:"Physique",name:"Sixième Science (tous niveaux)",q:"Sixième Science"},
+  {cat:"Mathématiques",name:"Maths en tête",q:"Maths en tête"},
+  {cat:"Mathématiques",name:"La Saga des maths",q:"La saga des maths France Inter"},
+  {cat:"Mathématiques",name:"Les Contes des mille et une sciences",q:"Les contes des mille et une sciences Cédric Villani"},
+  {cat:"Chimie",name:"Vis ma chimie !",q:"Vis ma chimie"},
+  {cat:"Technologie",name:"Les Technos",q:"Les Technos"},
+  {cat:"Technologie",name:"Le Rendez-vous Tech",q:"Le Rendez-vous Tech Patrick Beja"},
+  {cat:"Technologie",name:"Choses à Savoir Tech",q:"Choses à Savoir TECH"},
+  {cat:"Innovations et inventions",name:"La Petite Histoire des Inventions",q:"La Petite Histoire des Inventions"},
+  {cat:"Innovations et inventions",name:"Objectif Tech (innovation)",q:"Objectif Tech Capgemini"},
   {cat:"Culture générale",name:"Choses à Savoir Culture générale",q:"Choses à Savoir CULTURE GÉNÉRALE"},
   {cat:"Culture générale",name:"La Compagnie des auteurs",q:"La Compagnie des auteurs France Culture"},
   {cat:"Culture générale",name:"Les Cours du Collège de France",q:"Les Cours du Collège de France"},
 ];
-const CATS=["Sciences","Philosophie","Histoire","Économie","Afrique et monde","Culture générale"];
+const CATS=["Sciences","Physique","Mathématiques","Chimie","Technologie","Innovations et inventions","Histoire des civilisations","Philosophie","Histoire","Économie","Afrique et monde","Culture générale"];
 const PER_SOURCE=8, PAGE=24, TTL=3*3600*1000;
 
 const $=id=>document.getElementById(id);
