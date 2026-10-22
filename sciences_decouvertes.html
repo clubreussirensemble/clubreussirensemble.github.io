@@ -232,6 +232,39 @@ ol.chapitres li.cours{border-left:5px solid var(--gold);font-weight:600}
 })();
 </script>
 
+<!-- ═══ Publicité Adsterra (Native Banner) — chargement différé ═══ -->
+<style>
+.adx-native{max-width:1240px;margin:28px auto;padding:0 24px;display:none}
+.adx-native.on{display:block}
+.adx-native .adx-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2,#6b7280);margin-bottom:6px;text-align:center}
+.adx-native .adx-slot{background:var(--card,#fff);border:1px solid var(--line,#e5e7eb);border-radius:14px;padding:10px;min-height:90px;overflow:hidden}
+.adx-native .adx-slot>*{max-width:100%}
+</style>
+<div id="adxSentinel" style="height:1px"></div>
+<div class="adx-native" id="adxNative" aria-label="Publicité">
+  <div class="adx-label">Publicité</div>
+  <div class="adx-slot" id="adxSlot"><div id="container-acce816c2ce0b09023a7d29ca5f8ea05"></div></div>
+</div>
+<script>
+(function(){
+  var box=document.getElementById('adxNative'),slot=document.getElementById('adxSlot'),done=false;
+  if(!box||!slot)return;
+  function show(){ if(slot.querySelector('iframe,img,ins,a,video')) box.classList.add('on'); }
+  new MutationObserver(show).observe(slot,{childList:true,subtree:true});
+  function load(){
+    if(done)return; done=true;
+    var s=document.createElement('script');
+    s.async=true; s.setAttribute('data-cfasync','false'); s.src='https://bauval.org/21/acce816c2ce0b09023a7d29ca5f8ea05';
+    slot.parentNode.insertBefore(s,slot);
+    setTimeout(show,3000);
+  }
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(e){ if(e[0].isIntersecting){io.disconnect();load();} },{rootMargin:'400px'});
+    io.observe(document.getElementById('adxSentinel'));
+  } else { window.addEventListener('load',function(){setTimeout(load,1500)}); }
+})();
+</script>
+
 <footer class="site-footer">
   <div class="wrap foot-grid">
     <div class="foot-brand">
