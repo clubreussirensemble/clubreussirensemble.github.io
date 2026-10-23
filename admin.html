@@ -192,6 +192,7 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
       <button data-tab="liens">Réseaux sociaux</button>
       <button data-tab="espace">Espace élève (Chat, devoirs…)</button>
       <button data-tab="blog">Blog</button>
+      <button data-tab="reseau" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">💬 Réseau</button>
     </div>
 
     <div id="tab-classroom" class="panel" style="display:none;padding:0">
@@ -206,6 +207,11 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
 
     <div id="tab-blog" class="panel" style="display:none;padding:0">
       <iframe src="admin-blog.html" style="width:100%;height:85vh;min-height:640px;border:0;border-radius:var(--radius);box-shadow:var(--shadow);background:#fff" title="Administration du blog"></iframe>
+    </div>
+
+    <div id="tab-reseau" class="panel" style="display:none;padding:0">
+      <p style="margin:14px 0;color:var(--ink2);font-size:13px">Modération du réseau des élèves : supprimer des publications, commentaires et stories, traiter les signalements (🚩), lire les conversations (🛡). Tu dois être connecté en administrateur. <a href="reseau.html" target="_blank" rel="noopener" style="color:var(--blue);font-weight:700">Ouvrir dans un nouvel onglet ↗</a></p>
+      <iframe id="reseauFrame" data-src="reseau.html" src="about:blank" style="width:100%;height:85vh;min-height:640px;border:0;border-radius:var(--radius);box-shadow:var(--shadow);background:#fff" title="Réseau des élèves — modération"></iframe>
     </div>
 
     <div id="tab-olyjeu" class="panel" style="display:none;padding:0">
@@ -857,6 +863,7 @@ document.querySelectorAll('.admin-tabs button').forEach(b=>{
   b.onclick = ()=>{
     if(b.dataset.tab==='classroom'){ const fr=document.getElementById('classroomFrame'); if(fr.src==='about:blank'||!fr.src) fr.src=fr.dataset.src; }
     if(b.dataset.tab==='olyjeu'){ const fr=document.getElementById('olyJeuFrame'); if(!fr.src) fr.src=fr.dataset.src; }
+    if(b.dataset.tab==='reseau'){ const fr=document.getElementById('reseauFrame'); if(fr.src==='about:blank'||!fr.src) fr.src=fr.dataset.src; }
     document.querySelectorAll('.admin-tabs button').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
     document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
