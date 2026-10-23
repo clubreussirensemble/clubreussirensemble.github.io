@@ -232,6 +232,19 @@ a{text-decoration:none;color:inherit}
 }
 @media (max-width:640px){.rx-bar{gap:6px;padding:0 8px}.rx-ico{gap:0}.rx-ico a,.rx-ico button{width:42px}.rx-brand img{width:38px;height:38px}.rx-theme{display:none}.rx-search input{padding-left:12px}}
 </style>
+<style>
+.av.has{background-size:cover;background-position:center;color:transparent!important;font-size:0!important}
+.rx-mini{border:none;background:var(--blue);color:#fff;font-weight:700;font-size:12.5px;padding:6px 12px;border-radius:8px;cursor:pointer;margin-top:6px}
+.rx-mini.gr,.rx-row button.gr{background:rgba(127,127,127,.2);color:var(--ink)}
+.rx-modal{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px}
+.rx-modal.open{display:flex}
+.rx-mc{position:relative;width:100%;max-width:440px;max-height:88vh;overflow:auto;padding:20px;margin:0}
+.rx-x{position:absolute;right:12px;top:10px;border:none;background:none;font-size:18px;color:var(--ink2);cursor:pointer}
+.rx-pf{display:flex;gap:14px;align-items:center;margin:14px 0}
+.rx-pf small{display:block;color:var(--ink2)}
+.rx-big{width:84px;height:84px;font-size:28px}
+.rx-act{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+</style>
 </head>
 <body>
 
@@ -339,7 +352,6 @@ a{text-decoration:none;color:inherit}
     <img class="rx-logo" data-lg src="" alt="">
     <div class="rx-bt"><h1 class="hand">Club<br>Réussir Ensemble</h1><p>Rigueur &nbsp;•&nbsp; Discipline &nbsp;•&nbsp; Travail</p></div>
     <div class="rx-slogan hand">Ensemble pour un avenir meilleur !</div>
-    <span class="rx-loc">📍 Mamou - Guinée</span>
   </div>
   <div class="rx-prof"><img data-lg src="" alt=""><div><b>Réseau des élèves</b><small>@ReussirEnsemble · Partage tes idées, photos et vidéos</small></div><a class="pb" href="contact.html">Nous contacter</a></div>
 </section>
@@ -380,6 +392,15 @@ a{text-decoration:none;color:inherit}
 </aside>
 </div>
 
+<div class="rx-modal" id="rxSet"><div class="rx-mc card">
+  <button class="rx-x" id="setX" aria-label="Fermer">✕</button>
+  <h3>Paramètres du profil</h3>
+  <div class="rx-pf"><span class="av rx-big" id="setAv"></span><div><b id="setNom"></b><small id="setCl"></small></div></div>
+  <div class="rx-act"><label class="pb" style="cursor:pointer;margin:0">📷 Changer la photo de profil<input id="setFile" type="file" accept="image/*" hidden></label><button class="lnk" id="setDel" style="display:none">Supprimer la photo</button></div>
+  <div id="setMsg" class="rx-none" style="margin-top:8px"></div>
+  <h3 style="margin-top:18px">Mes amis</h3>
+  <div id="setAmis"></div>
+</div></div>
 <div id="sv"><div class="t"><b id="svt"></b><button id="svd">🗑 Supprimer</button><button id="svx">✕</button></div><div id="svm"></div></div>
 <script>document.querySelectorAll("[data-lg]").forEach(function(i){i.src=document.querySelector(".rx-brand img").src})</script>
 <script type="module">
@@ -437,7 +458,7 @@ const can = p => isAdmin || p.uid === me.uid;
 
 const io = new IntersectionObserver(es => es.forEach(e => { const v = e.target; if (e.isIntersecting) v.play().catch(() => {}); else v.pause(); }), { threshold: 0.6 });
 /* Groupes par classe : "" = général */
-let tab = "", mySuit = [];
+let tab = "", mySuit = [], myAmis = [], myEnv = [], myRef = [], allMem = {};
 const view = () => tab === "__s" ? posts.filter(p => mySuit.includes(p.uid) && (!p.groupe || p.groupe === me.classe || isAdmin)) : posts.filter(p => (p.groupe || "") === tab);
 const groups = () => isAdmin ? [...new Set(posts.map(p => p.groupe).filter(Boolean))].sort() : (me.classe ? [me.classe] : []);
 const lbl = x => x === "__s" ? "⭐ Abonnements" : x ? "👥 " + esc(x) : "🌐 Général";
@@ -451,7 +472,7 @@ function renderTabs() {
 $("tabs").onclick = e => { const b = e.target.closest("[data-g]"); if (!b) return; tab = b.dataset.g; shown = 8; if (tab !== "__s") $("grp").value = tab; renderTabs(); render(); };
 function mk(p) {
   const el = document.createElement("div"); el.className = "card post"; el.dataset.id = p.id;
-  el.innerHTML = `<div class="ph"><span class="av">${ini(p.auteur)}</span><div><b>${esc(p.auteur)}</b><small>${esc(p.classe)}${p.groupe ? " · 👥 " + esc(p.groupe) : ""} · ${ago(p.createdAt)}</small></div>${p.uid !== me.uid ? '<button class="lnk" data-act="follow"></button>' : ""}${can(p) ? '<button class="lnk" data-act="del">Supprimer</button>' : '<button class="lnk" data-act="rep">Signaler</button>'}</div>`
+  el.innerHTML = `<div class="ph"><span class="av" data-u="${esc(p.uid)}">${ini(p.auteur)}</span><div><b>${esc(p.auteur)}</b><small>${esc(p.classe)}${p.groupe ? " · 👥 " + esc(p.groupe) : ""} · ${ago(p.createdAt)}</small></div>${p.uid !== me.uid ? '<button class="lnk" data-act="follow"></button>' : ""}${can(p) ? '<button class="lnk" data-act="del">Supprimer</button>' : '<button class="lnk" data-act="rep">Signaler</button>'}</div>`
     + (p.texte ? `<p class="pt">${esc(p.texte)}</p>` : "")
     + (p.mediaType === "image" ? `<img class="pm" loading="eager" decoding="async" alt="" src="${esc(p.mediaUrl)}">` : p.mediaType === "video" ? `<video class="pm" controls muted loop autoplay preload="auto" playsinline webkit-playsinline src="${esc(p.mediaUrl)}#t=0.1"></video>` : "")
     + `<div class="st"><span class="nl"></span><span class="nc"></span></div>
@@ -487,6 +508,7 @@ $("more").onclick = () => { shown += 8; render(); };
 
 /* ===== Barre du haut + colonne de droite ===== */
 function rxMe() {
+  $("meAv").dataset.u = me.uid; $("rxUav").dataset.u = me.uid;
   $("rxUav").textContent = ini(me.name); $("rxUname").textContent = me.name.split(" ")[0]; $("rxUser").href = "espace-eleve.html";
   $("txt").placeholder = "Quoi de neuf, " + me.name.split(" ")[0] + " ? Écris quelque chose…";
 }
@@ -502,19 +524,77 @@ function renderSide() {
   if (!me || !$("rxGroups")) return;
   const g = groups();
   $("rxGroups").innerHTML = ["", ...g].map(x => `<div class="rx-row"><span class="av sm">${x ? ini(x) : "🌐"}</span><div class="t"><b>${x ? esc(x) : "Général"}</b><small>${posts.filter(p => (p.groupe || "") === x).length} publication(s)</small></div><button data-gr="${esc(x)}">${x === tab ? "Ouvert" : "Ouvrir"}</button></div>`).join("");
-  const sug = members.filter(m => !mySuit.includes(m.uid)).slice(0, 5);
-  $("rxPeople").innerHTML = sug.length ? sug.map(m => `<div class="rx-row"><span class="av">${ini(m.nom)}</span><div class="t"><b>${esc(m.nom)}</b><small>${esc(m.classe || "")}</small></div><button data-fo="${esc(m.uid)}">Suivre</button></div>`).join("") : '<p class="rx-none">Aucune suggestion pour le moment.</p>';
+  const pend = notifs.filter(n => n.type === "ami" && !myAmis.includes(n.fromUid) && !myRef.includes(n.fromUid)).map(n => n.fromUid);
+  const sug = members.filter(m => !myAmis.includes(m.uid)).slice(0, 6);
+  const btn = m => pend.includes(m.uid) ? `<button data-am="ok" data-u="${esc(m.uid)}" data-nom="${esc(m.nom)}">Accepter</button>` : myEnv.includes(m.uid) ? `<button class="gr" data-am="cancel" data-u="${esc(m.uid)}">Envoyée ✕</button>` : `<button data-am="add" data-u="${esc(m.uid)}" data-nom="${esc(m.nom)}">➕ Ajouter</button>`;
+  $("rxPeople").innerHTML = sug.length ? sug.map(m => `<div class="rx-row"><span class="av" data-u="${esc(m.uid)}">${ini(m.nom)}</span><div class="t"><b>${esc(m.nom)}</b><small>${esc(m.classe || "")}</small></div>${btn(m)}</div>`).join("") : '<p class="rx-none">Aucune suggestion pour le moment.</p>';
+  refreshAv();
 }
-$("rxGroups").onclick = e => { const b = e.target.closest("[data-gr]"); if (!b) return; tab = b.dataset.gr; shown = 8; $("grp").value = tab; renderTabs(); render(); $("tabs").scrollIntoView({ behavior: "smooth", block: "start" }); };
-$("rxPeople").onclick = async e => {
-  const b = e.target.closest("[data-fo]"); if (!b) return; const uid = b.dataset.fo;
-  if (!mySuit.includes(uid)) { mySuit = [...mySuit, uid]; render(); }
-  try { await setDoc(doc(fbDB, "reseau_membres", me.uid), { suit: mySuit }, { merge: true }); notify({ uid, id: "" }, "follow"); } catch (err) { alert("Action impossible : " + (err.code || err.message)); }
+
+/* ===== Photos de profil + demandes d’amis ===== */
+const memRef = () => doc(fbDB, "reseau_membres", me.uid);
+function refreshAv() {
+  document.querySelectorAll(".av[data-u]").forEach(el => {
+    const p = allMem[el.dataset.u] && allMem[el.dataset.u].photo;
+    if (p) { el.style.backgroundImage = `url("${p}")`; el.classList.add("has"); }
+    else { el.style.backgroundImage = ""; el.classList.remove("has"); }
+  });
+}
+new MutationObserver(() => { if (me) refreshAv(); }).observe(document.body, { childList: true, subtree: true });
+async function friendAct(uid, nom, act) {
+  try {
+    if (act === "add") {
+      myEnv = [...new Set([...myEnv, uid])]; await setDoc(memRef(), { envoyes: myEnv }, { merge: true });
+      await addDoc(collection(fbDB, "reseau_notifs"), { to: uid, from: me.name, fromUid: me.uid, type: "ami", postId: "", lu: false, createdAt: Date.now() });
+    } else if (act === "cancel") {
+      myEnv = myEnv.filter(x => x !== uid); await setDoc(memRef(), { envoyes: myEnv }, { merge: true });
+    } else if (act === "ok") {
+      myAmis = [...new Set([...myAmis, uid])]; await setDoc(memRef(), { amis: myAmis }, { merge: true });
+      await addDoc(collection(fbDB, "reseau_notifs"), { to: uid, from: me.name, fromUid: me.uid, type: "ami_ok", postId: "", lu: false, createdAt: Date.now() });
+    } else if (act === "no") {
+      myRef = [...new Set([...myRef, uid])]; await setDoc(memRef(), { refuses: myRef }, { merge: true });
+    }
+  } catch (err) { alert("Action impossible : " + (err.code || err.message)); }
+  renderSide(); if (panel === "n") showPanel(); fillSet();
+}
+/* Quand quelqu’un accepte ma demande, je l’ajoute à mes amis */
+function syncAmi() {
+  if (!me) return;
+  const ok = notifs.filter(n => n.type === "ami_ok" && n.fromUid && !myAmis.includes(n.fromUid)).map(n => n.fromUid);
+  if (!ok.length) return;
+  myAmis = [...new Set([...myAmis, ...ok])]; myEnv = myEnv.filter(x => !myAmis.includes(x));
+  setDoc(memRef(), { amis: myAmis, envoyes: myEnv }, { merge: true }).catch(() => {});
+  renderSide(); fillSet();
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-am]"); if (!b || !me) return;
+  e.stopPropagation(); friendAct(b.dataset.u, b.dataset.nom || "", b.dataset.am);
+}, true);
+/* Paramètres du profil */
+function fillSet() {
+  if (!$("setAv")) return;
+  $("setAv").dataset.u = me.uid; $("setAv").textContent = ini(me.name); $("setNom").textContent = me.name; $("setCl").textContent = me.classe || (isAdmin ? "Administrateur" : "");
+  $("setDel").style.display = allMem[me.uid] && allMem[me.uid].photo ? "" : "none";
+  $("setAmis").innerHTML = myAmis.length ? myAmis.map(u => { const m = allMem[u] || {}; return `<div class="rx-row"><span class="av sm" data-u="${esc(u)}">${ini(m.nom)}</span><div class="t"><b>${esc(m.nom || "Membre")}</b><small>${esc(m.classe || "")}</small></div><button data-chat2="${esc(u)}">Message</button></div>`; }).join("") : '<p class="rx-none">Pas encore d’amis. Envoie des demandes depuis « Personnes que vous pourriez connaître ».</p>';
+  refreshAv();
+}
+$("rxUser").onclick = e => { if (!me) return; e.preventDefault(); fillSet(); $("rxSet").classList.add("open"); };
+$("setX").onclick = () => $("rxSet").classList.remove("open");
+$("rxSet").onclick = e => { if (e.target.id === "rxSet") $("rxSet").classList.remove("open"); };
+$("setFile").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  if (!f.type.startsWith("image")) { $("setMsg").textContent = "Choisis une image."; return; }
+  $("setMsg").textContent = "Envoi de la photo…";
+  try { const r = await upload(f); await setDoc(memRef(), { photo: r.url }, { merge: true }); $("setMsg").textContent = "Photo mise à jour ✓"; }
+  catch (err) { $("setMsg").textContent = "Erreur : " + (err.code || err.message); }
 };
+$("setDel").onclick = async () => { try { await setDoc(memRef(), { photo: "" }, { merge: true }); $("setMsg").textContent = "Photo supprimée."; } catch (err) { $("setMsg").textContent = "Erreur : " + (err.code || err.message); } };
+$("setAmis").onclick = e => { const b = e.target.closest("[data-chat2]"); if (!b) return; const m = allMem[b.dataset.chat2]; if (!m) return; $("rxSet").classList.remove("open"); chat = { uid: m.uid, nom: m.nom }; panel = "m"; showPanel(); goTop(); };
+$("rxGroups").onclick = e => { const b = e.target.closest("[data-gr]"); if (!b) return; tab = b.dataset.gr; shown = 8; $("grp").value = tab; renderTabs(); render(); $("tabs").scrollIntoView({ behavior: "smooth", block: "start" }); };
 
 
 function fillCm(el, list) {
-  el.querySelector(".cl").innerHTML = list.map(c => `<div class="cmt"><span class="av sm">${ini(c.auteur)}</span><div class="bub"><b>${esc(c.auteur)}</b> <small style="color:var(--ink2)">${ago(c.createdAt)}</small><p>${esc(c.texte)}</p>${isAdmin || c.uid === me.uid ? `<button class="lnk" data-act="delc" data-c="${c.id}">Supprimer</button>` : ""}</div></div>`).join("");
+  el.querySelector(".cl").innerHTML = list.map(c => `<div class="cmt"><span class="av sm" data-u="${esc(c.uid)}">${ini(c.auteur)}</span><div class="bub"><b>${esc(c.auteur)}</b> <small style="color:var(--ink2)">${ago(c.createdAt)}</small><p>${esc(c.texte)}</p>${isAdmin || c.uid === me.uid ? `<button class="lnk" data-act="delc" data-c="${c.id}">Supprimer</button>` : ""}</div></div>`).join("");
 }
 
 $("feed").addEventListener("click", async e => {
@@ -569,7 +649,7 @@ function loadNotifs() {
   panel = ""; $("npanel").style.display = "none";
   nUnsub = onSnapshot(query(collection(fbDB, "reseau_notifs"), where("to", "==", me.uid)), s => {
     notifs = s.docs.map(x => ({ id: x.id, ...x.data() })).sort(byDate).slice(0, 30);
-    const n = notifs.filter(x => !x.lu).length; $("ncnt").textContent = n ? "(" + n + ")" : "";
+    const n = notifs.filter(x => !x.lu).length; $("ncnt").textContent = n ? "(" + n + ")" : ""; syncAmi();
     if (panel === "n") showPanel();
   }, () => {});
   if (isAdmin) {
@@ -586,7 +666,9 @@ function showPanel() {
   if (panel === "m") return showMsgs();
   if (panel === "a") return showAdmin();
   if (panel === "n") {
-    el.innerHTML = notifs.length ? notifs.map(n => `<div class="nt ${n.lu ? "" : "new"}" data-p="${esc(n.postId)}"><b>${esc(n.from)}</b> ${n.type === "like" ? "a aimé ta publication" : n.type === "follow" ? "te suit maintenant" : "a commenté ta publication"} · <small>${ago(n.createdAt)}</small></div>`).join("") : '<p class="empty">Aucune notification.</p>';
+    el.innerHTML = notifs.length ? notifs.filter(n => n.type !== "ami" || (!myRef.includes(n.fromUid))).map(n => n.type === "ami"
+      ? `<div class="nt ${n.lu ? "" : "new"}" style="cursor:default"><b>${esc(n.from)}</b> t’a envoyé une demande d’ami · <small>${ago(n.createdAt)}</small><br>${myAmis.includes(n.fromUid) ? "<small>✓ Vous êtes amis</small>" : `<button class="rx-mini" data-am="ok" data-u="${esc(n.fromUid)}" data-nom="${esc(n.from)}">Accepter</button> <button class="rx-mini gr" data-am="no" data-u="${esc(n.fromUid)}">Refuser</button>`}</div>`
+      : `<div class="nt ${n.lu ? "" : "new"}" data-p="${esc(n.postId)}"><b>${esc(n.from)}</b> ${n.type === "like" ? "a aimé ta publication" : n.type === "follow" ? "te suit maintenant" : n.type === "ami_ok" ? "a accepté ta demande d’ami" : "a commenté ta publication"} · <small>${ago(n.createdAt)}</small></div>`).join("") : '<p class="empty">Aucune notification.</p>';
     notifs.filter(x => !x.lu).forEach(n => updateDoc(doc(fbDB, "reseau_notifs", n.id), { lu: true }).catch(() => {}));
   } else {
     el.innerHTML = reps.length ? reps.map(r => `<div class="nt" style="cursor:default"><b>${esc(r.parNom)}</b> signale une publication de <b>${esc(r.auteur)}</b> : « ${esc(r.extrait)} »<br><button class="lnk" data-r="del" data-id="${r.id}" data-p="${esc(r.postId)}">Supprimer la publication</button> · <button class="lnk" data-r="ign" data-id="${r.id}">Ignorer</button></div>`).join("") : '<p class="empty">Aucun signalement.</p>';
@@ -627,7 +709,9 @@ function loadMsgs() {
   }, () => {});
   setDoc(doc(fbDB, "reseau_membres", me.uid), { uid: me.uid, nom: me.name, classe: me.classe }, { merge: true }).catch(() => {});
   memUnsub = onSnapshot(collection(fbDB, "reseau_membres"), s => {
-    const mine = s.docs.find(x => x.id === me.uid); if (mine) { mySuit = mine.data().suit || []; render(); }
+    allMem = {}; s.docs.forEach(x => allMem[x.id] = x.data());
+    const mine = s.docs.find(x => x.id === me.uid); if (mine) { const d = mine.data(); mySuit = d.suit || []; myAmis = d.amis || []; myEnv = d.envoyes || []; myRef = d.refuses || []; render(); }
+    refreshAv(); syncAmi(); if (panel === "n") showPanel();
     members = s.docs.map(x => x.data()).filter(m => m.uid !== me.uid).sort((a, b) => String(a.nom).localeCompare(b.nom));
     if (panel === "m" && !chat) showMsgs();
     renderSide();
@@ -681,7 +765,7 @@ function loadStories() {
     stories = s.docs.map(x => ({ id: x.id, ...x.data() }));
     const g = {}; stories.forEach(t => (g[t.uid] = g[t.uid] || []).push(t));
     $("stbar").innerHTML = '<button class="stc add" data-u=""><span class="av">+</span><span class="n">Ma story</span></button>'
-      + Object.entries(g).map(([u, l]) => `<button class="stc" data-u="${esc(u)}"><span class="av">${ini(l[0].auteur)}</span><span class="n">${esc(String(l[0].auteur).split(" ")[0])}</span></button>`).join("");
+      + Object.entries(g).map(([u, l]) => `<button class="stc" data-u="${esc(u)}"><span class="av" data-u="${esc(u)}">${ini(l[0].auteur)}</span><span class="n">${esc(String(l[0].auteur).split(" ")[0])}</span></button>`).join("");
   }, () => {});
 }
 function showSt() {
