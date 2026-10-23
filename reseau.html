@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="monetag" content="62309d15ad4e218ed5eb4991f37b994a">
 <title>Réseau des élèves — Club Réussir Ensemble</title>
 <meta name="description" content="Le réseau des élèves du Club Réussir Ensemble : publie du texte, des photos et des vidéos, aime et commente.">
 <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
@@ -232,7 +233,7 @@ a{text-decoration:none;color:inherit}
 .ph div{flex:1;min-width:0;line-height:1.3}
 .ph small{display:block;color:var(--ink2);font-size:12px}
 .pt{padding:0 14px 12px;white-space:pre-wrap;word-wrap:break-word;font-size:15px}
-.pm{width:100%;max-height:560px;object-fit:cover;background:#000;display:block}
+.pm{width:100%;min-height:200px;max-height:560px;object-fit:cover;background:#000;display:block}
 .st{display:flex;justify-content:space-between;padding:8px 14px;font-size:13px;color:var(--ink2);min-height:34px}
 .ac{display:flex;border-top:1px solid var(--line);margin:0 6px}
 .ac button{flex:1;border:none;background:none;padding:10px;font:600 14px 'Work Sans',sans-serif;color:var(--ink2);cursor:pointer;border-radius:8px;margin:4px 0}
@@ -366,7 +367,7 @@ function mk(p) {
   const el = document.createElement("div"); el.className = "card post"; el.dataset.id = p.id;
   el.innerHTML = `<div class="ph"><span class="av">${ini(p.auteur)}</span><div><b>${esc(p.auteur)}</b><small>${esc(p.classe)}${p.groupe ? " · 👥 " + esc(p.groupe) : ""} · ${ago(p.createdAt)}</small></div>${p.uid !== me.uid ? '<button class="lnk" data-act="follow"></button>' : ""}${can(p) ? '<button class="lnk" data-act="del">Supprimer</button>' : '<button class="lnk" data-act="rep">Signaler</button>'}</div>`
     + (p.texte ? `<p class="pt">${esc(p.texte)}</p>` : "")
-    + (p.mediaType === "image" ? `<img class="pm" loading="lazy" alt="" src="${esc(p.mediaUrl)}">` : p.mediaType === "video" ? `<video class="pm" controls muted loop preload="metadata" playsinline src="${esc(p.mediaUrl)}"></video>` : "")
+    + (p.mediaType === "image" ? `<img class="pm" loading="eager" decoding="async" alt="" src="${esc(p.mediaUrl)}">` : p.mediaType === "video" ? `<video class="pm" controls muted loop autoplay preload="auto" playsinline webkit-playsinline src="${esc(p.mediaUrl)}#t=0.1"></video>` : "")
     + `<div class="st"><span class="nl"></span><span class="nc"></span></div>
 <div class="ac"><button class="lk" data-act="like">👍 J’aime</button><button data-act="cm">💬 Commenter</button></div>
 <div class="cm" style="display:none"><div class="cl"></div><div class="cw"><input class="ci" maxlength="500" placeholder="Écris un commentaire…"><button data-act="sendc">Envoyer</button></div></div>`;
@@ -652,6 +653,65 @@ $("pub").onclick = async () => {
   } catch (err) { $("msg").textContent = "Erreur : " + (err.code || err.message); }
   $("pub").disabled = false;
 };
+</script>
+
+<!-- ═══ Bannière publicitaire Monetag ═══ -->
+<style>
+.ad-banner{max-width:1240px;margin:28px auto 0;padding:0 24px;display:none}
+.ad-banner.on{display:block}
+.ad-banner .ad-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin-bottom:6px;text-align:center}
+.ad-banner .ad-slot{background:var(--card);border:1.5px dashed var(--line);border-radius:14px;padding:10px;min-height:90px;display:flex;align-items:center;justify-content:center;overflow:hidden;max-width:100%}
+.ad-banner .ad-slot>*{max-width:100%}
+</style>
+<div class="ad-banner" id="adBanner" aria-label="Publicité">
+  <div class="ad-label">Publicité</div>
+  <div class="ad-slot" id="adSlot">
+    <!-- ▼▼▼ CODE MONETAG (zone 12025962) ▼▼▼ -->
+    <script>(function(s){s.dataset.zone='12025962',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+    <!-- ▲▲▲ FIN DU CODE MONETAG ▲▲▲ -->
+  </div>
+</div>
+<script>
+/* Affiche le cadre seulement quand la pub a réellement chargé du contenu */
+(function(){
+  var b=document.getElementById('adBanner'),s=document.getElementById('adSlot');
+  function check(){ if(s.querySelector('iframe,img,ins,a,div,video')) b.classList.add('on'); }
+  new MutationObserver(check).observe(s,{childList:true,subtree:true});
+  window.addEventListener('load',function(){setTimeout(check,2500)});
+})();
+</script>
+
+<!-- ═══ Publicité Adsterra (Native Banner) — chargement différé ═══ -->
+<style>
+.adx-native{max-width:1240px;margin:28px auto;padding:0 24px;display:none}
+.adx-native.on{display:block}
+.adx-native .adx-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2,#6b7280);margin-bottom:6px;text-align:center}
+.adx-native .adx-slot{background:var(--card,#fff);border:1px solid var(--line,#e5e7eb);border-radius:14px;padding:10px;min-height:90px;overflow:hidden}
+.adx-native .adx-slot>*{max-width:100%}
+</style>
+<div id="adxSentinel" style="height:1px"></div>
+<div class="adx-native" id="adxNative" aria-label="Publicité">
+  <div class="adx-label">Publicité</div>
+  <div class="adx-slot" id="adxSlot"><div id="container-acce816c2ce0b09023a7d29ca5f8ea05"></div></div>
+</div>
+<script>
+(function(){
+  var box=document.getElementById('adxNative'),slot=document.getElementById('adxSlot'),done=false;
+  if(!box||!slot)return;
+  function show(){ if(slot.querySelector('iframe,img,ins,a,video')) box.classList.add('on'); }
+  new MutationObserver(show).observe(slot,{childList:true,subtree:true});
+  function load(){
+    if(done)return; done=true;
+    var s=document.createElement('script');
+    s.async=true; s.setAttribute('data-cfasync','false'); s.src='https://bauval.org/21/acce816c2ce0b09023a7d29ca5f8ea05';
+    slot.parentNode.insertBefore(s,slot);
+    setTimeout(show,3000);
+  }
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(e){ if(e[0].isIntersecting){io.disconnect();load();} },{rootMargin:'400px'});
+    io.observe(document.getElementById('adxSentinel'));
+  } else { window.addEventListener('load',function(){setTimeout(load,1500)}); }
+})();
 </script>
 
 <footer class="site-footer">
