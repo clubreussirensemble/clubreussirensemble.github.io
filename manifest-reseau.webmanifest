@@ -1,0 +1,15 @@
+{
+  "name": "Réseau — Club Réussir Ensemble",
+  "short_name": "Réseau",
+  "description": "Le réseau des élèves du Club Réussir Ensemble de Mamou",
+  "start_url": "reseau.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A2A57",
+  "theme_color": "#0A2A57",
+  "lang": "fr",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
