@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Messages — Club Réussir Ensemble</title>
+<meta name="description" content="Messagerie privée des élèves du Club Réussir Ensemble : discute en direct, envoie photos et vidéos.">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<link rel="apple-touch-icon" href="/icon-512.png">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0A2A57; --navy-deep:#071A38; --blue:#2563EB; --blue-deep:#1D4ED8;
+  --green:#17A34A; --red:#D9060C; --gold:#FAB202;
+  --ink:#0F172A; --ink2:#5B6B85; --paper:#F5F8FC; --paper2:#EEF2F8; --line:#E3E9F2; --card:#FFFFFF;
+  --mine:#DCEBFF; --mine-ink:#0F172A; --theirs:#FFFFFF; --chatbg:#EAF0F8;
+  --shadow:0 6px 24px rgba(10,42,87,.08);
+}
+:root[data-theme="dark"]{
+  --ink:#EAF0FA; --ink2:#9FB0C8; --paper:#0B1626; --paper2:#111F35; --line:#22314A; --card:#101E33;
+  --mine:#1D4ED8; --mine-ink:#fff; --theirs:#16263F; --chatbg:#0B1626; --navy-deep:#050D1A;
+  --shadow:0 6px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;font-family:'Work Sans',sans-serif;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+button,input,textarea,select{font-family:inherit}
+a{text-decoration:none;color:inherit}
+
+/* En-tête */
+.bar{background:var(--navy-deep);color:#fff;display:flex;align-items:center;gap:10px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));flex-shrink:0}
+.bar a.back{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:18px}
+.bar img{width:36px;height:36px;border-radius:50%;object-fit:cover}
+.bar b{font:800 16px 'Poppins',sans-serif;line-height:1.1}
+.bar small{display:block;color:var(--gold);font-size:10.5px;font-weight:700;letter-spacing:.06em}
+.bar .sp{flex:1}
+.ib{width:36px;height:36px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:16px;cursor:pointer}
+
+/* Mise en page */
+#gate{padding:40px 20px;text-align:center;color:var(--ink2);font-size:15px}
+#app{flex:1;display:flex;min-height:0}
+.side{width:360px;max-width:100%;background:var(--card);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--chatbg)}
+
+/* Liste */
+.stop{padding:12px 12px 8px;display:flex;flex-direction:column;gap:8px}
+.stop h2{margin:0;font:800 20px 'Poppins',sans-serif}
+.srch{width:100%;border:none;border-radius:999px;padding:11px 16px;background:var(--paper2);color:var(--ink);font-size:14px;outline:none}
+.tabs{display:flex;gap:6px}
+.tab{border:none;background:var(--paper2);color:var(--ink2);font-weight:600;font-size:12.5px;padding:7px 14px;border-radius:999px;cursor:pointer}
+.tab.on{background:var(--blue);color:#fff}
+#list{flex:1;overflow-y:auto}
+.row{display:flex;gap:12px;align-items:center;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--line)}
+.row:hover,.row.on{background:var(--paper2)}
+.row .mid{flex:1;min-width:0}
+.row .t1{display:flex;gap:8px;align-items:baseline}
+.row .t1 b{flex:1;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t1 small{color:var(--ink2);font-size:11.5px;flex-shrink:0}
+.row .t2{display:flex;gap:8px;align-items:center;margin-top:2px}
+.row .t2 span{flex:1;color:var(--ink2);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row.unread .t2 span,.row.unread .t1 small{color:var(--ink);font-weight:700}
+.badge{background:var(--green);color:#fff;font-size:11.5px;font-weight:700;min-width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 6px}
+.av{width:46px;height:46px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font:700 15px 'Poppins',sans-serif;flex-shrink:0;background-size:cover;background-position:center}
+.av.has{color:transparent;font-size:0}
+.av.sm{width:38px;height:38px;font-size:13px}
+.empty{color:var(--ink2);text-align:center;padding:36px 20px;font-size:14px}
+
+/* Conversation */
+.chead{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--line);flex-shrink:0}
+.chead .back{display:none;border:none;background:none;font-size:22px;color:var(--ink);cursor:pointer;padding:0 4px}
+.chead b{font-size:15px}
+.chead small{display:block;color:var(--ink2);font-size:12px}
+#msgs{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:3px}
+.day{align-self:center;background:var(--card);color:var(--ink2);font-size:11.5px;font-weight:600;padding:4px 12px;border-radius:999px;margin:10px 0;box-shadow:var(--shadow)}
+.bw{display:flex}
+.bw.me{justify-content:flex-end}
+.bb{max-width:min(78%,520px);padding:7px 10px 5px;border-radius:14px;background:var(--theirs);color:var(--ink);box-shadow:0 1px 1px rgba(0,0,0,.08);font-size:14.5px;line-height:1.35;word-wrap:break-word;overflow-wrap:anywhere}
+.bw.me .bb{background:var(--mine);color:var(--mine-ink);border-bottom-right-radius:4px}
+.bw:not(.me) .bb{border-bottom-left-radius:4px}
+.bb p{margin:0;white-space:pre-wrap}
+.bb img,.bb video{display:block;max-width:100%;max-height:320px;border-radius:10px;margin-bottom:4px;cursor:pointer;background:#000}
+.meta{display:flex;justify-content:flex-end;gap:4px;font-size:10.5px;opacity:.65;margin-top:2px}
+.tick.lu{color:#38BDF8;opacity:1}
+.who{font-size:11.5px;font-weight:700;color:var(--blue);margin-bottom:2px}
+
+/* Saisie */
+.composer{display:flex;align-items:flex-end;gap:8px;padding:8px 10px;padding-bottom:max(8px,env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);flex-shrink:0;position:relative}
+.composer textarea{flex:1;resize:none;border:none;outline:none;border-radius:20px;padding:11px 16px;background:var(--paper2);color:var(--ink);font-size:15px;max-height:120px;line-height:1.3}
+.cbtn{width:42px;height:42px;border-radius:50%;border:none;background:none;font-size:20px;cursor:pointer;color:var(--ink2);flex-shrink:0}
+.cbtn:hover{background:var(--paper2)}
+.send{background:var(--blue);color:#fff;font-size:17px}
+.send:hover{background:var(--blue-deep)}
+.send:disabled{opacity:.5}
+#emo{position:absolute;bottom:100%;left:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:8px;display:none;grid-template-columns:repeat(8,1fr);gap:2px;max-width:calc(100% - 16px)}
+#emo.open{display:grid}
+#emo button{border:none;background:none;font-size:22px;padding:4px;cursor:pointer;border-radius:8px}
+#emo button:hover{background:var(--paper2)}
+#prev{display:none;align-items:center;gap:10px;padding:8px 12px;background:var(--card);border-top:1px solid var(--line);font-size:13px;color:var(--ink2)}
+#prev img,#prev video{width:54px;height:54px;object-fit:cover;border-radius:8px}
+#prev span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#prev button{border:none;background:none;font-size:18px;color:var(--red);cursor:pointer}
+.ph{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--ink2);text-align:center;padding:20px}
+.ph .big{font-size:56px}
+.note{font-size:11.5px;color:var(--ink2);text-align:center;padding:6px 12px;background:var(--card)}
+
+/* Visionneuse */
+#vw{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center}
+#vw.open{display:flex}
+#vw img,#vw video{max-width:96%;max-height:90vh}
+#vw button{position:absolute;top:max(14px,env(safe-area-inset-top));right:16px;border:none;background:rgba(255,255,255,.15);color:#fff;width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer}
+
+/* Mobile : un seul panneau à la fois */
+@media (max-width:760px){
+  .side{width:100%;border-right:none}
+  .main{display:none}
+  body.chat-open .side{display:none}
+  body.chat-open .main{display:flex}
+  .chead .back{display:block}
+  .bb{max-width:86%}
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <a class="back" href="reseau.html" aria-label="Retour au réseau">←</a>
+  <img src="/icon-512.png" alt="" onerror="this.style.display='none'">
+  <div><b>Messages</b><small>CLUB RÉUSSIR ENSEMBLE</small></div>
+  <span class="sp"></span>
+  <button class="ib" id="themeBtn" aria-label="Thème">🌙</button>
+</header>
+
+<div id="gate">Chargement…</div>
+
+<div id="app" style="display:none">
+  <aside class="side">
+    <div class="stop">
+      <h2>Discussions</h2>
+      <input class="srch" id="q" type="search" placeholder="Rechercher un élève ou une discussion…" autocomplete="off">
+      <div class="tabs">
+        <button class="tab on" id="tChats">💬 Discussions</button>
+        <button class="tab" id="tPeople">👥 Tous les élèves</button>
+        <button class="tab" id="tAdmin" style="display:none">🛡️ Supervision</button>
+      </div>
+    </div>
+    <div id="list"></div>
+  </aside>
+
+  <section class="main" id="main">
+    <div class="ph" id="ph"><div class="big">💬</div><b>Tes messages</b><span>Choisis une discussion ou commence-en une nouvelle avec un camarade du club.</span></div>
+    <div id="chatbox" style="display:none;flex:1;flex-direction:column;min-height:0">
+      <div class="chead">
+        <button class="back" id="back" aria-label="Retour">←</button>
+        <div class="av sm" id="cav"></div>
+        <div><b id="cname"></b><small id="csub"></small></div>
+      </div>
+      <div id="msgs"></div>
+      <div class="note" id="cnote">🔒 Pour la sécurité des élèves, l’administration du club peut consulter les messages.</div>
+      <div id="prev"></div>
+      <div class="composer" id="composer">
+        <div id="emo"></div>
+        <button class="cbtn" id="emoBtn" aria-label="Émojis">😊</button>
+        <button class="cbtn" id="attBtn" aria-label="Joindre une photo ou une vidéo">📎</button>
+        <input type="file" id="file" accept="image/*,video/*" hidden>
+        <textarea id="inp" rows="1" maxlength="1000" placeholder="Écris un message…"></textarea>
+        <button class="cbtn send" id="send" aria-label="Envoyer">➤</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="vw"><button id="vx" aria-label="Fermer">✕</button><div id="vm"></div></div>
+
+<script type="module">
+import { fbAuth, fbDB, C_ELEVES, collection, doc, getDoc, setDoc, addDoc, updateDoc, query, where, onSnapshot, onAuthStateChanged } from "./firebase.js";
+
+/* Cloudinary (mêmes réglages que reseau.html) */
+const CLOUD_NAME = "dctxjclv8", UPLOAD_PRESET = "reseau_eleves";
+const MAX_VIDEO = 30 * 1024 * 1024;
+const M = "reseau_messages", MEM = "reseau_membres";
+const EMOJIS = ["😀","😂","😍","🥰","😎","🤔","😢","😡","👍","👏","🙏","💪","🔥","🎉","❤️","📚","✅","❌","💡","🎓","🏆","🤝","👋","😅"];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ini = n => String(n || "?").split(" ").map(x => x[0]).slice(0, 2).join("").toUpperCase();
+const convId = (a, b) => [a, b].sort().join("_");
+const hhmm = t => new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+const dayLabel = t => {
+  const d = new Date(t), n = new Date(), y = new Date(Date.now() - 864e5);
+  if (d.toDateString() === n.toDateString()) return "Aujourd’hui";
+  if (d.toDateString() === y.toDateString()) return "Hier";
+  return d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+};
+const short = t => {
+  const d = new Date(t), n = new Date();
+  if (d.toDateString() === n.toDateString()) return hhmm(t);
+  if (d.toDateString() === new Date(Date.now() - 864e5).toDateString()) return "Hier";
+  return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+};
+
+let me = null, isAdmin = false;
+let msgs = [], allMsgs = [], mem = {}, members = [];
+let tab = "chats", chat = null, aconv = null, pending = null;
+let mUnsub = null, memUnsub = null, aUnsub = null;
+
+/* Thème (même réglage que le reste du site) */
+function applyTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  $("themeBtn").textContent = t === "dark" ? "☀️" : "🌙";
+  try { localStorage.setItem("cre-theme", t); } catch (e) {}
+}
+let th = "light"; try { th = localStorage.getItem("cre-theme") || "light"; } catch (e) {}
+applyTheme(th);
+$("themeBtn").onclick = () => applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+
+function gate(msg, login) {
+  $("app").style.display = "none"; $("gate").style.display = "";
+  $("gate").innerHTML = esc(msg) + (login ? '<br><br><a href="espace-eleve.html" style="display:inline-block;background:#2563EB;color:#fff;font-weight:700;padding:11px 24px;border-radius:999px">Se connecter</a>' : "");
+}
+
+function avatar(uid, nom, cls) {
+  const p = mem[uid] && mem[uid].photo;
+  return `<div class="av ${cls || ""} ${p ? "has" : ""}" ${p ? `style="background-image:url('${esc(p)}')"` : ""}>${esc(ini(nom))}</div>`;
+}
+
+onAuthStateChanged(fbAuth, async user => {
+  [mUnsub, memUnsub, aUnsub].forEach(u => u && u());
+  mUnsub = memUnsub = aUnsub = null; chat = null; aconv = null;
+  if (!user) { me = null; return gate("Connecte-toi avec ton compte élève pour accéder à tes messages.", true); }
+  const [e, a] = await Promise.all([
+    getDoc(doc(fbDB, C_ELEVES, user.uid)).catch(() => null),
+    getDoc(doc(fbDB, "admins", user.uid)).catch(() => null)
+  ]);
+  isAdmin = !!(a && a.exists());
+  const d = e && e.exists() ? e.data() : null;
+  if (!isAdmin && (!d || d.statut !== "valide")) return gate("Ton inscription doit encore être validée par un administrateur du club.");
+  me = { uid: user.uid, name: d ? (d.prenom + " " + d.nom).trim() : "Administrateur", classe: d ? (d.classe || "") : "Club" };
+  $("gate").style.display = "none"; $("app").style.display = "flex";
+  $("tAdmin").style.display = isAdmin ? "" : "none";
+  start();
+});
+
+function start() {
+  setDoc(doc(fbDB, MEM, me.uid), { uid: me.uid, nom: me.name, classe: me.classe }, { merge: true }).catch(() => {});
+  memUnsub = onSnapshot(collection(fbDB, MEM), s => {
+    mem = {}; s.docs.forEach(x => mem[x.id] = x.data());
+    members = s.docs.map(x => x.data()).filter(m => m.uid && m.uid !== me.uid).sort((a, b) => String(a.nom).localeCompare(String(b.nom)));
+    renderList(); if (chat) renderHead();
+    openFromHash();
+  }, () => {});
+  mUnsub = onSnapshot(query(collection(fbDB, M), where("membres", "array-contains", me.uid)), s => {
+    msgs = s.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => a.createdAt - b.createdAt);
+    renderList(); if (chat) renderChat();
+  }, () => {});
+  if (isAdmin) aUnsub = onSnapshot(collection(fbDB, M), s => {
+    allMsgs = s.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => a.createdAt - b.createdAt);
+    if (tab === "admin") { renderList(); if (aconv) renderChat(); }
+  }, () => {});
+}
+
+/* ── Liste ── */
+function convRows(src) {
+  const c = {}; src.forEach(m => c[m.conv] = m);
+  return Object.values(c).sort((a, b) => b.createdAt - a.createdAt);
+}
+const preview = m => m.mediaUrl ? (m.mediaType === "video" ? "🎥 Vidéo" : "📷 Photo") : (m.texte || "");
+function renderList() {
+  if (!me) return;
+  const q = $("q").value.trim().toLowerCase(), el = $("list");
+  document.querySelectorAll(".tab").forEach(b => b.classList.remove("on"));
+  $({ chats: "tChats", people: "tPeople", admin: "tAdmin" }[tab]).classList.add("on");
+  let h = "";
+  if (tab === "chats") {
+    const rows = convRows(msgs).map(m => {
+      const o = m.de === me.uid ? { uid: m.a, nom: m.aNom } : { uid: m.de, nom: m.deNom };
+      const nb = msgs.filter(x => x.conv === m.conv && x.a === me.uid && !x.lu).length;
+      return { m, o, nb };
+    }).filter(r => !q || String(r.o.nom).toLowerCase().includes(q));
+    h = rows.length ? rows.map(({ m, o, nb }) => `<div class="row ${nb ? "unread" : ""} ${chat && chat.uid === o.uid ? "on" : ""}" data-chat="${esc(o.uid)}" data-nom="${esc(o.nom)}">${avatar(o.uid, o.nom)}<div class="mid"><div class="t1"><b>${esc(o.nom)}</b><small>${short(m.createdAt)}</small></div><div class="t2"><span>${m.de === me.uid ? "Toi : " : ""}${esc(preview(m).slice(0, 60))}</span>${nb ? `<i class="badge">${nb}</i>` : ""}</div></div></div>`).join("")
+      : `<p class="empty">${q ? "Aucune discussion trouvée." : "Aucune discussion pour le moment.<br>Va dans « Tous les élèves » pour écrire à un camarade."}</p>`;
+  } else if (tab === "people") {
+    const l = members.filter(m => !q || String(m.nom).toLowerCase().includes(q) || String(m.classe || "").toLowerCase().includes(q));
+    h = l.length ? l.map(m => `<div class="row" data-chat="${esc(m.uid)}" data-nom="${esc(m.nom)}">${avatar(m.uid, m.nom)}<div class="mid"><div class="t1"><b>${esc(m.nom)}</b></div><div class="t2"><span>${esc(m.classe || "Club")}</span></div></div></div>`).join("")
+      : '<p class="empty">Aucun élève trouvé.</p>';
+  } else {
+    const rows = convRows(allMsgs).filter(m => !q || (String(m.deNom) + " " + String(m.aNom)).toLowerCase().includes(q));
+    h = rows.length ? rows.map(m => `<div class="row" data-conv="${esc(m.conv)}"><div class="av">🛡️</div><div class="mid"><div class="t1"><b>${esc(m.deNom)} ↔ ${esc(m.aNom)}</b><small>${short(m.createdAt)}</small></div><div class="t2"><span>${esc(preview(m).slice(0, 60))}</span></div></div></div>`).join("")
+      : '<p class="empty">Aucune conversation.</p>';
+  }
+  el.innerHTML = h;
+}
+$("q").oninput = renderList;
+$("tChats").onclick = () => { tab = "chats"; renderList(); };
+$("tPeople").onclick = () => { tab = "people"; renderList(); };
+$("tAdmin").onclick = () => { tab = "admin"; renderList(); };
+$("list").addEventListener("click", e => {
+  const r = e.target.closest(".row"); if (!r) return;
+  if (r.dataset.conv) { aconv = r.dataset.conv; chat = null; openPane(true); return; }
+  aconv = null; chat = { uid: r.dataset.chat, nom: r.dataset.nom }; openPane(false);
+});
+
+function openFromHash() {
+  const h = decodeURIComponent((location.hash || "").slice(1));
+  if (!h || chat || aconv) return;
+  const m = members.find(x => x.uid === h);
+  if (m) { chat = { uid: m.uid, nom: m.nom }; openPane(false); }
+}
+
+/* ── Conversation ── */
+function openPane(readOnly) {
+  $("ph").style.display = "none"; $("chatbox").style.display = "flex";
+  document.body.classList.add("chat-open");
+  $("composer").style.display = readOnly ? "none" : "";
+  $("cnote").textContent = readOnly ? "🛡️ Mode supervision : lecture seule." : "🔒 Pour la sécurité des élèves, l’administration du club peut consulter les messages.";
+  clearPending();
+  renderHead(); renderChat(true); renderList();
+  if (!readOnly) $("inp").focus({ preventScroll: true });
+}
+function closePane() {
+  chat = null; aconv = null; document.body.classList.remove("chat-open");
+  $("chatbox").style.display = "none"; $("ph").style.display = "";
+  history.replaceState(null, "", location.pathname); renderList();
+}
+$("back").onclick = closePane;
+
+function renderHead() {
+  if (aconv) {
+    const l = allMsgs.filter(m => m.conv === aconv);
+    $("cav").className = "av sm"; $("cav").textContent = "🛡️"; $("cav").style.backgroundImage = "";
+    $("cname").textContent = l.length ? l[0].deNom + " ↔ " + l[0].aNom : "Conversation";
+    $("csub").textContent = "Supervision"; return;
+  }
+  if (!chat) return;
+  const p = mem[chat.uid] && mem[chat.uid].photo;
+  $("cav").className = "av sm" + (p ? " has" : ""); $("cav").textContent = ini(chat.nom);
+  $("cav").style.backgroundImage = p ? `url('${p}')` : "";
+  $("cname").textContent = chat.nom;
+  $("csub").textContent = (mem[chat.uid] && mem[chat.uid].classe) || "Club Réussir Ensemble";
+}
+
+function bubble(m, withName) {
+  const mine = m.de === me.uid && !aconv;
+  const media = m.mediaUrl ? (m.mediaType === "video"
+    ? `<video src="${esc(m.mediaUrl)}" controls preload="metadata" playsinline></video>`
+    : `<img src="${esc(m.mediaUrl)}" alt="Photo" loading="lazy" data-zoom="${esc(m.mediaUrl)}">`) : "";
+  const txt = m.mediaUrl && /^(📷 Photo|🎥 Vidéo)$/.test(m.texte || "") ? "" : (m.texte || "");
+  const tick = mine ? `<span class="tick ${m.lu ? "lu" : ""}">${m.lu ? "✓✓" : "✓"}</span>` : "";
+  return `<div class="bw ${mine ? "me" : ""}"><div class="bb">${withName ? `<div class="who">${esc(m.deNom)}</div>` : ""}${media}${txt ? `<p>${esc(txt)}</p>` : ""}<div class="meta"><span>${hhmm(m.createdAt)}</span>${tick}</div></div></div>`;
+}
+let lastCount = -1;
+function renderChat(force) {
+  const l = aconv ? allMsgs.filter(m => m.conv === aconv) : (chat ? msgs.filter(m => m.conv === convId(me.uid, chat.uid)) : []);
+  const box = $("msgs"), nearEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+  let h = "", last = "";
+  l.forEach(m => {
+    const d = new Date(m.createdAt).toDateString();
+    if (d !== last) { h += `<div class="day">${esc(dayLabel(m.createdAt))}</div>`; last = d; }
+    h += bubble(m, !!aconv);
+  });
+  box.innerHTML = h || '<p class="empty">Écris le premier message 👋</p>';
+  if (force || nearEnd || l.length !== lastCount) box.scrollTop = box.scrollHeight;
+  lastCount = l.length;
+  if (!aconv && chat && document.visibilityState === "visible") {
+    l.filter(m => m.a === me.uid && !m.lu).forEach(m => updateDoc(doc(fbDB, M, m.id), { lu: true }).catch(() => {}));
+  }
+}
+document.addEventListener("visibilitychange", () => { if (chat) renderChat(); });
+
+/* Visionneuse photo */
+$("msgs").addEventListener("click", e => {
+  const z = e.target.closest("[data-zoom]"); if (!z) return;
+  $("vm").innerHTML = `<img src="${esc(z.dataset.zoom)}" alt="">`; $("vw").classList.add("open");
+});
+$("vx").onclick = () => $("vw").classList.remove("open");
+$("vw").onclick = e => { if (e.target.id === "vw") $("vw").classList.remove("open"); };
+
+/* ── Envoi ── */
+$("emo").innerHTML = EMOJIS.map(x => `<button type="button">${x}</button>`).join("");
+$("emoBtn").onclick = () => $("emo").classList.toggle("open");
+$("emo").addEventListener("click", e => {
+  if (e.target.tagName !== "BUTTON") return;
+  const i = $("inp"); i.value += e.target.textContent; i.focus();
+});
+const grow = () => { const i = $("inp"); i.style.height = "auto"; i.style.height = Math.min(i.scrollHeight, 120) + "px"; };
+$("inp").addEventListener("input", grow);
+$("inp").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey && window.matchMedia("(hover:hover)").matches) { e.preventDefault(); sendMsg(); }
+});
+$("send").onclick = sendMsg;
+
+function clearPending() { pending = null; $("file").value = ""; $("prev").style.display = "none"; $("prev").innerHTML = ""; }
+$("attBtn").onclick = () => $("file").click();
+$("file").onchange = () => {
+  const f = $("file").files[0]; if (!f) return;
+  if (f.type.startsWith("video") && f.size > MAX_VIDEO) { alert("Vidéo trop lourde (30 Mo maximum)."); $("file").value = ""; return; }
+  pending = f;
+  const u = URL.createObjectURL(f), v = f.type.startsWith("video");
+  $("prev").innerHTML = (v ? `<video src="${u}" muted></video>` : `<img src="${u}" alt="">`) + `<span>${esc(f.name)}</span><button type="button" id="px" aria-label="Retirer">✕</button>`;
+  $("prev").style.display = "flex"; $("px").onclick = clearPending;
+};
+
+function shrink(f) {
+  return new Promise((res, rej) => {
+    const im = new Image();
+    im.onload = () => {
+      const s = Math.min(1, 1280 / Math.max(im.width, im.height)), c = document.createElement("canvas");
+      c.width = Math.round(im.width * s); c.height = Math.round(im.height * s);
+      c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+      c.toBlob(b => b ? res(b) : rej(new Error("Image illisible")), "image/jpeg", 0.8);
+    };
+    im.onerror = () => rej(new Error("Image illisible"));
+    im.src = URL.createObjectURL(f);
+  });
+}
+async function upload(f) {
+  if (!CLOUD_NAME || !UPLOAD_PRESET) throw new Error("L’envoi de photos et vidéos n’est pas encore configuré.");
+  const v = f.type.startsWith("video"), fd = new FormData();
+  fd.append("file", v ? f : await shrink(f)); fd.append("upload_preset", UPLOAD_PRESET);
+  const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${v ? "video" : "image"}/upload`, { method: "POST", body: fd });
+  const j = await r.json();
+  if (!j.secure_url) throw new Error((j.error && j.error.message) || "Échec de l’envoi");
+  return { url: j.secure_url, type: v ? "video" : "image" };
+}
+
+let sending = false;
+async function sendMsg() {
+  if (sending || !chat) return;
+  const i = $("inp"), t = i.value.trim();
+  if (!t && !pending) return;
+  sending = true; $("send").disabled = true;
+  try {
+    let media = null;
+    if (pending) media = await upload(pending);
+    const data = {
+      conv: convId(me.uid, chat.uid), membres: [me.uid, chat.uid],
+      de: me.uid, deNom: me.name, a: chat.uid, aNom: chat.nom,
+      texte: t || (media ? (media.type === "video" ? "🎥 Vidéo" : "📷 Photo") : ""),
+      lu: false, createdAt: Date.now()
+    };
+    if (media) { data.mediaUrl = media.url; data.mediaType = media.type; }
+    i.value = ""; grow(); clearPending(); $("emo").classList.remove("open");
+    await addDoc(collection(fbDB, M), data);
+  } catch (err) {
+    alert("Message non envoyé : " + (err.code || err.message));
+  } finally { sending = false; $("send").disabled = false; i.focus(); }
+}
+</script>
+</body>
+</html>
