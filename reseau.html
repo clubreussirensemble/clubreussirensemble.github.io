@@ -338,6 +338,9 @@ a{text-decoration:none;color:inherit}
       <a href="evenements.html">📅 Événements</a>
       <a href="blog.html">📰 Blog</a>
       <a href="reseau.html" class="active">💬 Réseau</a>
+      <a href="notifications.html">🔔 Notifications</a>
+      <a href="amis.html">👥 Amis</a>
+      <a href="sac.html">🎒 Mon sac</a>
       <a href="olympiades.html">🏆 Olympiades</a>
       <a href="galerie.html">🖼️ Galerie</a>
       <a href="resultats.html">📊 Résultats</a>
@@ -476,7 +479,7 @@ function mk(p) {
     + (p.texte ? `<p class="pt">${esc(p.texte)}</p>` : "")
     + (p.mediaType === "image" ? `<img class="pm" loading="eager" decoding="async" alt="" src="${esc(p.mediaUrl)}">` : p.mediaType === "video" ? `<video class="pm" controls muted loop autoplay preload="auto" playsinline webkit-playsinline src="${esc(p.mediaUrl)}#t=0.1"></video>` : "")
     + `<div class="st"><span class="nl"></span><span class="nc"></span></div>
-<div class="ac"><button class="lk" data-act="like">👍 J’aime</button><button data-act="cm">💬 Commenter</button></div>
+<div class="ac"><button class="lk" data-act="like">👍 J’aime</button><button data-act="cm">💬 Commenter</button><button data-act="save">🎒 Enregistrer</button></div>
 <div class="cm" style="display:none"><div class="cl"></div><div class="cw"><input class="ci" maxlength="500" placeholder="Écris un commentaire…"><button data-act="sendc">Envoyer</button></div></div>`;
   const v = el.querySelector("video"); if (v) io.observe(v);
   return el;
@@ -508,14 +511,20 @@ $("more").onclick = () => { shown += 8; render(); };
 
 /* ===== Barre du haut + colonne de droite ===== */
 function rxMe() {
+  setTimeout(() => {
+    const h = location.hash;
+    if (h === "#settings") { fillSet(); $("rxSet").classList.add("open"); }
+    else if (h === "#messages") { $("mbtn").click(); goTop(); }
+    else if (h.startsWith("#chat=")) { const m = allMem[h.slice(6)]; if (m) { chat = { uid: m.uid, nom: m.nom }; panel = "m"; showPanel(); goTop(); } }
+  }, 1800);
   $("meAv").dataset.u = me.uid; $("rxUav").dataset.u = me.uid;
   $("rxUav").textContent = ini(me.name); $("rxUname").textContent = me.name.split(" ")[0]; $("rxUser").href = "espace-eleve.html";
   $("txt").placeholder = "Quoi de neuf, " + me.name.split(" ")[0] + " ? Écris quelque chose…";
 }
 const goTop = () => $("npanel").scrollIntoView({ behavior: "smooth", block: "start" });
 $("rxM").onclick = () => { if (!me) return; $("mbtn").click(); goTop(); };
-$("rxN").onclick = () => { if (!me) return; $("nbtn").click(); goTop(); };
-$("rxA").onclick = () => { if (!me) return; tab = "__s"; shown = 8; renderTabs(); render(); $("tabs").scrollIntoView({ behavior: "smooth", block: "start" }); };
+$("rxN").onclick = () => { location.href = "notifications.html"; };
+$("rxA").onclick = () => { location.href = "amis.html"; };
 [["ncnt", "rxNb"], ["mcnt", "rxMb"]].forEach(([a, b]) => {
   const sync = () => { const n = ($(a).textContent || "").replace(/[()]/g, ""); $(b).textContent = n; $(b).classList.toggle("on", !!n); };
   new MutationObserver(sync).observe($(a), { childList: true, characterData: true, subtree: true }); sync();
@@ -609,6 +618,12 @@ $("feed").addEventListener("click", async e => {
       const had = mySuit.includes(p.uid); mySuit = had ? mySuit.filter(x => x !== p.uid) : [...mySuit, p.uid]; render();
       await setDoc(doc(fbDB, "reseau_membres", me.uid), { suit: mySuit }, { merge: true });
       if (!had) notify({ uid: p.uid, id: "" }, "follow");
+    } else if (act === "save") {
+      const cur = (allMem[me.uid] || {}).sac || [];
+      if (cur.some(x => x.postId === id)) { alert("Déjà dans ton sac 🎒"); return; }
+      const it = { id: "s" + Date.now(), type: "post", titre: "Publication de " + p.auteur, texte: p.texte || "", url: p.mediaUrl || "", mediaType: p.mediaType || "", postId: id, createdAt: Date.now() };
+      await setDoc(doc(fbDB, "reseau_membres", me.uid), { sac: [it, ...cur] }, { merge: true });
+      alert("Ajouté à ton sac 🎒");
     } else if (act === "rep") {
       if (confirm("Signaler cette publication à l’administrateur ?")) {
         await addDoc(collection(fbDB, "reseau_signalements"), { postId: id, par: me.uid, parNom: me.name, auteur: p.auteur, extrait: (p.texte || "[photo/vidéo]").slice(0, 80), createdAt: Date.now() });
