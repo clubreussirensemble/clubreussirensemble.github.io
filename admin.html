@@ -210,7 +210,21 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
     </div>
 
     <div id="tab-reseau" class="panel" style="display:none;padding:0">
-      <p style="margin:14px 0;color:var(--ink2);font-size:13px">Modération du réseau des élèves : supprimer des publications, commentaires et stories, traiter les signalements (🚩), lire les conversations (🛡). Tu dois être connecté en administrateur. <a href="reseau.html" target="_blank" rel="noopener" style="color:var(--blue);font-weight:700">Ouvrir dans un nouvel onglet ↗</a></p>
+      <p style="margin:14px 0;color:var(--ink2);font-size:13px">Modération du réseau des élèves : supprimer des publications, commentaires et stories, traiter les signalements (🚩), lire les conversations (🛡). Tu dois être connecté en administrateur. <a id="rxOpen" href="reseau.html" target="_blank" rel="noopener" style="color:var(--blue);font-weight:700">Ouvrir dans un nouvel onglet ↗</a></p>
+      <div id="rxPages" style="display:flex;gap:8px;overflow-x:auto;padding:0 0 10px;-webkit-overflow-scrolling:touch"><button type="button" class="rxp" data-p="reseau.html" style="flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--line,#d8dee9);background:#fff;color:#0A2A57;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">💬 Réseau</button><button type="button" class="rxp" data-p="moderation.html" style="flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--line,#d8dee9);background:#fff;color:#0A2A57;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">🛡️ Modération</button><button type="button" class="rxp" data-p="sondages.html" style="flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--line,#d8dee9);background:#fff;color:#0A2A57;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">📊 Sondages</button><button type="button" class="rxp" data-p="entraide.html" style="flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--line,#d8dee9);background:#fff;color:#0A2A57;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">🤝 Entraide</button><button type="button" class="rxp" data-p="messages.html" style="flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--line,#d8dee9);background:#fff;color:#0A2A57;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">✉️ Messages</button><button type="button" class="rxp" data-p="groupes.html" style="flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--line,#d8dee9);background:#fff;color:#0A2A57;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">👥 Groupes</button><button type="button" class="rxp" data-p="anniversaires.html" style="flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--line,#d8dee9);background:#fff;color:#0A2A57;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">🎂 Anniversaires</button><button type="button" class="rxp" data-p="profil.html" style="flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--line,#d8dee9);background:#fff;color:#0A2A57;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">👤 Profil</button><button type="button" class="rxp" data-p="parametres.html" style="flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--line,#d8dee9);background:#fff;color:#0A2A57;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">⚙️ Paramètres</button></div>
+      <script>
+      (function(){
+        var bar=document.getElementById('rxPages');
+        function mark(u){bar.querySelectorAll('.rxp').forEach(function(b){var on=b.dataset.p===u;b.style.background=on?'#0A2A57':'#fff';b.style.color=on?'#fff':'#0A2A57';});}
+        mark('reseau.html');
+        bar.addEventListener('click',function(e){
+          var b=e.target.closest('.rxp'); if(!b) return;
+          var fr=document.getElementById('reseauFrame');
+          fr.dataset.src=b.dataset.p; fr.src=b.dataset.p; mark(b.dataset.p);
+          var l=document.getElementById('rxOpen'); if(l) l.href=b.dataset.p;
+        });
+      })();
+      </script>
       <iframe id="reseauFrame" data-src="reseau.html" src="about:blank" style="width:100%;height:85vh;min-height:640px;border:0;border-radius:var(--radius);box-shadow:var(--shadow);background:#fff" title="Réseau des élèves — modération"></iframe>
     </div>
 

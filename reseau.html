@@ -342,6 +342,10 @@ a{text-decoration:none;color:inherit}
       <a href="profil.html">👤 Mon profil</a>
       <a href="groupes.html">👥 Groupes</a>
       <a href="entraide.html">🤝 Entraide</a>
+      <a href="sondages.html">📊 Sondages</a>
+      <a href="anniversaires.html">🎂 Anniversaires</a>
+      <a href="parametres.html">⚙️ Paramètres</a>
+      <a href="moderation.html" id="navMod" style="display:none">🛡️ Modération</a>
       <a href="notifications.html">🔔 Notifications</a>
       <a href="amis.html">👥 Amis</a>
       <a href="sac.html">🎒 Mon sac</a>
@@ -444,7 +448,7 @@ onAuthStateChanged(fbAuth, async user => {
     getDoc(doc(fbDB, C_ELEVES, user.uid)).catch(() => null),
     getDoc(doc(fbDB, "admins", user.uid)).catch(() => null)
   ]);
-  isAdmin = !!(a && a.exists());
+  isAdmin = !!(a && a.exists()); { const nm = document.getElementById("navMod"); if (nm) nm.style.display = isAdmin ? "" : "none"; }
   const d = e && e.exists() ? e.data() : null;
   if (!isAdmin && (!d || d.statut !== "valide")) return gate("Ton inscription doit encore être validée par un administrateur du club.");
   me = { uid: user.uid, name: d ? (d.prenom + " " + d.nom).trim() : "Administrateur", classe: d ? (d.classe || "") : "Club" };

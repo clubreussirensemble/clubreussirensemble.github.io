@@ -118,6 +118,9 @@ a{text-decoration:none;color:inherit}
   .chead .back{display:block}
   .bb{max-width:86%}
 }
+.mdel{background:none;border:0;cursor:pointer;font-size:12px;opacity:.55;padding:0 4px;margin-right:auto;line-height:1}
+.mdel:hover{opacity:1}
+.mdel:disabled{opacity:.3;cursor:default}
 </style>
 </head>
 <body>
@@ -172,7 +175,7 @@ a{text-decoration:none;color:inherit}
 <div id="vw"><button id="vx" aria-label="Fermer">✕</button><div id="vm"></div></div>
 
 <script type="module">
-import { fbAuth, fbDB, C_ELEVES, collection, doc, getDoc, setDoc, addDoc, updateDoc, query, where, onSnapshot, onAuthStateChanged } from "./firebase.js";
+import { fbAuth, fbDB, C_ELEVES, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot, onAuthStateChanged } from "./firebase.js";
 
 /* Cloudinary (mêmes réglages que reseau.html) */
 const CLOUD_NAME = "dctxjclv8", UPLOAD_PRESET = "reseau_eleves";
@@ -345,7 +348,7 @@ function bubble(m, withName) {
     : `<img src="${esc(m.mediaUrl)}" alt="Photo" loading="lazy" data-zoom="${esc(m.mediaUrl)}">`) : "";
   const txt = m.mediaUrl && /^(📷 Photo|🎥 Vidéo)$/.test(m.texte || "") ? "" : (m.texte || "");
   const tick = mine ? `<span class="tick ${m.lu ? "lu" : ""}">${m.lu ? "✓✓" : "✓"}</span>` : "";
-  return `<div class="bw ${mine ? "me" : ""}"><div class="bb">${withName ? `<div class="who">${esc(m.deNom)}</div>` : ""}${media}${txt ? `<p>${esc(txt)}</p>` : ""}<div class="meta"><span>${hhmm(m.createdAt)}</span>${tick}</div></div></div>`;
+  return `<div class="bw ${mine ? "me" : ""}"><div class="bb">${withName ? `<div class="who">${esc(m.deNom)}</div>` : ""}${media}${txt ? `<p>${esc(txt)}</p>` : ""}<div class="meta">${mine ? `<button type="button" class="mdel" data-del="${esc(m.id)}" aria-label="Supprimer ce message" title="Supprimer">🗑</button>` : ""}<span>${hhmm(m.createdAt)}</span>${tick}</div></div></div>`;
 }
 let lastCount = -1;
 function renderChat(force) {
@@ -365,6 +368,15 @@ function renderChat(force) {
   }
 }
 document.addEventListener("visibilitychange", () => { if (chat) renderChat(); });
+
+/* Suppression d'un message envoyé par moi */
+$("msgs").addEventListener("click", async e => {
+  const b = e.target.closest("[data-del]"); if (!b) return;
+  if (!confirm("Supprimer ce message pour tout le monde ?")) return;
+  b.disabled = true;
+  try { await deleteDoc(doc(fbDB, M, b.dataset.del)); }
+  catch (err) { b.disabled = false; alert("Suppression impossible : " + (err.code || err.message)); }
+});
 
 /* Visionneuse photo */
 $("msgs").addEventListener("click", e => {
