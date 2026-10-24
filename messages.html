@@ -121,6 +121,19 @@ a{text-decoration:none;color:inherit}
 .mdel{background:none;border:0;cursor:pointer;font-size:12px;opacity:.55;padding:0 4px;margin-right:auto;line-height:1}
 .mdel:hover{opacity:1}
 .mdel:disabled{opacity:.3;cursor:default}
+.callb{border:none;background:var(--paper2);color:var(--ink);font-weight:700;font-size:12.5px;padding:8px 12px;border-radius:999px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.callb:hover{background:var(--line)}
+.callj{display:inline-block;margin:4px 0 2px;background:var(--green);color:#fff!important;font-weight:700;font-size:13px;padding:8px 14px;border-radius:999px}
+.bb audio{display:block;width:240px;max-width:100%;height:40px;margin-bottom:4px}
+#rec{display:none;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border-top:1px solid var(--line);font-size:14px;color:var(--ink)}
+#rec .dot{width:11px;height:11px;border-radius:50%;background:var(--red);animation:blk 1s infinite}
+@keyframes blk{50%{opacity:.25}}
+#rec span{flex:1;font-weight:700}
+#rec button{border:none;border-radius:50%;width:40px;height:40px;font-size:17px;cursor:pointer}
+#rec #recX{background:var(--paper2);color:var(--red)}
+#rec #recOk{background:var(--blue);color:#fff}
+#micBtn.on{color:var(--red)}
+@media (max-width:420px){.callb{padding:8px 9px;font-size:12px}}
 </style>
 </head>
 <body>
@@ -155,16 +168,20 @@ a{text-decoration:none;color:inherit}
       <div class="chead">
         <button class="back" id="back" aria-label="Retour">←</button>
         <div class="av sm" id="cav"></div>
-        <div><b id="cname"></b><small id="csub"></small></div>
+        <div style="min-width:0;flex:1"><b id="cname"></b><small id="csub"></small></div>
+        <button class="callb" id="callMeet" type="button" title="Appel vidéo Google Meet">📹 Meet</button>
+        <button class="callb" id="callJitsi" type="button" title="Appel vidéo Jitsi Meet">📞 Jitsi</button>
       </div>
       <div id="msgs"></div>
       <div class="note" id="cnote">🔒 Pour la sécurité des élèves, l’administration du club peut consulter les messages.</div>
       <div id="prev"></div>
+      <div id="rec"><i class="dot"></i><span id="recT">0:00</span><button type="button" id="recX" aria-label="Annuler">✕</button><button type="button" id="recOk" aria-label="Envoyer le vocal">➤</button></div>
       <div class="composer" id="composer">
         <div id="emo"></div>
         <button class="cbtn" id="emoBtn" aria-label="Émojis">😊</button>
         <button class="cbtn" id="attBtn" aria-label="Joindre une photo ou une vidéo">📎</button>
         <input type="file" id="file" accept="image/*,video/*" hidden>
+        <button class="cbtn" id="micBtn" aria-label="Message vocal" title="Message vocal">🎤</button>
         <textarea id="inp" rows="1" maxlength="1000" placeholder="Écris un message…"></textarea>
         <button class="cbtn send" id="send" aria-label="Envoyer">➤</button>
       </div>
@@ -266,7 +283,7 @@ function convRows(src) {
   const c = {}; src.forEach(m => c[m.conv] = m);
   return Object.values(c).sort((a, b) => b.createdAt - a.createdAt);
 }
-const preview = m => m.mediaUrl ? (m.mediaType === "video" ? "🎥 Vidéo" : "📷 Photo") : (m.texte || "");
+const preview = m => m.mediaUrl ? (m.mediaType === "audio" ? "🎤 Message vocal" : m.mediaType === "video" ? "🎥 Vidéo" : "📷 Photo") : (m.texte || "");
 function renderList() {
   if (!me) return;
   const q = $("q").value.trim().toLowerCase(), el = $("list");
@@ -315,11 +332,12 @@ function openPane(readOnly) {
   document.body.classList.add("chat-open");
   $("composer").style.display = readOnly ? "none" : "";
   $("cnote").textContent = readOnly ? "🛡️ Mode supervision : lecture seule." : "🔒 Pour la sécurité des élèves, l’administration du club peut consulter les messages.";
-  clearPending();
+  stopRec(true); clearPending();
   renderHead(); renderChat(true); renderList();
   if (!readOnly) $("inp").focus({ preventScroll: true });
 }
 function closePane() {
+  stopRec(true);
   chat = null; aconv = null; document.body.classList.remove("chat-open");
   $("chatbox").style.display = "none"; $("ph").style.display = "";
   history.replaceState(null, "", location.pathname); renderList();
@@ -327,6 +345,7 @@ function closePane() {
 $("back").onclick = closePane;
 
 function renderHead() {
+  $("callMeet").style.display = $("callJitsi").style.display = aconv ? "none" : "";
   if (aconv) {
     const l = allMsgs.filter(m => m.conv === aconv);
     $("cav").className = "av sm"; $("cav").textContent = "🛡️"; $("cav").style.backgroundImage = "";
@@ -343,12 +362,13 @@ function renderHead() {
 
 function bubble(m, withName) {
   const mine = m.de === me.uid && !aconv;
-  const media = m.mediaUrl ? (m.mediaType === "video"
+  const media = m.mediaUrl ? (m.mediaType === "audio" ? `<audio src="${esc(m.mediaUrl)}" controls preload="metadata"></audio>` : m.mediaType === "video"
     ? `<video src="${esc(m.mediaUrl)}" controls preload="metadata" playsinline></video>`
     : `<img src="${esc(m.mediaUrl)}" alt="Photo" loading="lazy" data-zoom="${esc(m.mediaUrl)}">`) : "";
-  const txt = m.mediaUrl && /^(📷 Photo|🎥 Vidéo)$/.test(m.texte || "") ? "" : (m.texte || "");
+  const txt = m.mediaUrl && /^(📷 Photo|🎥 Vidéo|🎤 Message vocal)$/.test(m.texte || "") ? "" : (m.texte || "");
   const tick = mine ? `<span class="tick ${m.lu ? "lu" : ""}">${m.lu ? "✓✓" : "✓"}</span>` : "";
-  return `<div class="bw ${mine ? "me" : ""}"><div class="bb">${withName ? `<div class="who">${esc(m.deNom)}</div>` : ""}${media}${txt ? `<p>${esc(txt)}</p>` : ""}<div class="meta">${mine ? `<button type="button" class="mdel" data-del="${esc(m.id)}" aria-label="Supprimer ce message" title="Supprimer">🗑</button>` : ""}<span>${hhmm(m.createdAt)}</span>${tick}</div></div></div>`;
+  const call = callOk(m.callUrl) ? `<a class="callj" href="${esc(m.callUrl)}" target="_blank" rel="noopener noreferrer">📞 Rejoindre l’appel ${m.callType === "meet" ? "Google Meet" : "Jitsi"}</a>` : "";
+  return `<div class="bw ${mine ? "me" : ""}"><div class="bb">${withName ? `<div class="who">${esc(m.deNom)}</div>` : ""}${media}${txt ? `<p>${esc(txt)}</p>` : ""}${call}<div class="meta">${mine ? `<button type="button" class="mdel" data-del="${esc(m.id)}" aria-label="Supprimer ce message" title="Supprimer">🗑</button>` : ""}<span>${hhmm(m.createdAt)}</span>${tick}</div></div></div>`;
 }
 let lastCount = -1;
 function renderChat(force) {
@@ -456,6 +476,95 @@ async function sendMsg() {
     alert("Message non envoyé : " + (err.code || err.message));
   } finally { sending = false; $("send").disabled = false; i.focus(); }
 }
+
+/* ── Appels vidéo : Google Meet / Jitsi Meet (lien envoyé dans la discussion) ── */
+const callOk = u => typeof u === "string" && /^https:\/\/(meet\.jit\.si|meet\.google\.com)\/[\w\-./?=&%]+$/i.test(u);
+async function sendCall(url, type) {
+  if (!chat) return;
+  try {
+    await addDoc(collection(fbDB, M), {
+      conv: convId(me.uid, chat.uid), membres: [me.uid, chat.uid],
+      de: me.uid, deNom: me.name, a: chat.uid, aNom: chat.nom,
+      texte: "📞 Appel vidéo " + (type === "meet" ? "Google Meet" : "Jitsi"),
+      callUrl: url, callType: type, lu: false, createdAt: Date.now()
+    });
+  } catch (err) { alert("Invitation non envoyée : " + (err.code || err.message)); }
+}
+$("callJitsi").onclick = () => {
+  if (!chat) return;
+  if (!confirm("Lancer un appel vidéo Jitsi avec " + chat.nom + " ?\nUne invitation sera envoyée dans la discussion.")) return;
+  const room = "CRE" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  const url = "https://meet.jit.si/" + room;
+  window.open(url, "_blank", "noopener");
+  sendCall(url, "jitsi");
+};
+$("callMeet").onclick = () => {
+  if (!chat) return;
+  window.open("https://meet.google.com/new", "_blank", "noopener");
+  const l = prompt("Google Meet vient de s’ouvrir.\nCrée la réunion, copie son lien (https://meet.google.com/xxx-xxxx-xxx) et colle-le ici pour l’envoyer à " + chat.nom + " :");
+  if (!l) return;
+  const url = l.trim();
+  if (!/^https:\/\/meet\.google\.com\/[a-z0-9\-]+(\?.*)?$/i.test(url)) { alert("Lien Google Meet invalide."); return; }
+  sendCall(url, "meet");
+};
+
+/* ── Messages vocaux ── */
+const MAX_REC = 300; // secondes
+let rec = null, recChunks = [], recTimer = null, recStart = 0, recCancel = false;
+const mmss = t => Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0");
+async function startRec() {
+  if (!chat || rec) return;
+  if (!navigator.mediaDevices || !window.MediaRecorder) { alert("Ton navigateur ne permet pas l’enregistrement audio."); return; }
+  try {
+    const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mt = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"].find(t => MediaRecorder.isTypeSupported(t)) || "";
+    rec = new MediaRecorder(st, mt ? { mimeType: mt } : undefined);
+    recChunks = []; recCancel = false;
+    rec.ondataavailable = e => { if (e.data && e.data.size) recChunks.push(e.data); };
+    rec.onstop = onRecStop;
+    rec.start(); recStart = Date.now();
+    $("rec").style.display = "flex"; $("micBtn").classList.add("on"); $("recT").textContent = "0:00";
+    recTimer = setInterval(() => {
+      const t = Math.round((Date.now() - recStart) / 1000);
+      $("recT").textContent = mmss(t);
+      if (t >= MAX_REC) stopRec(false);
+    }, 500);
+  } catch (e) { rec = null; alert("Micro inaccessible : " + (e.message || e)); }
+}
+function stopRec(cancel) {
+  if (!rec) return;
+  recCancel = !!cancel; clearInterval(recTimer);
+  try { if (rec.state !== "inactive") rec.stop(); } catch (e) {}
+  try { rec.stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+}
+async function onRecStop() {
+  const type = (rec && rec.mimeType) || "audio/webm", dur = Math.round((Date.now() - recStart) / 1000);
+  rec = null; $("rec").style.display = "none"; $("micBtn").classList.remove("on");
+  if (recCancel || dur < 1 || !recChunks.length || !chat) return;
+  await sendAudio(new Blob(recChunks, { type }), dur);
+}
+async function sendAudio(blob, dur) {
+  if (sending) return;
+  sending = true; $("send").disabled = true;
+  try {
+    if (!CLOUD_NAME || !UPLOAD_PRESET) throw new Error("L’envoi n’est pas encore configuré.");
+    const ext = blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm";
+    const fd = new FormData(); fd.append("file", blob, "vocal." + ext); fd.append("upload_preset", UPLOAD_PRESET);
+    const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`, { method: "POST", body: fd });
+    const j = await r.json();
+    if (!j.secure_url) throw new Error((j.error && j.error.message) || "Échec de l’envoi");
+    await addDoc(collection(fbDB, M), {
+      conv: convId(me.uid, chat.uid), membres: [me.uid, chat.uid],
+      de: me.uid, deNom: me.name, a: chat.uid, aNom: chat.nom,
+      texte: "🎤 Message vocal", mediaUrl: j.secure_url, mediaType: "audio", duree: dur,
+      lu: false, createdAt: Date.now()
+    });
+  } catch (err) { alert("Vocal non envoyé : " + (err.code || err.message)); }
+  finally { sending = false; $("send").disabled = false; }
+}
+$("micBtn").onclick = startRec;
+$("recX").onclick = () => stopRec(true);
+$("recOk").onclick = () => stopRec(false);
 </script>
 </body>
 </html>

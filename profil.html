@@ -180,17 +180,56 @@ function renderProf() {
     <div class="pill" style="margin-bottom:12px"><b>${posts.length}</b> publication${posts.length > 1 ? "s" : ""} · <b>${(m.amis || []).length}</b> ami${(m.amis || []).length > 1 ? "s" : ""} · <b>${(m.suit || []).length}</b> abonnement${(m.suit || []).length > 1 ? "s" : ""}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       ${mine ? (editing ? '<button class="btn ok" id="bSave">💾 Enregistrer</button><button class="btn gr" id="bCancel">Annuler</button>' : '<button class="btn" id="bEdit">✏️ Modifier ma présentation</button><button class="btn gr" id="bPhoto">📷 Changer ma photo</button>')
-        : `<a class="btn" href="messages.html#${esc(target)}">✉️ Écrire</a><button class="btn gr" id="bFollow">${suit.includes(target) ? "✓ Abonné" : "➕ S’abonner"}</button>`}
+        : `<a class="btn" href="messages.html#${esc(target)}">✉️ Écrire</a><button class="btn gr" id="bFollow">${suit.includes(target) ? "✓ Abonné" : "➕ S’abonner"}</button>${isAdmin ? '<button class="btn" id="bDelAcc" style="background:#C0392B;color:#fff">🗑 Supprimer le compte</button>' : ""}`}
     </div></div></div>`;
   const g = id => $(id);
   if (g("bEdit")) g("bEdit").onclick = () => { editing = true; renderProf(); };
   if (g("bCancel")) g("bCancel").onclick = () => { editing = false; renderProf(); };
   if (g("bSave")) g("bSave").onclick = async () => { try { await setDoc(memRef(me.uid), { bio: g("bio").value.trim().slice(0, 200) }, { merge: true }); editing = false; } catch (e) { alert("Erreur : " + (e.code || e.message)); } };
   if (g("bPhoto")) g("bPhoto").onclick = () => $("pf").click();
+  if (g("bDelAcc")) g("bDelAcc").onclick = () => purgeAccount(target, nom);
   if (g("bFollow")) g("bFollow").onclick = async () => {
     const cur = (mem[me.uid] && mem[me.uid].suit) || [], n = cur.includes(target) ? cur.filter(x => x !== target) : [...cur, target];
     try { await setDoc(memRef(me.uid), { suit: n }, { merge: true }); } catch (e) { alert("Erreur : " + (e.code || e.message)); }
   };
+}
+/* ── Admin : supprimer entièrement le compte d'un élève (réseau + fiche du site) ── */
+const once = q => new Promise(res => { let u = null; u = onSnapshot(q, sn => { if (u) u(); res(sn.docs); }, () => res([])); });
+async function purgeAccount(uid, nom) {
+  if (!isAdmin || !uid || uid === me.uid) return;
+  if (!confirm("Supprimer DÉFINITIVEMENT le compte de « " + nom + " » ?\n\nSes publications, commentaires, stories, questions, sondages, messages et sa fiche élève seront effacés. Il ne pourra plus se connecter au club.")) return;
+  const btn = $("bDelAcc"); if (btn) { btn.disabled = true; btn.textContent = "Suppression…"; }
+  const C = n => collection(fbDB, n), W = (f, v) => where(f, "==", v);
+  try {
+    const del = async (name, docs) => { await Promise.all(docs.map(d => deleteDoc(doc(fbDB, name, d.id)))); return docs.length; };
+    const myPosts = await once(query(C("reseau_posts"), W("uid", uid)));
+    const myQs = await once(query(C("reseau_questions"), W("uid", uid)));
+    const myPolls = await once(query(C("reseau_sondages"), W("uid", uid)));
+    // éléments liés à ses publications / questions / sondages (posés par d'autres)
+    for (const p of myPosts) await del("reseau_commentaires", await once(query(C("reseau_commentaires"), W("postId", p.id))));
+    for (const q of myQs) await del("reseau_reponses", await once(query(C("reseau_reponses"), W("qid", q.id))));
+    for (const s of myPolls) await del("reseau_votes", await once(query(C("reseau_votes"), W("pid", s.id))));
+    // ses propres contenus
+    await del("reseau_posts", myPosts);
+    await del("reseau_questions", myQs);
+    await del("reseau_sondages", myPolls);
+    await del("reseau_commentaires", await once(query(C("reseau_commentaires"), W("uid", uid))));
+    await del("reseau_reponses", await once(query(C("reseau_reponses"), W("uid", uid))));
+    await del("reseau_votes", await once(query(C("reseau_votes"), W("uid", uid))));
+    await del("reseau_stories", await once(query(C("reseau_stories"), W("uid", uid))));
+    await del("reseau_signalements", await once(query(C("reseau_signalements"), W("par", uid))));
+    await del("reseau_messages", await once(query(C("reseau_messages"), where("membres", "array-contains", uid))));
+    await del("reseau_notifs", await once(query(C("reseau_notifs"), W("to", uid))));
+    await del("reseau_notifs", await once(query(C("reseau_notifs"), W("fromUid", uid))));
+    // profil réseau, puis fiche élève du site
+    await deleteDoc(doc(fbDB, "reseau_membres", uid));
+    await deleteDoc(doc(fbDB, C_ELEVES, uid));
+    alert("Compte supprimé.");
+    location.href = "reseau.html";
+  } catch (e) {
+    alert("Suppression incomplète : " + (e.code || e.message) + "\nVérifie que les règles Firestore ont été mises à jour, puis recommence.");
+    if (btn) { btn.disabled = false; btn.textContent = "🗑 Supprimer le compte"; }
+  }
 }
 $("pf").onchange = async () => {
   const f = $("pf").files[0]; if (!f) return;
