@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Paramètres — Club Réussir Ensemble</title>
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<link rel="apple-touch-icon" href="/icon-512.png">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0A2A57;--navy-deep:#071A38;--blue:#2563EB;--blue-deep:#1D4ED8;--green:#17A34A;--red:#D9060C;--gold:#FAB202;--ink:#0F172A;--ink2:#5B6B85;--paper:#F5F8FC;--paper2:#EEF2F8;--line:#E3E9F2;--card:#FFFFFF;--shadow:0 6px 24px rgba(10,42,87,.08)}
+:root[data-theme="dark"]{--ink:#EAF0FA;--ink2:#9FB0C8;--paper:#0B1626;--paper2:#111F35;--line:#22314A;--card:#101E33;--navy-deep:#050D1A;--shadow:0 6px 24px rgba(0,0,0,.35)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:'Work Sans',sans-serif;background:var(--paper);color:var(--ink)}
+button,input,textarea,select{font-family:inherit}
+a{text-decoration:none;color:inherit}
+h1,h2,h3{font-family:'Poppins',sans-serif;margin:0;line-height:1.2}
+.bar{position:sticky;top:0;z-index:50;background:var(--navy-deep);color:#fff;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top))}
+.bar .r1{display:flex;align-items:center;gap:10px}
+.bar a.back{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:18px}
+.bar b{font:800 16px 'Poppins',sans-serif;line-height:1.1}
+.bar small{display:block;color:var(--gold);font-size:10.5px;font-weight:700;letter-spacing:.06em}
+.sp{flex:1}
+.ib{width:36px;height:36px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:16px;cursor:pointer}
+.nav{display:flex;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px}
+.nav a{flex:0 0 auto;color:#C7D2E6;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.07)}
+.nav a.on{background:var(--blue);color:#fff}
+.wrap{max-width:720px;margin:0 auto;padding:14px 12px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
+#gate{padding:40px 20px;text-align:center;color:var(--ink2);font-size:15px}
+.btn{border:none;background:var(--blue);color:#fff;font-weight:700;font-size:14px;padding:10px 18px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--blue-deep)}
+.btn:disabled{opacity:.5}
+.btn.gr{background:var(--paper2);color:var(--ink)}
+.btn.ok{background:var(--green)}
+.btn.sm{padding:6px 12px;font-size:12.5px}
+.av{width:44px;height:44px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font:700 14px 'Poppins',sans-serif;flex-shrink:0;background-size:cover;background-position:center}
+.av.has{color:transparent;font-size:0}
+.av.sm{width:34px;height:34px;font-size:12px}
+.av.xl{width:96px;height:96px;font-size:30px;border:4px solid var(--card)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px}
+.chip{flex:0 0 auto;border:none;background:var(--card);border:1px solid var(--line);color:var(--ink2);font-weight:600;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer}
+.chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.empty{color:var(--ink2);text-align:center;padding:30px 16px;font-size:14px}
+.in,.ta,.sel{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 14px;background:var(--paper2);color:var(--ink);font-size:14.5px;outline:none}
+.ta{resize:vertical;min-height:80px}
+.ph{display:flex;gap:10px;align-items:center;padding:12px 14px}
+.ph div.t{flex:1;min-width:0;line-height:1.3}
+.ph small{display:block;color:var(--ink2);font-size:12px}
+.pt{padding:0 14px 12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px}
+.pm{width:100%;max-height:520px;object-fit:cover;background:#000;display:block}
+.pf{display:flex;gap:8px;align-items:center;border-top:1px solid var(--line);padding:6px 10px;font-size:13px;color:var(--ink2)}
+.pf button{border:none;background:none;font:600 13.5px 'Work Sans',sans-serif;color:var(--ink2);cursor:pointer;padding:8px 10px;border-radius:8px}
+.pf button:hover{background:var(--paper2)}
+.pf button.on{color:var(--blue)}
+.tag{display:inline-block;background:rgba(37,99,235,.12);color:var(--blue);font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px}
+.tag.g{background:rgba(23,163,74,.14);color:var(--green)}
+.tag.y{background:rgba(250,178,2,.2);color:#9a6b00}
+.row{display:flex;gap:10px;align-items:center;padding:6px 0}
+.pill{font-size:12px;color:var(--ink2)}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="r1">
+    <a class="back" href="reseau.html" aria-label="Retour au réseau">←</a>
+    <div><b>Paramètres</b><small>CLUB RÉUSSIR ENSEMBLE</small></div>
+    <span class="sp"></span>
+    <button class="ib" id="themeBtn" aria-label="Thème">🌙</button>
+  </div>
+  <nav class="nav">
+    <a href="reseau.html" class="">🏠 Réseau</a>
+    <a href="messages.html" class="">✉️ Messages</a>
+    <a href="profil.html" class="">👤 Profil</a>
+    <a href="groupes.html" class="">👥 Groupes</a>
+    <a href="entraide.html" class="">🤝 Entraide</a>
+    <a href="sondages.html" class="">📊 Sondages</a>
+    <a href="anniversaires.html" class="">🎂 Anniversaires</a>
+    <a href="parametres.html" class="on">⚙️ Paramètres</a>
+    <a href="moderation.html" class="" id="navMod" style="display:none">🛡️ Modération</a>
+  </nav>
+</header>
+<div id="gate">Chargement…</div>
+<main class="wrap" id="app" style="display:none">
+
+<div class="card" style="padding:16px">
+  <h3 style="font-size:17px;margin-bottom:12px">👤 Mon profil</h3>
+  <div class="row"><div id="pav" class="av xl"></div><div style="flex:1;min-width:0"><b id="pnom" style="font-size:16px"></b><div class="pill" id="pcl"></div><button class="btn gr sm" id="pphoto" style="margin-top:8px">📷 Changer ma photo</button> <button class="btn gr sm" id="pphotodel" style="margin-top:8px;color:var(--red)">Retirer</button></div></div>
+  <textarea class="ta" id="pbio" maxlength="200" placeholder="Ta présentation (200 caractères max)" style="margin-top:12px"></textarea>
+  <div style="display:flex;align-items:center;gap:10px;margin-top:10px"><button class="btn" id="pbsave">💾 Enregistrer</button><span class="pill" id="pmsg"></span></div>
+  <input type="file" id="pfile" accept="image/*" hidden>
+</div>
+<div class="card" style="padding:16px">
+  <h3 style="font-size:17px;margin-bottom:6px">🔒 Qui peut m’écrire ?</h3>
+  <p class="pill" style="margin:0 0 10px">L’administration du club peut toujours t’écrire.</p>
+  <label class="row"><input type="radio" name="pm" value="tous"> Tous les élèves du club</label>
+  <label class="row"><input type="radio" name="pm" value="amis"> Mes amis seulement</label>
+  <label class="row"><input type="radio" name="pm" value="personne"> Personne (messages désactivés)</label>
+</div>
+<div class="card" style="padding:16px">
+  <h3 style="font-size:17px;margin-bottom:10px">🚫 Élèves bloqués</h3>
+  <div style="display:flex;gap:8px"><select class="sel" id="bsel" style="flex:1"></select><button class="btn" id="bblock">Bloquer</button></div>
+  <div id="blist" style="margin-top:10px"></div>
+</div>
+<div class="card" style="padding:16px">
+  <h3 style="font-size:17px;margin-bottom:10px">🎨 Apparence</h3>
+  <div style="display:flex;gap:8px"><button class="btn gr" id="tl">☀️ Clair</button><button class="btn gr" id="td">🌙 Sombre</button></div>
+</div>
+<div class="card" style="padding:16px">
+  <h3 style="font-size:17px;margin-bottom:10px">🚪 Compte</h3>
+  <button class="btn gr" id="logout" style="color:var(--red)">Se déconnecter</button>
+</div>
+</main>
+
+<script type="module">
+import { fbAuth, fbDB, C_ELEVES, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot, onAuthStateChanged } from "./firebase.js";
+const CLOUD_NAME = "dctxjclv8", UPLOAD_PRESET = "reseau_eleves", MAX_VIDEO = 30 * 1024 * 1024;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ini = n => String(n || "?").split(" ").map(x => x[0]).slice(0, 2).join("").toUpperCase();
+const ago = t => { const s = (Date.now() - t) / 1000; if (s < 60) return "à l’instant"; if (s < 3600) return Math.floor(s / 60) + " min"; if (s < 86400) return Math.floor(s / 3600) + " h"; if (s < 604800) return Math.floor(s / 86400) + " j"; return new Date(t).toLocaleDateString("fr-FR"); };
+let me = null, isAdmin = false, mem = {}, init = () => {}, onMem = () => {}, subs = [];
+const clearSubs = () => { subs.forEach(u => u && u()); subs = []; };
+
+function applyTheme(t) { document.documentElement.setAttribute("data-theme", t); $("themeBtn").textContent = t === "dark" ? "☀️" : "🌙"; try { localStorage.setItem("cre-theme", t); } catch (e) {} }
+let th = "light"; try { th = localStorage.getItem("cre-theme") || "light"; } catch (e) {}
+applyTheme(th);
+$("themeBtn").onclick = () => applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+
+function gate(msg, login) {
+  $("app").style.display = "none"; $("gate").style.display = "";
+  $("gate").innerHTML = esc(msg) + (login ? '<br><br><a class="btn" href="espace-eleve.html">Se connecter</a>' : "");
+}
+function av(uid, nom, cls) {
+  const p = mem[uid] && mem[uid].photo;
+  return `<a href="profil.html#${esc(uid)}" class="av ${cls || ""} ${p ? "has" : ""}" ${p ? `style="background-image:url('${esc(p)}')"` : ""}>${esc(ini(nom))}</a>`;
+}
+function shrink(f) {
+  return new Promise((res, rej) => {
+    const im = new Image();
+    im.onload = () => { const s = Math.min(1, 1280 / Math.max(im.width, im.height)), c = document.createElement("canvas"); c.width = Math.round(im.width * s); c.height = Math.round(im.height * s); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); c.toBlob(b => b ? res(b) : rej(new Error("Image illisible")), "image/jpeg", 0.8); };
+    im.onerror = () => rej(new Error("Image illisible")); im.src = URL.createObjectURL(f);
+  });
+}
+async function upload(f) {
+  const v = f.type.startsWith("video"), fd = new FormData();
+  if (v && f.size > MAX_VIDEO) throw new Error("Vidéo trop lourde (30 Mo maximum).");
+  fd.append("file", v ? f : await shrink(f)); fd.append("upload_preset", UPLOAD_PRESET);
+  const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${v ? "video" : "image"}/upload`, { method: "POST", body: fd });
+  const j = await r.json();
+  if (!j.secure_url) throw new Error((j.error && j.error.message) || "Échec de l’envoi");
+  return { url: j.secure_url, type: v ? "video" : "image" };
+}
+function postHtml(p) {
+  const l = p.likes || [], on = l.includes(me.uid);
+  const media = p.mediaUrl ? (p.mediaType === "video" ? `<video class="pm" src="${esc(p.mediaUrl)}" controls preload="metadata" playsinline></video>` : `<img class="pm" src="${esc(p.mediaUrl)}" alt="" loading="lazy">`) : "";
+  return `<article class="card"><div class="ph">${av(p.uid, p.auteur, "")}<div class="t"><b>${esc(p.auteur)}</b>${p.annonce ? ' <span class="tag y">📌 Annonce</span>' : ""}<small>${esc(p.classe || "")} · ${ago(p.createdAt)}</small></div></div>${p.texte ? `<div class="pt">${esc(p.texte)}</div>` : ""}${media}<div class="pf"><button data-like="${esc(p.id)}" class="${on ? "on" : ""}">${on ? "👍" : "👍"} J’aime${l.length ? " · " + l.length : ""}</button><span>💬 ${p.nbCom || 0}</span><span class="sp"></span><a href="reseau.html" class="pill">Commenter sur le réseau →</a></div></article>`;
+}
+async function toggleLike(p) {
+  const s = new Set(p.likes || []); s.has(me.uid) ? s.delete(me.uid) : s.add(me.uid);
+  try { await updateDoc(doc(fbDB, "reseau_posts", p.id), { likes: [...s] }); } catch (e) { alert("Action impossible : " + (e.code || e.message)); }
+}
+let memUnsub = null;
+onAuthStateChanged(fbAuth, async user => {
+  clearSubs(); if (memUnsub) { memUnsub(); memUnsub = null; }
+  if (!user) { me = null; return gate("Connecte-toi avec ton compte élève pour accéder à cette page.", true); }
+  const [e, a] = await Promise.all([getDoc(doc(fbDB, C_ELEVES, user.uid)).catch(() => null), getDoc(doc(fbDB, "admins", user.uid)).catch(() => null)]);
+  isAdmin = !!(a && a.exists()); { const nm = document.getElementById("navMod"); if (nm) nm.style.display = isAdmin ? "" : "none"; }
+  const d = e && e.exists() ? e.data() : null;
+  if (!isAdmin && (!d || d.statut !== "valide")) return gate("Ton inscription doit encore être validée par un administrateur du club.");
+  me = { uid: user.uid, name: d ? (d.prenom + " " + d.nom).trim() : "Administrateur", classe: d ? (d.classe || "") : "Club" };
+  $("gate").style.display = "none"; $("app").style.display = "";
+  setDoc(doc(fbDB, "reseau_membres", me.uid), { uid: me.uid, nom: me.name, classe: me.classe }, { merge: true }).catch(() => {});
+  let first = true;
+  memUnsub = onSnapshot(collection(fbDB, "reseau_membres"), s => {
+    mem = {}; s.docs.forEach(x => mem[x.id] = x.data());
+    if (first) { first = false; init(); } else onMem();
+  }, () => { if (first) { first = false; init(); } });
+});
+
+const mref = () => doc(fbDB, "reseau_membres", me.uid);
+let loaded = false;
+function render() {
+  if (!me) return;
+  const m = mem[me.uid] || {}, p = m.photo;
+  $("pav").className = "av xl" + (p ? " has" : ""); $("pav").textContent = ini(me.name); $("pav").style.backgroundImage = p ? `url('${p}')` : "";
+  $("pnom").textContent = me.name; $("pcl").textContent = me.classe || "Club Réussir Ensemble";
+  if (!loaded) { $("pbio").value = m.bio || ""; loaded = true; }
+  const pm = (m.prefs && m.prefs.msg) || "tous";
+  document.querySelectorAll('input[name="pm"]').forEach(r => r.checked = r.value === pm);
+  const bl = m.bloques || [];
+  $("bsel").innerHTML = '<option value="">Choisir un élève…</option>' + Object.values(mem).filter(x => x.uid && x.uid !== me.uid && !bl.includes(x.uid)).sort((a, b) => String(a.nom).localeCompare(String(b.nom))).map(x => `<option value="${esc(x.uid)}">${esc(x.nom)} (${esc(x.classe || "")})</option>`).join("");
+  $("blist").innerHTML = bl.length ? bl.map(u => `<div class="row"><b style="flex:1;font-size:14px">${esc((mem[u] && mem[u].nom) || "Élève")}</b><button class="btn gr sm" data-un="${esc(u)}">Débloquer</button></div>`).join("") : '<p class="pill">Aucun élève bloqué.</p>';
+}
+const fail = e => alert("Erreur : " + (e.code || e.message));
+$("pphoto").onclick = () => $("pfile").click();
+$("pfile").onchange = async () => { const f = $("pfile").files[0]; if (!f) return; $("pmsg").textContent = "Envoi…"; try { const r = await upload(f); await setDoc(mref(), { photo: r.url }, { merge: true }); $("pmsg").textContent = "Photo mise à jour ✓"; } catch (e) { $("pmsg").textContent = ""; fail(e); } $("pfile").value = ""; };
+$("pphotodel").onclick = async () => { try { await setDoc(mref(), { photo: "" }, { merge: true }); $("pmsg").textContent = "Photo retirée."; } catch (e) { fail(e); } };
+$("pbsave").onclick = async () => { try { await setDoc(mref(), { bio: $("pbio").value.trim().slice(0, 200) }, { merge: true }); $("pmsg").textContent = "Enregistré ✓"; } catch (e) { fail(e); } };
+document.querySelectorAll('input[name="pm"]').forEach(r => r.onchange = async () => { try { await setDoc(mref(), { prefs: { msg: r.value } }, { merge: true }); } catch (e) { fail(e); } });
+$("bblock").onclick = async () => { const u = $("bsel").value; if (!u) return; const bl = (mem[me.uid] && mem[me.uid].bloques) || []; try { await setDoc(mref(), { bloques: [...new Set([...bl, u])] }, { merge: true }); } catch (e) { fail(e); } };
+$("blist").addEventListener("click", async e => { const b = e.target.closest("[data-un]"); if (!b) return; const bl = (mem[me.uid] && mem[me.uid].bloques) || []; try { await setDoc(mref(), { bloques: bl.filter(x => x !== b.dataset.un) }, { merge: true }); } catch (err) { fail(err); } });
+$("tl").onclick = () => applyTheme("light"); $("td").onclick = () => applyTheme("dark");
+$("logout").onclick = async () => { try { await fbAuth.signOut(); location.href = "espace-eleve.html"; } catch (e) { fail(e); } };
+init = render; onMem = render;
+
+</script>
+</body>
+</html>
