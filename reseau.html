@@ -338,6 +338,10 @@ a{text-decoration:none;color:inherit}
       <a href="evenements.html">📅 Événements</a>
       <a href="blog.html">📰 Blog</a>
       <a href="reseau.html" class="active">💬 Réseau</a>
+      <a href="messages.html">✉️ Messages</a>
+      <a href="profil.html">👤 Mon profil</a>
+      <a href="groupes.html">👥 Groupes</a>
+      <a href="entraide.html">🤝 Entraide</a>
       <a href="notifications.html">🔔 Notifications</a>
       <a href="amis.html">👥 Amis</a>
       <a href="sac.html">🎒 Mon sac</a>
@@ -522,7 +526,7 @@ function rxMe() {
   $("txt").placeholder = "Quoi de neuf, " + me.name.split(" ")[0] + " ? Écris quelque chose…";
 }
 const goTop = () => $("npanel").scrollIntoView({ behavior: "smooth", block: "start" });
-$("rxM").onclick = () => { if (!me) return; $("mbtn").click(); goTop(); };
+$("rxM").onclick = () => { if (!me) return; location.href = "messages.html"; };
 $("rxN").onclick = () => { location.href = "notifications.html"; };
 $("rxA").onclick = () => { location.href = "amis.html"; };
 [["ncnt", "rxNb"], ["mcnt", "rxMb"]].forEach(([a, b]) => {

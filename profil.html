@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Profil — Club Réussir Ensemble</title>
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<link rel="apple-touch-icon" href="/icon-512.png">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0A2A57;--navy-deep:#071A38;--blue:#2563EB;--blue-deep:#1D4ED8;--green:#17A34A;--red:#D9060C;--gold:#FAB202;--ink:#0F172A;--ink2:#5B6B85;--paper:#F5F8FC;--paper2:#EEF2F8;--line:#E3E9F2;--card:#FFFFFF;--shadow:0 6px 24px rgba(10,42,87,.08)}
+:root[data-theme="dark"]{--ink:#EAF0FA;--ink2:#9FB0C8;--paper:#0B1626;--paper2:#111F35;--line:#22314A;--card:#101E33;--navy-deep:#050D1A;--shadow:0 6px 24px rgba(0,0,0,.35)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:'Work Sans',sans-serif;background:var(--paper);color:var(--ink)}
+button,input,textarea,select{font-family:inherit}
+a{text-decoration:none;color:inherit}
+h1,h2,h3{font-family:'Poppins',sans-serif;margin:0;line-height:1.2}
+.bar{position:sticky;top:0;z-index:50;background:var(--navy-deep);color:#fff;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top))}
+.bar .r1{display:flex;align-items:center;gap:10px}
+.bar a.back{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:18px}
+.bar b{font:800 16px 'Poppins',sans-serif;line-height:1.1}
+.bar small{display:block;color:var(--gold);font-size:10.5px;font-weight:700;letter-spacing:.06em}
+.sp{flex:1}
+.ib{width:36px;height:36px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:16px;cursor:pointer}
+.nav{display:flex;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px}
+.nav a{flex:0 0 auto;color:#C7D2E6;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.07)}
+.nav a.on{background:var(--blue);color:#fff}
+.wrap{max-width:720px;margin:0 auto;padding:14px 12px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
+#gate{padding:40px 20px;text-align:center;color:var(--ink2);font-size:15px}
+.btn{border:none;background:var(--blue);color:#fff;font-weight:700;font-size:14px;padding:10px 18px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--blue-deep)}
+.btn:disabled{opacity:.5}
+.btn.gr{background:var(--paper2);color:var(--ink)}
+.btn.ok{background:var(--green)}
+.btn.sm{padding:6px 12px;font-size:12.5px}
+.av{width:44px;height:44px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font:700 14px 'Poppins',sans-serif;flex-shrink:0;background-size:cover;background-position:center}
+.av.has{color:transparent;font-size:0}
+.av.sm{width:34px;height:34px;font-size:12px}
+.av.xl{width:96px;height:96px;font-size:30px;border:4px solid var(--card)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px}
+.chip{flex:0 0 auto;border:none;background:var(--card);border:1px solid var(--line);color:var(--ink2);font-weight:600;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer}
+.chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.empty{color:var(--ink2);text-align:center;padding:30px 16px;font-size:14px}
+.in,.ta,.sel{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 14px;background:var(--paper2);color:var(--ink);font-size:14.5px;outline:none}
+.ta{resize:vertical;min-height:80px}
+.ph{display:flex;gap:10px;align-items:center;padding:12px 14px}
+.ph div.t{flex:1;min-width:0;line-height:1.3}
+.ph small{display:block;color:var(--ink2);font-size:12px}
+.pt{padding:0 14px 12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px}
+.pm{width:100%;max-height:520px;object-fit:cover;background:#000;display:block}
+.pf{display:flex;gap:8px;align-items:center;border-top:1px solid var(--line);padding:6px 10px;font-size:13px;color:var(--ink2)}
+.pf button{border:none;background:none;font:600 13.5px 'Work Sans',sans-serif;color:var(--ink2);cursor:pointer;padding:8px 10px;border-radius:8px}
+.pf button:hover{background:var(--paper2)}
+.pf button.on{color:var(--blue)}
+.tag{display:inline-block;background:rgba(37,99,235,.12);color:var(--blue);font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px}
+.tag.g{background:rgba(23,163,74,.14);color:var(--green)}
+.tag.y{background:rgba(250,178,2,.2);color:#9a6b00}
+.row{display:flex;gap:10px;align-items:center;padding:6px 0}
+.pill{font-size:12px;color:var(--ink2)}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="r1">
+    <a class="back" href="reseau.html" aria-label="Retour au réseau">←</a>
+    <div><b>Profil</b><small>CLUB RÉUSSIR ENSEMBLE</small></div>
+    <span class="sp"></span>
+    <button class="ib" id="themeBtn" aria-label="Thème">🌙</button>
+  </div>
+  <nav class="nav">
+    <a href="reseau.html" class="">🏠 Réseau</a>
+    <a href="messages.html" class="">✉️ Messages</a>
+    <a href="profil.html" class="on">👤 Profil</a>
+    <a href="groupes.html" class="">👥 Groupes</a>
+    <a href="entraide.html" class="">🤝 Entraide</a>
+    <a href="sondages.html" class="">📊 Sondages</a>
+    <a href="anniversaires.html" class="">🎂 Anniversaires</a>
+    <a href="parametres.html" class="">⚙️ Paramètres</a>
+    <a href="moderation.html" class="" id="navMod" style="display:none">🛡️ Modération</a>
+  </nav>
+</header>
+<div id="gate">Chargement…</div>
+<main class="wrap" id="app" style="display:none">
+
+<section id="prof"></section>
+<h3 style="margin:6px 4px 12px">Publications</h3>
+<div id="feed"></div>
+<input type="file" id="pf" accept="image/*" hidden>
+</main>
+
+<script type="module">
+import { fbAuth, fbDB, C_ELEVES, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot, onAuthStateChanged } from "./firebase.js";
+const CLOUD_NAME = "dctxjclv8", UPLOAD_PRESET = "reseau_eleves", MAX_VIDEO = 30 * 1024 * 1024;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ini = n => String(n || "?").split(" ").map(x => x[0]).slice(0, 2).join("").toUpperCase();
+const ago = t => { const s = (Date.now() - t) / 1000; if (s < 60) return "à l’instant"; if (s < 3600) return Math.floor(s / 60) + " min"; if (s < 86400) return Math.floor(s / 3600) + " h"; if (s < 604800) return Math.floor(s / 86400) + " j"; return new Date(t).toLocaleDateString("fr-FR"); };
+let me = null, isAdmin = false, mem = {}, init = () => {}, onMem = () => {}, subs = [];
+const clearSubs = () => { subs.forEach(u => u && u()); subs = []; };
+
+function applyTheme(t) { document.documentElement.setAttribute("data-theme", t); $("themeBtn").textContent = t === "dark" ? "☀️" : "🌙"; try { localStorage.setItem("cre-theme", t); } catch (e) {} }
+let th = "light"; try { th = localStorage.getItem("cre-theme") || "light"; } catch (e) {}
+applyTheme(th);
+$("themeBtn").onclick = () => applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+
+function gate(msg, login) {
+  $("app").style.display = "none"; $("gate").style.display = "";
+  $("gate").innerHTML = esc(msg) + (login ? '<br><br><a class="btn" href="espace-eleve.html">Se connecter</a>' : "");
+}
+function av(uid, nom, cls) {
+  const p = mem[uid] && mem[uid].photo;
+  return `<a href="profil.html#${esc(uid)}" class="av ${cls || ""} ${p ? "has" : ""}" ${p ? `style="background-image:url('${esc(p)}')"` : ""}>${esc(ini(nom))}</a>`;
+}
+function shrink(f) {
+  return new Promise((res, rej) => {
+    const im = new Image();
+    im.onload = () => { const s = Math.min(1, 1280 / Math.max(im.width, im.height)), c = document.createElement("canvas"); c.width = Math.round(im.width * s); c.height = Math.round(im.height * s); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); c.toBlob(b => b ? res(b) : rej(new Error("Image illisible")), "image/jpeg", 0.8); };
+    im.onerror = () => rej(new Error("Image illisible")); im.src = URL.createObjectURL(f);
+  });
+}
+async function upload(f) {
+  const v = f.type.startsWith("video"), fd = new FormData();
+  if (v && f.size > MAX_VIDEO) throw new Error("Vidéo trop lourde (30 Mo maximum).");
+  fd.append("file", v ? f : await shrink(f)); fd.append("upload_preset", UPLOAD_PRESET);
+  const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${v ? "video" : "image"}/upload`, { method: "POST", body: fd });
+  const j = await r.json();
+  if (!j.secure_url) throw new Error((j.error && j.error.message) || "Échec de l’envoi");
+  return { url: j.secure_url, type: v ? "video" : "image" };
+}
+function postHtml(p) {
+  const l = p.likes || [], on = l.includes(me.uid);
+  const media = p.mediaUrl ? (p.mediaType === "video" ? `<video class="pm" src="${esc(p.mediaUrl)}" controls preload="metadata" playsinline></video>` : `<img class="pm" src="${esc(p.mediaUrl)}" alt="" loading="lazy">`) : "";
+  return `<article class="card"><div class="ph">${av(p.uid, p.auteur, "")}<div class="t"><b>${esc(p.auteur)}</b>${p.annonce ? ' <span class="tag y">📌 Annonce</span>' : ""}<small>${esc(p.classe || "")} · ${ago(p.createdAt)}</small></div></div>${p.texte ? `<div class="pt">${esc(p.texte)}</div>` : ""}${media}<div class="pf"><button data-like="${esc(p.id)}" class="${on ? "on" : ""}">${on ? "👍" : "👍"} J’aime${l.length ? " · " + l.length : ""}</button><span>💬 ${p.nbCom || 0}</span><span class="sp"></span><a href="reseau.html" class="pill">Commenter sur le réseau →</a></div></article>`;
+}
+async function toggleLike(p) {
+  const s = new Set(p.likes || []); s.has(me.uid) ? s.delete(me.uid) : s.add(me.uid);
+  try { await updateDoc(doc(fbDB, "reseau_posts", p.id), { likes: [...s] }); } catch (e) { alert("Action impossible : " + (e.code || e.message)); }
+}
+let memUnsub = null;
+onAuthStateChanged(fbAuth, async user => {
+  clearSubs(); if (memUnsub) { memUnsub(); memUnsub = null; }
+  if (!user) { me = null; return gate("Connecte-toi avec ton compte élève pour accéder à cette page.", true); }
+  const [e, a] = await Promise.all([getDoc(doc(fbDB, C_ELEVES, user.uid)).catch(() => null), getDoc(doc(fbDB, "admins", user.uid)).catch(() => null)]);
+  isAdmin = !!(a && a.exists()); { const nm = document.getElementById("navMod"); if (nm) nm.style.display = isAdmin ? "" : "none"; }
+  const d = e && e.exists() ? e.data() : null;
+  if (!isAdmin && (!d || d.statut !== "valide")) return gate("Ton inscription doit encore être validée par un administrateur du club.");
+  me = { uid: user.uid, name: d ? (d.prenom + " " + d.nom).trim() : "Administrateur", classe: d ? (d.classe || "") : "Club" };
+  $("gate").style.display = "none"; $("app").style.display = "";
+  setDoc(doc(fbDB, "reseau_membres", me.uid), { uid: me.uid, nom: me.name, classe: me.classe }, { merge: true }).catch(() => {});
+  let first = true;
+  memUnsub = onSnapshot(collection(fbDB, "reseau_membres"), s => {
+    mem = {}; s.docs.forEach(x => mem[x.id] = x.data());
+    if (first) { first = false; init(); } else onMem();
+  }, () => { if (first) { first = false; init(); } });
+});
+
+let target = "", posts = [], editing = false;
+const memRef = uid => doc(fbDB, "reseau_membres", uid);
+function loadPosts() {
+  clearSubs(); posts = [];
+  const parts = {}, apply = k => sn => { parts[k] = sn.docs.map(x => ({ id: x.id, ...x.data() })); posts = Object.values(parts).flat().filter(p => p.uid === target).sort((a, b) => b.createdAt - a.createdAt); renderFeed(); renderProf(); };
+  const fail = () => { $("feed").innerHTML = '<p class="empty">Impossible de charger les publications.</p>'; };
+  if (isAdmin) subs.push(onSnapshot(collection(fbDB, "reseau_posts"), apply("a"), fail));
+  else {
+    subs.push(onSnapshot(query(collection(fbDB, "reseau_posts"), where("groupe", "==", "")), apply("g"), fail));
+    if (me.classe) subs.push(onSnapshot(query(collection(fbDB, "reseau_posts"), where("groupe", "==", me.classe)), apply("c"), fail));
+  }
+}
+function renderProf() {
+  const m = mem[target] || {}, mine = target === me.uid;
+  const nom = m.nom || (mine ? me.name : "Élève"), suit = (mem[me.uid] && mem[me.uid].suit) || [];
+  const p = m.photo;
+  $("prof").innerHTML = `<div class="card"><div style="height:90px;background:linear-gradient(120deg,var(--navy-deep),var(--blue))"></div>
+  <div style="padding:0 16px 16px;margin-top:-48px">
+    <div class="av xl ${p ? "has" : ""}" ${p ? `style="background-image:url('${esc(p)}')"` : ""}>${esc(ini(nom))}</div>
+    <h2 style="margin-top:8px;font-size:21px">${esc(nom)}</h2>
+    <div class="pill" style="margin:4px 0 8px">${esc(m.classe || "Club Réussir Ensemble")}</div>
+    ${editing ? `<textarea class="ta" id="bio" maxlength="200" placeholder="Parle un peu de toi (200 caractères max)…">${esc(m.bio || "")}</textarea>` : `<p style="margin:0 0 10px;white-space:pre-wrap;font-size:14.5px">${m.bio ? esc(m.bio) : (mine ? '<span class="pill">Ajoute une petite présentation de toi.</span>' : "")}</p>`}
+    <div class="pill" style="margin-bottom:12px"><b>${posts.length}</b> publication${posts.length > 1 ? "s" : ""} · <b>${(m.amis || []).length}</b> ami${(m.amis || []).length > 1 ? "s" : ""} · <b>${(m.suit || []).length}</b> abonnement${(m.suit || []).length > 1 ? "s" : ""}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${mine ? (editing ? '<button class="btn ok" id="bSave">💾 Enregistrer</button><button class="btn gr" id="bCancel">Annuler</button>' : '<button class="btn" id="bEdit">✏️ Modifier ma présentation</button><button class="btn gr" id="bPhoto">📷 Changer ma photo</button>')
+        : `<a class="btn" href="messages.html#${esc(target)}">✉️ Écrire</a><button class="btn gr" id="bFollow">${suit.includes(target) ? "✓ Abonné" : "➕ S’abonner"}</button>`}
+    </div></div></div>`;
+  const g = id => $(id);
+  if (g("bEdit")) g("bEdit").onclick = () => { editing = true; renderProf(); };
+  if (g("bCancel")) g("bCancel").onclick = () => { editing = false; renderProf(); };
+  if (g("bSave")) g("bSave").onclick = async () => { try { await setDoc(memRef(me.uid), { bio: g("bio").value.trim().slice(0, 200) }, { merge: true }); editing = false; } catch (e) { alert("Erreur : " + (e.code || e.message)); } };
+  if (g("bPhoto")) g("bPhoto").onclick = () => $("pf").click();
+  if (g("bFollow")) g("bFollow").onclick = async () => {
+    const cur = (mem[me.uid] && mem[me.uid].suit) || [], n = cur.includes(target) ? cur.filter(x => x !== target) : [...cur, target];
+    try { await setDoc(memRef(me.uid), { suit: n }, { merge: true }); } catch (e) { alert("Erreur : " + (e.code || e.message)); }
+  };
+}
+$("pf").onchange = async () => {
+  const f = $("pf").files[0]; if (!f) return;
+  try { const r = await upload(f); await setDoc(memRef(me.uid), { photo: r.url }, { merge: true }); } catch (e) { alert("Photo non enregistrée : " + (e.code || e.message)); }
+  $("pf").value = "";
+};
+function renderFeed() {
+  $("feed").innerHTML = posts.length ? posts.map(postHtml).join("") : '<p class="empty">Aucune publication visible pour le moment.</p>';
+}
+$("feed").addEventListener("click", e => { const b = e.target.closest("[data-like]"); if (b) { const p = posts.find(x => x.id === b.dataset.like); if (p) toggleLike(p); } });
+function open() { target = decodeURIComponent((location.hash || "").slice(1)) || me.uid; editing = false; loadPosts(); renderProf(); renderFeed(); }
+init = open; onMem = renderProf;
+window.addEventListener("hashchange", () => { if (me) open(); });
+
+</script>
+</body>
+</html>
