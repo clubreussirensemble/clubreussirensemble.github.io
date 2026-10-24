@@ -771,7 +771,7 @@ import { fbAuth, fbDB, C_MATIERES, C_PAIEMENTS, C_ELEVES, C_EVENEMENTS, C_EVALUA
          C_RESULTATS, C_OBJECTIFS, C_CONFIG, C_VIDEOS, C_EQUIPE, C_RESSOURCES, C_INSC, C_GAL,
          C_TEMOIGNAGES, C_RES_EXAMENS, C_PALMARES, C_QUIZ_QUEST, C_RES_MENS, C_RES_ELEVES,
          collection, doc, getDoc, setDoc, addDoc,
-         updateDoc, deleteDoc, orderBy, query, onSnapshot, signInWithEmailAndPassword, signOut,
+         updateDoc, deleteDoc, orderBy, query, where, onSnapshot, signInWithEmailAndPassword, signOut,
          onAuthStateChanged } from "./firebase.js";
 
 // ── Connexion au projet Firebase "emploi-temps" (même base que Chat_eleves.html) ──
@@ -787,6 +787,42 @@ const edtFirebaseConfig = {
   appId: "1:665985283894:web:b0c4cb14824bb8fed9a597"
 };
 const edtDb = getFirestore(initializeApp(edtFirebaseConfig, "edtLink"));
+/* ── Suppression complète d'un compte élève : réseau + fiche du site ── */
+const onceDocs = q => new Promise(res => { let u = null; u = onSnapshot(q, sn => { if (u) u(); res(sn.docs); }, () => res([])); });
+async function purgeEleve(uid, btn) {
+  const e = (typeof eleves !== 'undefined' ? eleves : []).find(x => x.uid === uid) || {};
+  const nom = ((e.prenom || '') + ' ' + (e.nom || '')).trim() || 'cet élève';
+  if (!confirm('Supprimer DÉFINITIVEMENT le compte de « ' + nom + ' » ?\n\nSes publications, commentaires, stories, questions, sondages, messages et sa fiche élève seront effacés. Il ne pourra plus se connecter au club.')) return;
+  const old = btn ? btn.textContent : ''; if (btn) { btn.disabled = true; btn.textContent = 'Suppression…'; }
+  const C = n => collection(fbDB, n), W = (f, v) => where(f, '==', v);
+  const del = async (name, docs) => { await Promise.all(docs.map(d => deleteDoc(doc(fbDB, name, d.id)))); };
+  try {
+    const myPosts = await onceDocs(query(C('reseau_posts'), W('uid', uid)));
+    const myQs = await onceDocs(query(C('reseau_questions'), W('uid', uid)));
+    const myPolls = await onceDocs(query(C('reseau_sondages'), W('uid', uid)));
+    for (const p of myPosts) await del('reseau_commentaires', await onceDocs(query(C('reseau_commentaires'), W('postId', p.id))));
+    for (const q of myQs) await del('reseau_reponses', await onceDocs(query(C('reseau_reponses'), W('qid', q.id))));
+    for (const s of myPolls) await del('reseau_votes', await onceDocs(query(C('reseau_votes'), W('pid', s.id))));
+    await del('reseau_posts', myPosts);
+    await del('reseau_questions', myQs);
+    await del('reseau_sondages', myPolls);
+    await del('reseau_commentaires', await onceDocs(query(C('reseau_commentaires'), W('uid', uid))));
+    await del('reseau_reponses', await onceDocs(query(C('reseau_reponses'), W('uid', uid))));
+    await del('reseau_votes', await onceDocs(query(C('reseau_votes'), W('uid', uid))));
+    await del('reseau_stories', await onceDocs(query(C('reseau_stories'), W('uid', uid))));
+    await del('reseau_signalements', await onceDocs(query(C('reseau_signalements'), W('par', uid))));
+    await del('reseau_messages', await onceDocs(query(C('reseau_messages'), where('membres', 'array-contains', uid))));
+    await del('reseau_notifs', await onceDocs(query(C('reseau_notifs'), W('to', uid))));
+    await del('reseau_notifs', await onceDocs(query(C('reseau_notifs'), W('fromUid', uid))));
+    await deleteDoc(doc(fbDB, 'reseau_membres', uid));
+    await deleteDoc(doc(fbDB, C_ELEVES, uid));
+    alert('Compte supprimé.');
+  } catch (err) {
+    alert('Suppression incomplète : ' + (err.code || err.message) + '\nVérifie que les règles Firestore ont été mises à jour, puis recommence.');
+    if (btn) { btn.disabled = false; btn.textContent = old; }
+  }
+}
+
 const CHAT_ELEVES_COL = 'chatEleves';
 // File d'attente lue par l'onglet "Groupes/Classes" d'Emploi_du_temps.html : dès qu'un
 // compte élève est validé ici, sa fiche (nom, tél, e-mail, classe) y est déposée, et
@@ -1036,7 +1072,7 @@ function startListeners(){
       `<tr><td>${e.prenom||''} ${e.nom||''}</td><td>${e.classe||'—'}</td><td>${e.telephone||'—'}</td><td>${e.email||'—'}</td>
        <td><span class="pill ${e.statut==='valide'?'ok':'attente'}">${e.statut==='valide'?'Validé':'En attente'}</span></td>
        <td>${e.statut!=='valide' ? `<button class="small-btn" data-valel="${e.uid}">Valider</button>` : ''}
-       <button class="small-btn" data-delel="${e.uid}" style="background:var(--red)">Supprimer</button></td></tr>`
+       <button class="small-btn" data-delel="${e.uid}" style="background:var(--red)">🗑 Supprimer le compte</button></td></tr>`
     ).join('') : '<tr><td colspan="6">Aucun élève inscrit.</td></tr>';
 
     document.getElementById('eleveSelect').innerHTML = eleves.length ? eleves.map(e=>
@@ -1057,7 +1093,7 @@ function startListeners(){
       };
     });
     document.querySelectorAll('[data-delel]').forEach(b=>{
-      b.onclick = ()=> { if(confirm("Supprimer cet élève ? Cela ne supprime pas son compte de connexion, seulement sa fiche.")) deleteDoc(doc(fbDB, C_ELEVES, b.dataset.delel)); };
+      b.onclick = ()=> purgeEleve(b.dataset.delel, b);
     });
   });
 
