@@ -407,22 +407,49 @@ async function fetchSource(s){
     return ls.flat().filter(c=>{if(seen.has(c.url))return false;seen.add(c.url);return !s.re||s.re.test(c.name+' '+c.group);}).sort((x,y)=>x.name.localeCompare(y.name,'fr'));}
   return getList(s.url);
 }
+/* Listes enregistrées dans le téléphone (IndexedDB) pour consulter les chaînes sans connexion */
+const idb={
+  db:null,
+  open(){
+    if(this.db)return this.db;
+    this.db=new Promise((res,rej)=>{
+      if(!window.indexedDB)return rej();
+      const r=indexedDB.open('tv-gratuite',1);
+      r.onupgradeneeded=()=>r.result.createObjectStore('lists');
+      r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);
+    });
+    return this.db;
+  },
+  async get(k){try{const d=await this.open();return await new Promise(res=>{const q=d.transaction('lists').objectStore('lists').get(k);q.onsuccess=()=>res(q.result||null);q.onerror=()=>res(null);});}catch(e){return null}},
+  async set(k,v){try{const d=await this.open();d.transaction('lists','readwrite').objectStore('lists').put({chans:v,at:Date.now()},k);}catch(e){}}
+};
+function fmtDate(t){try{return new Date(t).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}catch(e){return ''}}
+let offlineNote='';
 async function load(id){
-  src=id;store.set('tv_src',id);shown=60;renderChips();
+  src=id;store.set('tv_src',id);shown=60;offlineNote='';renderChips();
   if(id==='fav'){all=favs.slice();return render();}
   const s=SOURCES.find(x=>x.id===id);
   if(cache[id]){all=cache[id];return render();}
   list.innerHTML='<li class="msg">Chargement des chaînes…</li>';$('count').textContent='';
   try{
     all=cache[id]=await fetchSource(s);
-  }catch(e){all=[];list.innerHTML='<li class="msg">Impossible de charger cette liste. Vérifiez votre connexion et réessayez.</li>';return;}
+    idb.set(id,all);
+  }catch(e){
+    const saved=await idb.get(id);
+    if(saved&&saved.chans&&saved.chans.length){
+      all=saved.chans;
+      offlineNote=' · liste enregistrée le '+fmtDate(saved.at)+' (hors ligne)';
+    }else{
+      all=[];list.innerHTML='<li class="msg">Impossible de charger cette liste. Elle n’a pas encore été enregistrée : ouvrez-la une première fois avec une connexion.</li>';return;
+    }
+  }
   render();
 }
 function isFav(u){return favs.some(f=>f.url===u)}
 function render(){
   const q=$('q').value.trim().toLowerCase();
   const f=q?all.filter(c=>(c.name+' '+c.group).toLowerCase().includes(q)):all;
-  $('count').textContent=f.length+' chaîne'+(f.length>1?'s':'');
+  $('count').textContent=f.length+' chaîne'+(f.length>1?'s':'')+offlineNote;
   list.innerHTML='';
   if(!f.length){list.innerHTML='<li class="msg">'+(src==='fav'?'Aucun favori. Touchez ♡ à côté d’une chaîne pour l’ajouter.':'Aucune chaîne trouvée.')+'</li>';$('more').hidden=true;return;}
   f.slice(0,shown).forEach(c=>{
@@ -455,23 +482,58 @@ function renderChips(){
   sel.onchange=()=>{if(sel.value)load(sel.value);};
 })();
 function status(txt,live){$('state').textContent=txt;$('dot').className='dot'+(live?' on':'');}
-function play(c){
-  cur=c;$('title').textContent=c.name;status('Connexion…',false);render();
+/* Lecture avec reprise automatique : si la connexion coupe puis revient, la chaîne se relance seule */
+let tries=0,retryT=null,mediaFix=0,gaveUp=false;
+const MAX_TRIES=8;
+function stopRetry(){clearTimeout(retryT);retryT=null;}
+function scheduleRetry(c){
+  stopRetry();
+  if(!navigator.onLine){status('Hors ligne — reprise dès le retour de la connexion',false);return;}
+  if(tries>=MAX_TRIES){gaveUp=true;status('Flux indisponible, essayez une autre chaîne',false);return;}
+  const wait=Math.min(2000*Math.pow(2,tries),20000);
+  tries++;
+  status('Connexion perdue, reprise… ('+tries+'/'+MAX_TRIES+')',false);
+  retryT=setTimeout(()=>{if(cur&&cur.url===c.url)startStream(c);},wait);
+}
+function startStream(c){
   if(hls){hls.destroy();hls=null;}
-  v.removeAttribute('src');
+  v.removeAttribute('src');v.load();
   const go=()=>v.play().catch(()=>{});
   if(window.Hls&&Hls.isSupported()){
     hls=new Hls({lowLatencyMode:true});
     hls.loadSource(c.url);hls.attachMedia(v);
     hls.on(Hls.Events.MANIFEST_PARSED,go);
-    hls.on(Hls.Events.ERROR,(e,d)=>{if(d.fatal)status('Flux indisponible, essayez une autre chaîne',false);});
-  }else if(v.canPlayType('application/vnd.apple.mpegurl')){v.src=c.url;go();}
+    hls.on(Hls.Events.ERROR,(e,d)=>{
+      if(!d.fatal)return;
+      if(d.type===Hls.ErrorTypes.MEDIA_ERROR&&mediaFix<2){mediaFix++;status('Reprise de la lecture…',false);hls.recoverMediaError();return;}
+      scheduleRetry(c);
+    });
+  }else if(v.canPlayType('application/vnd.apple.mpegurl')){
+    v.src=c.url;go();
+  }
   else status('Format non pris en charge sur cet appareil',false);
+}
+function play(c){
+  cur=c;tries=0;mediaFix=0;gaveUp=false;stopRetry();
+  $('title').textContent=c.name;status('Connexion…',false);render();
+  startStream(c);
   store.set('tv_last',c);
   window.scrollTo({top:0,behavior:'smooth'});
 }
-v.addEventListener('playing',()=>status('En direct',true));
-v.addEventListener('waiting',()=>status('Chargement…',false));
+v.addEventListener('playing',()=>{tries=0;mediaFix=0;gaveUp=false;stopRetry();status('En direct',true);});
+v.addEventListener('waiting',()=>status(navigator.onLine?'Chargement…':'Hors ligne — en attente de connexion',false));
+/* Lecture native (Safari/iPhone) : relancer en cas d'erreur */
+v.addEventListener('error',()=>{if(cur&&!hls)scheduleRetry(cur);});
+window.addEventListener('offline',()=>{if(cur)status('Hors ligne — en attente de connexion',false);});
+window.addEventListener('online',()=>{
+  if(!cur)return;
+  if(v.paused||v.readyState<3||gaveUp){tries=0;mediaFix=0;gaveUp=false;stopRetry();status('Connexion retrouvée, reprise…',false);startStream(cur);}
+  if(src!=='fav'&&offlineNote){delete cache[src];load(src);}
+});
+/* Service Worker : la page s'ouvre même sans réseau */
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw-tv.js',{scope:'./tv-gratuite.html'}).catch(()=>{});});
+}
 $('q').addEventListener('input',()=>{shown=60;render();});
 $('more').onclick=()=>{shown+=60;render();};
 $('addf').onsubmit=e=>{
