@@ -205,6 +205,14 @@
 
   .ligne-row{display:grid;grid-template-columns:1fr 52px 78px 32px;gap:6px;align-items:end;margin-bottom:6px;}
   .ligne-row label{margin:0 0 3px;}
+  .art-wrap{position:relative;}
+  .art-list{position:absolute;left:0;right:0;top:100%;z-index:60;margin-top:2px;max-height:240px;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 28px rgba(10,26,45,.25);}
+  .art-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 12px;border-bottom:1px solid var(--line);color:var(--text);font-size:14px;cursor:pointer;}
+  .art-item:last-child{border-bottom:none;}
+  .art-item:active{background:var(--accent);color:#1a1305;}
+  .art-item .art-n{font-weight:600;word-break:break-word;}
+  .art-item .art-p{font-size:11.5px;color:var(--text-dim);white-space:nowrap;flex:0 0 auto;}
+  header.topbar button.btn.ghost{color:#fff;border-color:rgba(255,255,255,.4);}
   .ligne-total{font-family:var(--font-mono);font-size:12px;color:var(--text-dim);grid-column:1/-1;text-align:right;margin-top:-3px;margin-bottom:2px;}
 
   .totalbox{
@@ -278,6 +286,9 @@
   .inv-logo-crop{width:var(--logohdr-w,100px);height:var(--logohdr-h,39px);background-repeat:no-repeat;background-size:100% 200%;flex:0 0 auto;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
   .inv-logo-crop.top{background-position:0 0;}
   .inv-logo-crop.bot{background-position:0 100%;}
+  .inv-initials{width:58px;height:58px;border-radius:50%;background:var(--ink,#0A2A57);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;letter-spacing:.02em;flex:0 0 auto;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
+  .inv-watermark-txt{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--font-display);font-weight:800;font-size:45mm;line-height:1;white-space:nowrap;color:var(--ink,#0A2A57);opacity:.06;z-index:0;pointer-events:none;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
+  .rapport-initials{display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--ink,#0A2A57);color:#fff;font-family:var(--font-display);font-weight:800;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
   .inv-head-center{flex:1 1 auto;text-align:center;font-size:var(--meta-fs,9.5px);color:#0c1f33;line-height:1.35;font-weight:500;}
   .inv-facture-label{font-family:var(--font-display);font-weight:800;font-size:var(--titre-fs,15px);letter-spacing:.04em;color:var(--ink);text-transform:uppercase;margin-top:4px;}
   .inv-client{border:1px solid var(--ink);border-radius:5px;padding:var(--client-pad,5px) 7px;margin-bottom:var(--client-mb,7px);font-size:var(--client-fs,10.5px);font-weight:600;color:#0c1f33;line-height:1.35;}
@@ -436,7 +447,9 @@ body.locked #instBanner{display:none !important}
 <script>/* Logo : script classique, indépendant de firebase.js */
 (function(){var s=document.getElementById("hdrLogo");if(!s)return;var L=s.src;var l=document.getElementById("ldLogo");if(l)l.src=L;var f=document.querySelector('link[rel="icon"]');if(f)f.href=L;var a=document.querySelector('link[rel="apple-touch-icon"]');if(a)a.href=L;})();</script>
 <script>/* Installation de l'application (téléphone / ordinateur) */
-if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw-boutique.js").catch(function(){})})}
+if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw-boutique.js").then(function(){return navigator.serviceWorker.ready}).then(function(reg){
+setTimeout(function(){try{var urls=performance.getEntriesByType("resource").map(function(r){return r.name}).filter(function(n){return /^https:\/\/(www\.gstatic\.com\/firebasejs\/|fonts\.googleapis\.com\/|fonts\.gstatic\.com\/)/.test(n)||(n.indexOf(location.origin)===0&&/\.(js|json|png|css|woff2?)(\?|$)/.test(n))});
+var sw=reg.active||navigator.serviceWorker.controller;if(sw)sw.postMessage({type:"cache-urls",urls:urls})}catch(e){}},3000)}).catch(function(){})})}
 (function(){
 var dp=null,btns=document.querySelectorAll("[data-install]"),msg=document.getElementById("instMsg"),ban=document.getElementById("instBanner");
 var standalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
@@ -460,40 +473,140 @@ import{fbAuth as auth,fbDB as db,doc,getDoc,setDoc,deleteDoc,onSnapshot,signOut,
 const HOME="boutiques.html",ADMIN="admin.html"; /* connexion / abonnement  ·  administration du club */
 
 const $=id=>document.getElementById(id);
-const CH=200000;let uid=null,started=false,pending=null,timer=null,lastN=0;
+const CH=200000;let uid=null,started=false,listening=false,pending=null,timer=null,legacyN=0,cloudParts=null,written={};
 const sync=t=>{const e=$("syncState");if(e)e.textContent=t};
 const base=()=>["site_boutiques",uid,"appdata"];
-async function loadCloud(){const m=await getDoc(doc(db,...base(),"meta"));if(!m.exists())return null;
-const n=m.data().n;lastN=n;const ps=await Promise.all(Array.from({length:n},(_,i)=>getDoc(doc(db,...base(),"c"+i))));
-return JSON.parse(ps.map(p=>p.data().t).join(""))}
-async function flush(){if(pending==null)return;const str=pending;pending=null;sync("enregistrement…");
-try{const parts=[];for(let i=0;i<str.length;i+=CH)parts.push(str.slice(i,i+CH));
-await Promise.all(parts.map((t,i)=>setDoc(doc(db,...base(),"c"+i),{i,t})));
-await setDoc(doc(db,...base(),"meta"),{n:parts.length,at:Date.now()});
-for(let i=parts.length;i<lastN;i++)await deleteDoc(doc(db,...base(),"c"+i));
-lastN=parts.length;sync("✔ synchronisé")}
-catch(e){pending=pending??str;sync("⚠ non synchronisé (réessai à la prochaine action)")}}
-window.__cloudSave=app=>{const str=JSON.stringify(app);try{localStorage.setItem("bq_"+uid,str)}catch(e){}pending=str;clearTimeout(timer);timer=setTimeout(flush,1200)};
-window.__logout=async()=>{await flush();await signOut(auth);location.replace(HOME)};
-addEventListener("pagehide",flush);document.addEventListener("visibilitychange",()=>{if(document.hidden)flush()});
+const T=(p,ms)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),ms))]);
+const offline=()=>navigator.onLine===false;
+const K={data:u=>"bq_"+u,dirty:u=>"bqdirty_"+u,shop:u=>"bqshop_"+u};
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+const lsDel=k=>{try{localStorage.removeItem(k)}catch(e){}};
+const isDirty=()=>lsGet(K.dirty(uid))==="1";
+const localData=()=>{try{return JSON.parse(lsGet(K.data(uid)))}catch(e){return null}};
+const cachedShop=()=>{try{return JSON.parse(lsGet(K.shop(uid)))}catch(e){return null}};
+const okShop=s=>!!s&&!s.blocked&&s.activeUntil>Date.now();
 const left=s=>Math.ceil((s.activeUntil-Date.now())/864e5);
+const OFFMSG="⚠ hors ligne : données enregistrées sur l'appareil";
+
+/* ===== Stockage cloud par morceaux =====
+   Les données sont découpées : « core » (stock, clients, réglages) + un morceau par mois pour les
+   factures (f_AAAA-MM), les mouvements de stock (m_…) et les achats (a_…).
+   À chaque enregistrement, seuls les morceaux réellement modifiés sont réécrits :
+   le coût ne grandit donc plus avec l'ancienneté de la boutique. */
+const M2="meta2";
+function splitApp(a){
+ const core=Object.assign({},a);delete core.draftFacture;delete core.factures;delete core.mouvements;delete core.achats;
+ const buckets={};
+ const put=(arr,pfx)=>(arr||[]).forEach(x=>{const k=pfx+(String((x&&x.date)||"").slice(0,7)||"0000");(buckets[k]=buckets[k]||[]).push(x)});
+ put(a.factures,"f_");put(a.mouvements,"m_");put(a.achats,"a_");
+ const out={core:JSON.stringify(core)};
+ Object.keys(buckets).sort().forEach(k=>{out[k]=JSON.stringify(buckets[k])});
+ return out;
+}
+function joinApp(p){
+ const a=p.core||{};a.factures=[];a.mouvements=[];a.achats=[];
+ Object.keys(p).sort().forEach(k=>{const t=k.slice(0,2);const dst=t==="f_"?a.factures:t==="m_"?a.mouvements:t==="a_"?a.achats:null;
+  if(dst)for(const x of p[k])dst.push(x)});
+ return a;
+}
+const sortedParts=o=>{const r={};Object.keys(o||{}).sort().forEach(k=>{r[k]=o[k]});return JSON.stringify(r)};
+
+async function loadCloud(){
+ const m2=await getDoc(doc(db,...base(),M2));
+ if(m2.exists()){
+  const mp=m2.data().parts||{};cloudParts=mp;written={};const out={};
+  await Promise.all(Object.keys(mp).map(async nme=>{
+   const ps=await Promise.all(Array.from({length:mp[nme]},(_,i)=>getDoc(doc(db,...base(),nme+"_"+i))));
+   out[nme]=JSON.parse(ps.map((p,i)=>{const t=p.data().t;written[nme+"_"+i]=t;return t}).join(""));
+  }));
+  return joinApp(out);
+ }
+ /* ancien format (un seul bloc) : lu une dernière fois, puis migré au prochain enregistrement */
+ cloudParts={};written={};
+ const m=await getDoc(doc(db,...base(),"meta"));if(!m.exists())return null;
+ const n=m.data().n;legacyN=n;
+ const ps=await Promise.all(Array.from({length:n},(_,i)=>getDoc(doc(db,...base(),"c"+i))));
+ return JSON.parse(ps.map(p=>p.data().t).join(""));
+}
+
+async function flush(){if(pending==null)return;
+if(offline()){sync(OFFMSG);return}
+const str=pending;pending=null;sync("enregistrement…");
+try{
+ if(cloudParts==null){ /* état du cloud inconnu (démarrage avec la copie de l'appareil) : on le lit pour pouvoir nettoyer */
+  const m2=await T(getDoc(doc(db,...base(),M2)),8000);
+  cloudParts=m2.exists()?(m2.data().parts||{}):{};
+  const m=await T(getDoc(doc(db,...base(),"meta")),8000);legacyN=m.exists()?m.data().n:0;
+ }
+ const out=splitApp(JSON.parse(str));const parts={},writes=[];
+ Object.keys(out).forEach(nme=>{const t=out[nme],n=Math.max(1,Math.ceil(t.length/CH));parts[nme]=n;
+  for(let i=0;i<n;i++){const id=nme+"_"+i,piece=t.slice(i*CH,(i+1)*CH);if(written[id]!==piece)writes.push([id,piece])}});
+ await T(Promise.all(writes.map(([id,t])=>setDoc(doc(db,...base(),id),{t}))),30000);
+ writes.forEach(([id,t])=>{written[id]=t});
+ if(sortedParts(parts)!==sortedParts(cloudParts)){
+  await T(setDoc(doc(db,...base(),M2),{v:2,parts,at:Date.now()}),20000);
+  for(const nme of Object.keys(cloudParts))for(let i=parts[nme]||0;i<cloudParts[nme];i++){await T(deleteDoc(doc(db,...base(),nme+"_"+i)),20000);delete written[nme+"_"+i]}
+  cloudParts=parts;
+ }
+ if(legacyN>0){ /* nettoyage de l'ancien format */
+  for(let i=0;i<legacyN;i++)await T(deleteDoc(doc(db,...base(),"c"+i)),20000);
+  await T(deleteDoc(doc(db,...base(),"meta")),20000);legacyN=0;
+ }
+ if(pending==null)lsDel(K.dirty(uid));sync("✔ synchronisé")}
+catch(e){pending=pending??str;sync("⚠ non synchronisé (nouvel essai automatique)")}}
+
+window.__cloudSave=app=>{const str=JSON.stringify(app);lsSet(K.data(uid),str);lsSet(K.dirty(uid),"1");pending=str;clearTimeout(timer);timer=setTimeout(flush,1200);if(offline())sync(OFFMSG)};
+window.__logout=async()=>{
+ if((pending!=null||isDirty())&&offline()&&!confirm("Vous êtes hors ligne : certaines données ne sont pas encore envoyées. Se déconnecter quand même ?"))return;
+ await flush();await signOut(auth);location.replace(HOME)};
+
+/* Reprise automatique de la synchronisation dès que le réseau revient */
+function retry(){if(!uid||!started||offline()||!isDirty())return;if(pending==null)pending=lsGet(K.data(uid));flush()}
+addEventListener("online",()=>{if(started){sync("connexion rétablie…");retry()}});
+addEventListener("offline",()=>{if(started)sync(OFFMSG)});
+setInterval(retry,30000);
+addEventListener("pagehide",flush);document.addEventListener("visibilitychange",()=>{if(document.hidden)flush()});
+
+/* Abonnement terminé pendant qu'on est hors ligne : on verrouille */
+setInterval(()=>{if(!started||!offline())return;const c=cachedShop();
+ if(c&&!okShop(c)){document.body.classList.add("locked");$("loginScreen").style.display="";$("gateMsg").textContent="Abonnement terminé : connectez-vous à internet pour le renouveler."}},60000);
+
+async function begin(s){
+ if(started)return;started=true;
+ let data=null,ok=false;
+ if(offline()){data=localData();ok=data!=null}
+ else if(isDirty()&&localData()){data=localData();ok=true;pending=lsGet(K.data(uid))}
+ else{try{data=await T(loadCloud(),10000);ok=true}catch(e){data=localData();ok=data!=null}}
+ if(!ok){started=false;$("gateMsg").textContent="Connexion internet requise pour la première ouverture de la boutique.";return}
+ if(data&&!data.draftFacture){const l=localData();if(l&&l.draftFacture)data.draftFacture=l.draftFacture}
+ window.__CLOUD={uid,shop:s,data};
+ $("loginScreen").style.display="none";document.body.classList.remove("locked");
+ window.__startApp();
+ $("hdrShopSub").textContent="Gestion de stock & factures · abonnement : "+left(s)+" j";
+ if(offline())sync(OFFMSG);else if(pending!=null||isDirty()){retry()}else sync("✔ synchronisé");
+}
 
 onAuthStateChanged(auth,async u=>{
  if(!u)return location.replace(HOME);
  uid=u.uid;
- try{if((await getDoc(doc(db,"admins",uid))).exists())return location.replace(ADMIN)}catch(e){}
+ if(!offline()){try{if((await T(getDoc(doc(db,"admins",uid)),4000)).exists())return location.replace(ADMIN)}catch(e){}}
+ const c=cachedShop();
+ if(offline()){
+  if(okShop(c))begin(c);
+  else $("gateMsg").textContent=c?"Abonnement terminé : connectez-vous à internet pour le renouveler.":"Connexion internet requise pour vérifier votre abonnement.";
+ }
+ if(listening)return;listening=true;
+ /* Réseau très lent : au bout de 6 s, on démarre avec l'abonnement connu */
+ setTimeout(()=>{const k=cachedShop();if(!started&&okShop(k))begin(k)},6000);
  onSnapshot(doc(db,"site_boutiques",uid),async d=>{
-  if(!d.exists())return location.replace(HOME);const s=d.data();
-  if(s.blocked||!(s.activeUntil>Date.now())){await flush();return location.replace(HOME)}
+  if(!d.exists()){if(d.metadata.fromCache)return;return location.replace(HOME)}
+  const s=d.data();
+  if(!d.metadata.fromCache)lsSet(K.shop(uid),JSON.stringify(s));
+  if(s.blocked||!(s.activeUntil>Date.now())){if(d.metadata.fromCache)return;await flush();return location.replace(HOME)}
   if(started){$("hdrShopSub").textContent="Gestion de stock & factures · abonnement : "+left(s)+" j";return}
-  started=true;let data=null;
-  try{data=await loadCloud()}catch(e){try{data=JSON.parse(localStorage.getItem("bq_"+uid))}catch(_){}sync("⚠ hors ligne")}
-  window.__CLOUD={uid,shop:s,data};
-  $("loginScreen").style.display="none";document.body.classList.remove("locked");
-  window.__startApp();
-  $("hdrShopSub").textContent="Gestion de stock & factures · abonnement : "+left(s)+" j";
-  sync("✔ synchronisé");
- });
+  begin(s);
+ },()=>{});
 });
 </script>
 <script>
@@ -502,6 +615,11 @@ window.__startApp=function(){
 "use strict";
 
 var LOGO_DATA_URI = document.getElementById("hdrLogo").src;
+/* Abréviation du nom de la boutique (ex. « Quincaillerie Diallo » -> « QD ») : sert de logo sur factures et rapports */
+function shopInitials(nom){
+  var t = String(nom||"").split(/\s+/).map(function(w){ var m = w.match(/[A-Za-z0-9\u00C0-\u00FF]/); return m ? m[0] : ""; }).join("").slice(0,3).toUpperCase();
+  return t || "B";
+}
 
 
 /* ============ STOCKAGE ============ */
@@ -775,7 +893,7 @@ function render(){
   if(currentTab==="historique" && APP.settings && APP.settings.masquerHistorique) currentTab = "dashboard";
   renderTabs();
   document.getElementById("hdrShopName").textContent = APP.shop.nom || "Quincaillerie";
-  document.getElementById("brandInitials").textContent = (APP.shop.nom||"Q").split(/\s+/).map(function(w){return w[0];}).join("").slice(0,3).toUpperCase();
+  document.getElementById("brandInitials").textContent = shopInitials(APP.shop.nom||"Q");
   var app = document.getElementById("app");
   if(currentTab==="dashboard") app.innerHTML = viewDashboard();
   else if(currentTab==="stock") app.innerHTML = viewStock();
@@ -1058,7 +1176,7 @@ function viewFacture(){
     '</datalist>'+
     draft.lignes.map(function(l,i){
       return '<div class="ligne-row" data-idx="'+i+'">'+
-        '<div><label>Désignation</label><input id="lnDesig'+i+'" list="dlProduits" data-field="designation" data-idx="'+i+'" value="'+esc(l.designation)+'" placeholder="Article"></div>'+
+        '<div class="art-wrap"><label>Désignation</label><input id="lnDesig'+i+'" autocomplete="off" autocapitalize="off" data-field="designation" data-idx="'+i+'" value="'+esc(l.designation)+'" placeholder="Article"><div class="art-list" id="artList'+i+'" style="display:none"></div></div>'+
         '<div><label>Qté</label><input id="lnQte'+i+'" type="text" inputmode="decimal" data-field="qte" data-idx="'+i+'" value="'+esc(l.qte)+'"></div>'+
         '<div><label>P.U (FG)</label><input id="lnPu'+i+'" type="text" inputmode="decimal" data-field="pu" data-idx="'+i+'" value="'+esc(l.pu)+'"></div>'+
         '<div><button class="btn small danger" data-action="delLigne" data-idx="'+i+'" title="Retirer la ligne">✕</button></div>'+
@@ -1328,15 +1446,15 @@ function buildInvoiceCopy(f, label){
   return ''+
   '<div class="inv-copy" style="'+densityStyle+'">'+
     '<div class="inv-copy-label">'+esc(label)+'</div>'+
-    '<img class="inv-watermark" src="'+LOGO_DATA_URI+'" alt="">'+
+    '<div class="inv-watermark-txt">'+esc(shopInitials(s.nom))+'</div>'+
     '<div class="inv-content">'+
     '<div class="inv-head">'+
       '<div class="inv-shop-title">'+esc(s.nom)+'</div>'+
       '<div class="inv-head-row">'+
-        '<div class="inv-logo-crop top" style="background-image:url('+LOGO_DATA_URI+')"></div>'+
+        '<div class="inv-initials" style="font-size:'+(shopInitials(s.nom).length>=3?'16px':'21px')+'">'+esc(shopInitials(s.nom))+'</div>'+
         '<div class="inv-head-center">'+esc(s.activite)+'<br>'+esc(s.detail)+'<br>'+esc(s.adresse)+'<br>'+
         'Tél : '+esc(s.tel1)+(s.tel2? ' / '+esc(s.tel2):'')+(s.telAutre? ' / '+esc(s.telAutre):'')+'</div>'+
-        '<div class="inv-logo-crop bot" style="background-image:url('+LOGO_DATA_URI+')"></div>'+
+        '<div class="inv-logo-crop bot"></div>'+
       '</div>'+
       '<div class="inv-facture-label">Facture</div>'+
     '</div>'+
@@ -1481,7 +1599,7 @@ function buildRapportJournalier(dateISO){
   '<div class="rapport-doc">'+
     '<div class="rapport-head">'+
       '<div class="rapport-head-left">'+
-        '<img class="rapport-logo" src="'+LOGO_DATA_URI+'" alt="">'+
+        '<div class="rapport-logo rapport-initials" style="font-size:'+(shopInitials(s.nom).length>=3?'14px':'18px')+'">'+esc(shopInitials(s.nom))+'</div>'+
         '<div>'+
           '<h2>'+esc(s.nom)+'</h2>'+
           '<div class="meta">'+esc(s.activite)+'<br>'+esc(s.detail)+'<br>'+esc(s.adresse)+'<br>'+
@@ -1717,6 +1835,46 @@ function attachHandlers(){
     }
     return cleaned;
   }
+  // Liste de suggestions d'articles (remplace la liste native, peu fiable sur téléphone)
+  function hideArtSuggest(idx){
+    var box = document.getElementById("artList"+idx);
+    if(box){ box.style.display = "none"; box.innerHTML = ""; }
+  }
+  function showArtSuggest(inp, idx){
+    var box = document.getElementById("artList"+idx);
+    if(!box) return;
+    var q = (inp.value||"").trim().toLowerCase();
+    var liste = APP.produits.filter(function(p){
+      return !q || String(p.designation||"").toLowerCase().indexOf(q) !== -1;
+    }).slice(0,30);
+    if(!liste.length || (liste.length===1 && liste[0].designation===inp.value)){ hideArtSuggest(idx); return; }
+    box.innerHTML = liste.map(function(p){
+      var pi = APP.produits.indexOf(p);
+      return '<div class="art-item" data-pi="'+pi+'"><span class="art-n">'+esc(p.designation)+'</span>'+
+             '<span class="art-p">'+fmtNum(p.prixVente)+' FG · stock '+fmtNum(p.qte)+'</span></div>';
+    }).join("");
+    box.style.display = "block";
+    Array.prototype.forEach.call(box.querySelectorAll(".art-item"), function(it){
+      // mousedown bloqué : le champ garde le focus jusqu'au choix
+      it.addEventListener("mousedown", function(e){ e.preventDefault(); });
+      it.addEventListener("click", function(e){
+        e.preventDefault();
+        var p = APP.produits[Number(it.getAttribute("data-pi"))];
+        if(!p || !draft.lignes[idx]) return;
+        draft.lignes[idx].designation = p.designation;
+        if(!draft.lignes[idx].pu || draft.lignes[idx].pu===0) draft.lignes[idx].pu = p.prixVente;
+        persistDraft();
+        try{ inp.blur(); }catch(er){}
+        render();
+      });
+    });
+  }
+  Array.prototype.forEach.call(app.querySelectorAll('[data-field="designation"]'), function(inp){
+    var idx = Number(inp.getAttribute("data-idx"));
+    inp.addEventListener("focus", function(){ showArtSuggest(inp, idx); });
+    inp.addEventListener("click", function(){ showArtSuggest(inp, idx); });
+    inp.addEventListener("blur", function(){ setTimeout(function(){ hideArtSuggest(idx); }, 200); });
+  });
   Array.prototype.forEach.call(app.querySelectorAll('[data-field]'), function(inp){
     inp.addEventListener("input", function(){
       var idx = Number(inp.getAttribute("data-idx"));
@@ -1724,10 +1882,16 @@ function attachHandlers(){
       if(!draft.lignes[idx]) return;
       if(field==="designation"){
         draft.lignes[idx].designation = inp.value;
+        showArtSuggest(inp, idx);
         var prod = APP.produits.find(function(p){ return p.designation===inp.value; });
         if(prod && (!draft.lignes[idx].pu || draft.lignes[idx].pu===0)){
           draft.lignes[idx].pu = prod.prixVente;
+          persistDraft();
+          render();
+        } else {
+          persistDraft();
         }
+        return;
       } else if(field==="qte"){
         draft.lignes[idx].qte = Number(sanitizeDigits(inp))||0;
       } else if(field==="pu"){
