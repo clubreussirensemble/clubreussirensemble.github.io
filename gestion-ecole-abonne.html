@@ -1611,7 +1611,7 @@ function liaison(uid0){
 }
 onAuthStateChanged(auth,async u=>{
   if(!u)return location.replace(HUB);
-  try{if((await getDoc(doc(db,"admins",u.uid))).exists())return location.replace("admin-scolaire.html")}catch(e){}
+  try{if((await getDoc(doc(db,"admins",u.uid))).exists())return location.replace("admin.html")}catch(e){}
   const go=()=>{if(started)return;started=true;window.appOnAuth(u);liaison(u.uid)};
   onSnapshot(doc(db,"site_gestscol",u.uid),d=>{
     const s=d.exists()&&d.data();

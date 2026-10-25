@@ -12,8 +12,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gestion Scolaire">
-<link rel="apple-touch-icon" href="icon-finance-192.png">
-<link rel="icon" type="image/png" href="icon-finance-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -8088,7 +8088,7 @@ window.__liaisonAll=()=>{
 };
 onAuthStateChanged(auth,async u=>{
   if(!u)return location.replace(HUB);
-  try{if((await getDoc(doc(db,"admins",u.uid))).exists())return location.replace("admin-scolaire.html")}catch(e){}
+  try{if((await getDoc(doc(db,"admins",u.uid))).exists())return location.replace("admin.html")}catch(e){}
   const go=()=>{if(started)return;started=true;window.__CLOUD={uid:u.uid};try{lmap=JSON.parse(localStorage.getItem("liaison_h_"+u.uid)||"{}")}catch(e){lmap={}}window.__finBind(mkRef(u.uid));document.getElementById("gsGate").remove();window.__finStart();setTimeout(window.__liaisonAll,4000)};
   onSnapshot(doc(db,"site_gestscol",u.uid),d=>{
     const s=d.exists()&&d.data();

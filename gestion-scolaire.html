@@ -120,7 +120,7 @@ onAuthStateChanged(auth,async u=>{
  unsub&&unsub();unsub=null;
  if(!u)return authView();
  box.innerHTML="<p>Chargement…</p>";
- try{if((await getDoc(doc(db,"admins",u.uid))).exists())return location.replace("admin-scolaire.html")}catch(e){}
+ try{if((await getDoc(doc(db,"admins",u.uid))).exists())return location.replace("admin.html")}catch(e){}
  unsub=onSnapshot(doc(db,"site_gestscol",u.uid),d=>{
   if(!d.exists()){if(!registering)createView(u);return}
   const s=d.data();
