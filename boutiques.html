@@ -194,7 +194,7 @@ theme((()=>{try{return localStorage.getItem("cre-theme")}catch(e){}})()||"light"
 tb.onclick=()=>theme(document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark");
 $("#navToggle").onclick=()=>$("#navLinks").classList.toggle("open");
 
-let reg=false,registering=false,unsub=null;
+let reg=false,registering=false,unsub=null,fresh=false;
 $("#ctaReg").onclick=()=>{reg=true;if(!auth.currentUser)authView()};
 $("#ctaLog").onclick=()=>{reg=false;if(!auth.currentUser)authView()};
 
@@ -215,11 +215,11 @@ async function go(){
  try{
   if(reg){
    const sn=$("#sn").value.trim();if(!sn){err.textContent="Entrez le nom de la boutique.";return}
-   registering=true;
+   registering=true;fresh=true;
    const c=await createUserWithEmailAndPassword(auth,em,pw);
    await setDoc(doc(db,"site_boutiques",c.user.uid),{name:sn,phone:$("#ph").value.trim(),email:em,activeUntil:0,blocked:false,createdAt:Date.now()});
    registering=false;
-  }else await signInWithEmailAndPassword(auth,em,pw);
+  }else{fresh=true;await signInWithEmailAndPassword(auth,em,pw)}
  }catch(e){registering=false;err.textContent={"auth/email-already-in-use":"Cet e-mail a déjà un compte : connectez-vous.","auth/weak-password":"Mot de passe trop court (6 caractères minimum).","auth/invalid-email":"Adresse e-mail invalide."}[e.code]||"Échec de la connexion : vérifiez vos informations."}
 }
 function createShopView(u){
@@ -229,6 +229,12 @@ function createShopView(u){
  $("#lo").onclick=e=>{e.preventDefault();signOut(auth)};
  $("#mk").onclick=async()=>{const sn=$("#sn").value.trim();if(!sn){$("#err").textContent="Entrez le nom de la boutique.";return}
   try{await setDoc(doc(db,"site_boutiques",u.uid),{name:sn,phone:$("#ph").value.trim(),email:u.email,activeUntil:0,blocked:false,createdAt:Date.now()})}catch(e){$("#err").textContent="Création impossible pour le moment."}};
+}
+function chooseView(u,s){
+ box.innerHTML=`<h2>🏬 ${esc(s.name)}</h2><p>Connecté en tant que <b>${esc(u.email)}</b></p>
+ <a class="btn btn-blue btn-block" href="gestion-boutique.html">Continuer vers ma boutique</a>
+ <button class="btn btn-ghost btn-block" id="sw">Changer de compte</button>`;
+ $("#sw").onclick=()=>signOut(auth);
 }
 function lockView(s){
  const st=s.blocked?`<span class="tag x">Compte bloqué</span>`:s.activeUntil?`<span class="tag x">Abonnement expiré le ${dstr(s.activeUntil)}</span>`:`<span class="tag">En attente d'activation</span>`;
@@ -247,7 +253,7 @@ onAuthStateChanged(auth,async u=>{
  unsub=onSnapshot(doc(db,"site_boutiques",u.uid),d=>{
   if(!d.exists()){if(!registering)createShopView(u);return}
   const s=d.data();
-  if(!s.blocked&&s.activeUntil>Date.now())return location.replace("gestion-boutique.html");
+  if(!s.blocked&&s.activeUntil>Date.now()){if(fresh)return location.replace("gestion-boutique.html");return chooseView(u,s)}
   lockView(s);
  },()=>{box.innerHTML="<p>Accès impossible pour le moment. Réessayez plus tard.</p>"});
 });
