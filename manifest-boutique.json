@@ -1,0 +1,17 @@
+{
+  "id": "gestion-boutique.html",
+  "name": "Ma Boutique — Club Réussir Ensemble",
+  "short_name": "Ma Boutique",
+  "description": "Gérez votre boutique : stock, factures, clients, dettes et rapports.",
+  "lang": "fr",
+  "start_url": "gestion-boutique.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#071A38",
+  "theme_color": "#0A2A57",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
