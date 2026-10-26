@@ -68,8 +68,8 @@ a{text-decoration:none;color:inherit}
 /* Conversation */
 .chead{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--line);flex-shrink:0}
 .chead .back{display:none;border:none;background:none;font-size:22px;color:var(--ink);cursor:pointer;padding:0 4px}
-.chead b{font-size:15px}
-.chead small{display:block;color:var(--ink2);font-size:12px}
+.chead b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chead small{display:block;color:var(--ink2);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #msgs{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:3px}
 .day{align-self:center;background:var(--card);color:var(--ink2);font-size:11.5px;font-weight:600;padding:4px 12px;border-radius:999px;margin:10px 0;box-shadow:var(--shadow)}
 .bw{display:flex}
