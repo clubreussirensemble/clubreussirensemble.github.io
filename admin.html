@@ -2225,6 +2225,7 @@ function renderAll(){
   $("#trS1").textContent = n; $("#trS2").textContent = l.filter(d => d.statutCompte==="actif").length; $("#trS3").textContent = l.filter(online).length;
   $("#trNb").textContent = n ? "("+n+")" : ""; renderIns(); renderList(); fillSel(); if (tab==="map" && map) drawMarkers();
 }
+const gmaps = d => "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(d.position.lat + "," + d.position.lng);
 function renderIns(){
   const l = arr().filter(d => d.statutCompte==="en_attente").sort((a,b) => tms(b.createdAt)-tms(a.createdAt));
   $("#trIns").innerHTML = l.length ? l.map(d => `<div class="tr-card"><div class="tr-row"><b>${esc(d.name)}</b><span class="tr-badge en_attente">En attente</span></div>
@@ -2236,7 +2237,7 @@ function renderList(){
   const l = arr().filter(d => d.statutCompte!=="en_attente" && (!q || [d.name,d.phone,d.vehicule,d.categorie].join(" ").toLowerCase().includes(q))).sort((a,b) => (online(b)-online(a)) || String(a.name).localeCompare(String(b.name)));
   $("#trList").innerHTML = l.length ? l.map(d => { const tel = String(d.phone||"").replace(/[^\d+]/g,""); return `<div class="tr-card"><div class="tr-row"><b><span class="tr-dot ${online(d)?"on":""}"></span>${esc(d.name)}</b><span class="tr-badge ${esc(d.statutCompte)}">${ST[d.statutCompte]||esc(d.statutCompte)}</span></div>
 <div class="tr-meta">🛺 ${esc(d.vehicule||"—")} · ${esc(d.categorie||"—")} · ${esc(d.quartier||"—")}</div><div class="tr-meta">📞 ${esc(d.phone)}${d.positionAt?" · GPS : "+fdt(tms(d.positionAt)):" · Pas encore de GPS"}</div>
-<div class="tr-acts">${tel?`<a class="tr-b g" href="tel:${tel}">📞 Appeler</a>`:""}${d.position?`<button class="tr-b o" data-act="carte" data-id="${d.id}">🗺️ Carte</button>`:""}${d.statutCompte==="actif"?`<button class="tr-b r" data-act="refuser" data-id="${d.id}">Suspendre</button>`:`<button class="tr-b v" data-act="valider" data-id="${d.id}">Réactiver</button>`}<button class="tr-b g" data-act="supprimer" data-id="${d.id}">🗑️ Supprimer</button></div></div>`; }).join("") : `<div class="tr-card tr-meta" style="text-align:center">Aucun chauffeur.</div>`;
+<div class="tr-acts">${tel?`<a class="tr-b g" href="tel:${tel}">📞 Appeler</a>`:""}${d.position?`<button class="tr-b o" data-act="carte" data-id="${d.id}">🗺️ Carte</button>`:""}${d.position?`<a class="tr-b o" style="text-decoration:none" target="_blank" rel="noopener" href="${gmaps(d)}">📍 Google Maps</a>`:""}${d.statutCompte==="actif"?`<button class="tr-b r" data-act="refuser" data-id="${d.id}">Suspendre</button>`:`<button class="tr-b v" data-act="valider" data-id="${d.id}">Réactiver</button>`}<button class="tr-b g" data-act="supprimer" data-id="${d.id}">🗑️ Supprimer</button></div></div>`; }).join("") : `<div class="tr-card tr-meta" style="text-align:center">Aucun chauffeur.</div>`;
 }
 async function supprimer(id){
   const d = DRV[id]; if (!d) return;
@@ -2258,7 +2259,7 @@ function drawMarkers(){
     seen[d.id] = 1; const on = online(d), ll = [d.position.lat, d.position.lng];
     const ic = L.divIcon({ className:"", html:`<div class="tr-pin ${on?"":"off"}">🛺</div>`, iconSize:[32,32], iconAnchor:[16,16] });
     const tel = String(d.phone||"").replace(/[^\d+]/g,"");
-    const pop = `<b>${esc(d.name)}</b><br>${esc(d.vehicule||"")} · ${esc(d.categorie||"")}<br>${on?"🟢 En ligne":"⚪ Hors ligne"} · ${fdt(tms(d.positionAt))}<br><a href="tel:${tel}">📞 ${esc(d.phone)}</a><br><a href="#" data-act="parcours" data-id="${d.id}">Voir son parcours</a>`;
+    const pop = `<b>${esc(d.name)}</b><br>${esc(d.vehicule||"")} · ${esc(d.categorie||"")}<br>${on?"🟢 En ligne":"⚪ Hors ligne"} · ${fdt(tms(d.positionAt))}<br><a href="tel:${tel}">📞 ${esc(d.phone)}</a><br><a href="${gmaps(d)}" target="_blank" rel="noopener">📍 Ouvrir dans Google Maps</a><br><a href="#" data-act="parcours" data-id="${d.id}">Voir son parcours</a>`;
     if (markers[d.id]) markers[d.id].setLatLng(ll).setIcon(ic).setPopupContent(pop); else markers[d.id] = L.marker(ll, { icon:ic }).addTo(map).bindPopup(pop);
   });
   Object.keys(markers).forEach(id => { if (!seen[id]) { map.removeLayer(markers[id]); delete markers[id]; } });
