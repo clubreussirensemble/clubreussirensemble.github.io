@@ -252,6 +252,10 @@ input:checked + .slider::before{transform:translateX(20px);}
       <p>Réserve ta place, monte à bord, paie sur place. Wuro = ta ville, Go = on y va.</p>
     </div>
     <div class="auth-body">
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <a class="btn btn-outline" style="flex:1;text-align:center;text-decoration:none;padding:12px 8px;font-size:13px;" href="passager.html">📍 Espace Passager<br><span style="font-weight:400;font-size:11px;">Appeler un chauffeur</span></a>
+        <a class="btn btn-outline" style="flex:1;text-align:center;text-decoration:none;padding:12px 8px;font-size:13px;" href="chauffeur.html">🛺 Espace Chauffeur<br><span style="font-weight:400;font-size:11px;">Recevoir les positions</span></a>
+      </div>
       <div class="tabs">
         <button class="tab-btn active" onclick="setAuthTab('guest')">Réserver</button>
         <button class="tab-btn" onclick="setAuthTab('login')">Connexion</button>
@@ -303,6 +307,8 @@ input:checked + .slider::before{transform:translateX(20px);}
     <div id="top-menu" class="top-menu" style="display:none;">
       <a href="index.html">🏠 Accueil du site</a>
       <a href="#" onclick="menuGo('home');return false;">🧭 Page d'accueil du transport</a>
+      <a href="passager.html">📍 Espace Passager (envoyer ma position)</a>
+      <a href="chauffeur.html">🛺 Espace Chauffeur (positions reçues)</a>
       <a href="#" onclick="menuLogout();return false;" style="color:#C1443C;">⎋ Se déconnecter</a>
     </div>
     <div class="topbar-sub" id="topbar-sub">Bonjour 👋</div>
