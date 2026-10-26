@@ -526,7 +526,10 @@ function doRegister(){
       disponible: false,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    return db.collection('gst_users').doc(uid).set(profile).then(()=>chargerProfil(cred.user));
+    return db.collection('gst_users').doc(uid).set(profile).then(()=>chargerProfil(cred.user)).catch(e=>{
+      // profil non enregistré : on supprime le compte créé pour pouvoir réessayer avec le même email
+      return cred.user.delete().catch(()=>{}).then(()=>{ throw e; });
+    });
   }).then(()=>{
     showAuthMsg('Compte créé ! Bienvenue sur Guinée Service Transport.', 'ok');
   }).catch(err=>{
@@ -584,7 +587,15 @@ function traduireErreur(err){
     'auth/user-not-found':'Aucun compte trouvé.',
     'auth/invalid-credential':'Identifiants incorrects.'
   };
-  return m[err.code] || 'Une erreur est survenue. Réessaie.';
+  if(m[err.code]) return m[err.code];
+  console.error(err);
+  const x = {
+    'permission-denied':'Accès refusé par Firestore : publie les dernières règles Firestore.',
+    'auth/operation-not-allowed':"Méthode de connexion non activée dans Firebase (Authentication).",
+    'auth/network-request-failed':'Pas de connexion internet.',
+    'auth/too-many-requests':'Trop d\'essais. Réessaie plus tard.'
+  };
+  return (x[err.code] || 'Une erreur est survenue. Réessaie.') + ' [' + (err.code || err.message || '?') + ']';
 }
 
 /* ======================================================================
