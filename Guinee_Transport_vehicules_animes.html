@@ -509,6 +509,7 @@ function doRegister(){
   const quartier = $('reg-quartier').value;
   const vehicule = $('reg-vehicule').value.trim();
 
+  if(!quartier){ showAuthMsg('Choisis ton quartier.', 'error'); return; }
   if(!name || !phone || !email || !pass){ showAuthMsg('Remplis tous les champs obligatoires.', 'error'); return; }
   if(pass.length < 6){ showAuthMsg('Mot de passe : 6 caractères minimum.', 'error'); return; }
   selectedRole = 'chauffeur';
@@ -589,6 +590,7 @@ function traduireErreur(err){
 /* ======================================================================
    ROUTEUR / ÉTAT DE SESSION
 ====================================================================== */
+fillQuartiers($('reg-quartier'), 'Choisis ton quartier');
 function chargerProfil(user){
   currentUser = user;
   return db.collection('gst_users').doc(user.uid).get().then(doc=>{
@@ -624,7 +626,6 @@ function entrerApp(){
   fillQuartiers($('p-destination'));
   $('p-depart').onchange = updatePrixPreview;
   $('p-destination').onchange = updatePrixPreview;
-  fillQuartiers($('reg-quartier'));
 
   if(currentProfile.role === 'passager'){ goTab('home'); listenMesTrajets(); listenChauffeursDispo(); }
   else if(currentProfile.role === 'chauffeur'){
