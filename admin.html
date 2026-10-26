@@ -144,6 +144,31 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
 .lecon-form label{font-size:11.5px;font-weight:700;color:var(--ink2)}
 .lecon-form input,.lecon-form select{padding:9px 11px;border:1.5px solid var(--line);border-radius:7px;font-size:13.5px;font-family:inherit;background:var(--paper2)}
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+#tab-transport .tr-note{background:#FEF3C7;color:#92400E;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+#tab-transport .tr-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+#tab-transport .tr-stat{display:flex;align-items:center;gap:12px;background:var(--paper2);border-radius:14px;padding:12px 14px}
+#tab-transport .tr-stat i{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:19px;color:#fff;flex-shrink:0}
+#tab-transport .tr-stat b{display:block;font:800 21px Poppins,sans-serif;color:var(--navy-deep)}#tab-transport .tr-stat span{font-size:12.5px;color:var(--ink2)}
+#tab-transport .tr-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+#tab-transport .tr-tabs button{padding:9px 16px;border:1.5px solid var(--line);background:#fff;border-radius:999px;font:700 13px 'Work Sans',sans-serif;color:var(--ink2);cursor:pointer}
+#tab-transport .tr-tabs button.on{background:var(--navy-deep);border-color:var(--navy-deep);color:#fff}
+#tab-transport .tr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+#tab-transport .tr-card{border:1.5px solid var(--line);border-radius:14px;padding:14px;background:#fff}
+#tab-transport .tr-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+#tab-transport .tr-meta{font-size:12.5px;color:var(--ink2);margin-top:5px}
+#tab-transport .tr-acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+#tab-transport .tr-b{flex:1;min-width:100px;padding:10px 14px;border:0;border-radius:999px;background:var(--navy);color:#fff;font:700 13px 'Work Sans',sans-serif;cursor:pointer;text-align:center;text-decoration:none}
+#tab-transport .tr-b.o{background:#2563EB}#tab-transport .tr-b.v{background:var(--green)}#tab-transport .tr-b.r{background:var(--red)}#tab-transport .tr-b.g{background:var(--paper2);color:var(--ink);border:1px solid var(--line)}
+#tab-transport .tr-badge{font-size:11.5px;font-weight:700;padding:4px 11px;border-radius:999px;background:var(--paper2);white-space:nowrap}
+#tab-transport .tr-badge.actif{background:#DCFCE7;color:#166534}#tab-transport .tr-badge.en_attente{background:#FEF3C7;color:#92400E}#tab-transport .tr-badge.refuse{background:#FEE2E2;color:#991B1B}
+#tab-transport #trMap{height:55vh;min-height:320px;border-radius:14px;box-shadow:var(--shadow)}
+#tab-transport .tr-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:#B6C0D0}#tab-transport .tr-dot.on{background:var(--green)}
+#tab-transport .tr-pin{width:32px;height:32px;border-radius:50%;background:var(--green);border:3px solid #fff;box-shadow:0 2px 8px rgba(10,42,87,.4);display:flex;align-items:center;justify-content:center;font-size:16px}#tab-transport .tr-pin.off{background:#8A97AB}
+#tab-transport .tr-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:600px){#tab-transport .tr-two{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 
@@ -196,6 +221,33 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
       <button data-tab="blog">Blog</button>
       <button data-tab="reseau" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">💬 Réseau</button>
       <button data-tab="boutiques" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">🏬 Boutiques</button>
+      <button data-tab="transport" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">🛺 Transport</button>
+    </div>
+
+    <div id="tab-transport" class="panel" style="display:none">
+      <h2>🛺 Guinée Service Transport — chauffeurs</h2>
+      <div id="trDash">
+        <div class="tr-stats">
+          <div class="tr-stat"><i style="background:#FAB202">⏳</i><div><b id="trS1">0</b><span>Inscriptions en attente</span></div></div>
+          <div class="tr-stat"><i style="background:#2563EB">🛺</i><div><b id="trS2">0</b><span>Chauffeurs actifs</span></div></div>
+          <div class="tr-stat"><i style="background:#17A34A">📡</i><div><b id="trS3">0</b><span>En ligne (GPS)</span></div></div>
+        </div>
+        <div class="tr-tabs">
+          <button type="button" id="trT-ins" class="on" data-act="tab" data-id="ins">Inscriptions <span id="trNb"></span></button>
+          <button type="button" id="trT-list" data-act="tab" data-id="list">Chauffeurs</button>
+          <button type="button" id="trT-map" data-act="tab" data-id="map">Carte &amp; parcours</button>
+        </div>
+        <p id="trNote" class="tr-meta" style="min-height:18px"></p>
+        <div id="trV-ins"><div id="trIns" class="tr-grid"></div></div>
+        <div id="trV-list" style="display:none"><input id="trQ" placeholder="Rechercher un chauffeur (nom, téléphone, véhicule)…" style="margin-bottom:12px"><div id="trList" class="tr-grid"></div></div>
+        <div id="trV-map" style="display:none">
+          <div id="trMap"></div>
+          <div class="tr-meta" style="margin:8px 0 14px"><span class="tr-dot on"></span>En ligne (position &lt; 2 min) &nbsp; <span class="tr-dot"></span>Dernière position connue</div>
+          <div class="tr-card"><h3 style="font-size:15px;margin-bottom:10px">🧭 Parcours d'un chauffeur</h3>
+            <div class="tr-two"><div class="field"><label>Chauffeur</label><select id="trSel"></select></div><div class="field"><label>Jour</label><input id="trDate" type="date"></div></div>
+            <div id="trInfo" class="tr-meta" style="margin-top:8px">Choisis un chauffeur pour voir son trajet de la journée.</div></div>
+        </div>
+      </div>
     </div>
 
     <div id="tab-boutiques" class="panel" style="display:none">
@@ -2130,6 +2182,112 @@ installBtn.addEventListener('click', async ()=>{
   installBtn.style.display = 'none';
 });
 window.addEventListener('appinstalled', ()=>{ installBtn.style.display = 'none'; });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script type="module">
+/* ── Guinée Service Transport : gestion des chauffeurs (onglet « Transport ») ── */
+import { fbDB as db, collection, doc, updateDoc, deleteDoc, onSnapshot, query, where } from "./firebase.js";
+const P = document.getElementById("tab-transport"), $ = s => P.querySelector(s);
+const show = (el, b) => { el.style.display = b ? "" : "none"; };
+const esc = t => String(t==null?"":t).replace(/[&<>"']/g, x => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[x]));
+const tms = ts => ts && ts.toDate ? ts.toDate().getTime() : (ts ? new Date(ts).getTime() : 0);
+const fdt = ms => ms ? new Date(ms).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"})+" "+new Date(ms).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}) : "—";
+const fh = ms => new Date(ms).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+const dist = (a,b) => { const r=x=>x*Math.PI/180, dl=r(b.lat-a.lat), dg=r(b.lng-a.lng), h=Math.sin(dl/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dg/2)**2; return 12742*Math.asin(Math.sqrt(h)); };
+const ST = { actif:"Actif", en_attente:"En attente", refuse:"Refusé / suspendu" };
+let DRV = {}, unsubD = null, unsubT = null, map = null, markers = {}, trackLayer = null, tab = "ins", timer = null, fitted = false, started = false, nt = null;
+const note = m => { const n = $("#trNote"); n.textContent = m; clearTimeout(nt); nt = setTimeout(() => n.textContent = "", 3500); };
+const online = d => d.statutCompte==="actif" && d.disponible && d.positionAt && Date.now()-tms(d.positionAt) < 120000;
+const arr = () => Object.values(DRV);
+
+function init(){
+  $("#trQ").oninput = renderList; $("#trSel").onchange = loadTrack; $("#trDate").onchange = loadTrack;
+  P.addEventListener("click", onClick);
+  $("#trDate").value = new Date().toLocaleDateString("sv-SE");
+  unsubD = onSnapshot(query(collection(db,"gst_users"), where("role","==","chauffeur")), s => { DRV = {}; s.docs.forEach(x => DRV[x.id] = { id:x.id, ...x.data() }); renderAll(); }, () => note("Lecture impossible : vérifie les règles Firestore."));
+  timer = setInterval(renderAll, 30000);
+}
+const onceDocs = q => new Promise(res => { let u = null; u = onSnapshot(q, sn => { if (u) u(); res(sn.docs); }, () => res([])); });
+function onClick(e){
+  const b = e.target.closest("[data-act]"); if (!b) return; e.preventDefault();
+  const id = b.dataset.id;
+  if (b.dataset.act==="tab") goTab(id);
+  else if (b.dataset.act==="valider") setStatut(id,"actif");
+  else if (b.dataset.act==="refuser") setStatut(id,"refuse");
+  else if (b.dataset.act==="carte") voirCarte(id);
+  else if (b.dataset.act==="parcours") showTrack(id);
+  else if (b.dataset.act==="supprimer") supprimer(id);
+}
+function goTab(t){ tab = t; ["ins","list","map"].forEach(k => { show($("#trV-"+k), k===t); $("#trT-"+k).classList.toggle("on", k===t); });
+  if (t==="map") { initMap(); setTimeout(() => { map.invalidateSize(); drawMarkers(); }, 60); } }
+function renderAll(){
+  const l = arr(), n = l.filter(d => d.statutCompte==="en_attente").length;
+  $("#trS1").textContent = n; $("#trS2").textContent = l.filter(d => d.statutCompte==="actif").length; $("#trS3").textContent = l.filter(online).length;
+  $("#trNb").textContent = n ? "("+n+")" : ""; renderIns(); renderList(); fillSel(); if (tab==="map" && map) drawMarkers();
+}
+function renderIns(){
+  const l = arr().filter(d => d.statutCompte==="en_attente").sort((a,b) => tms(b.createdAt)-tms(a.createdAt));
+  $("#trIns").innerHTML = l.length ? l.map(d => `<div class="tr-card"><div class="tr-row"><b>${esc(d.name)}</b><span class="tr-badge en_attente">En attente</span></div>
+<div class="tr-meta">📞 ${esc(d.phone)} · ✉️ ${esc(d.email||"—")}</div><div class="tr-meta">🛺 ${esc(d.vehicule||"—")} · ${esc(d.categorie||"—")} · ${esc(d.quartier||"—")}</div><div class="tr-meta">Inscrit le ${fdt(tms(d.createdAt))}</div>
+<div class="tr-acts"><button class="tr-b v" data-act="valider" data-id="${d.id}">✓ Valider</button><button class="tr-b r" data-act="refuser" data-id="${d.id}">✕ Refuser</button></div></div>`).join("") : `<div class="tr-card tr-meta" style="text-align:center">✅ Aucune inscription en attente.</div>`;
+}
+function renderList(){
+  const q = ($("#trQ").value||"").toLowerCase();
+  const l = arr().filter(d => d.statutCompte!=="en_attente" && (!q || [d.name,d.phone,d.vehicule,d.categorie].join(" ").toLowerCase().includes(q))).sort((a,b) => (online(b)-online(a)) || String(a.name).localeCompare(String(b.name)));
+  $("#trList").innerHTML = l.length ? l.map(d => { const tel = String(d.phone||"").replace(/[^\d+]/g,""); return `<div class="tr-card"><div class="tr-row"><b><span class="tr-dot ${online(d)?"on":""}"></span>${esc(d.name)}</b><span class="tr-badge ${esc(d.statutCompte)}">${ST[d.statutCompte]||esc(d.statutCompte)}</span></div>
+<div class="tr-meta">🛺 ${esc(d.vehicule||"—")} · ${esc(d.categorie||"—")} · ${esc(d.quartier||"—")}</div><div class="tr-meta">📞 ${esc(d.phone)}${d.positionAt?" · GPS : "+fdt(tms(d.positionAt)):" · Pas encore de GPS"}</div>
+<div class="tr-acts">${tel?`<a class="tr-b g" href="tel:${tel}">📞 Appeler</a>`:""}${d.position?`<button class="tr-b o" data-act="carte" data-id="${d.id}">🗺️ Carte</button>`:""}${d.statutCompte==="actif"?`<button class="tr-b r" data-act="refuser" data-id="${d.id}">Suspendre</button>`:`<button class="tr-b v" data-act="valider" data-id="${d.id}">Réactiver</button>`}<button class="tr-b g" data-act="supprimer" data-id="${d.id}">🗑️ Supprimer</button></div></div>`; }).join("") : `<div class="tr-card tr-meta" style="text-align:center">Aucun chauffeur.</div>`;
+}
+async function supprimer(id){
+  const d = DRV[id]; if (!d) return;
+  if (!confirm("Supprimer DÉFINITIVEMENT le chauffeur « " + (d.name||"") + " » ?\n\nSon profil, son parcours et les positions reçues seront effacés. Cette action est irréversible.")) return;
+  try {
+    for (const c of ["parcours","localisations"]) {
+      try { const ds = await onceDocs(query(collection(db,"gst_"+c), where("chauffeurId","==",id))); await Promise.all(ds.map(x => deleteDoc(x.ref))); } catch (e) {}
+    }
+    await deleteDoc(doc(db,"gst_users",id));
+    if ($("#trSel").value === id) { $("#trSel").value = ""; loadTrack(); }
+    note("Chauffeur supprimé.");
+  } catch (e) { note("Suppression impossible : vérifie les règles Firestore."); }
+}
+function setStatut(id, s){ updateDoc(doc(db,"gst_users",id), s==="refuse" ? { statutCompte:s, disponible:false } : { statutCompte:s }).then(() => note(s==="actif" ? "Chauffeur validé ✅" : "Chauffeur refusé / suspendu")).catch(() => note("Action impossible : vérifie les règles Firestore.")); }
+function initMap(){ if (map) return; map = L.map($("#trMap")).setView([10.3756,-12.0914], 13); L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom:19, attribution:"© OpenStreetMap" }).addTo(map); }
+function drawMarkers(){
+  const seen = {};
+  arr().filter(d => d.statutCompte==="actif" && d.position).forEach(d => {
+    seen[d.id] = 1; const on = online(d), ll = [d.position.lat, d.position.lng];
+    const ic = L.divIcon({ className:"", html:`<div class="tr-pin ${on?"":"off"}">🛺</div>`, iconSize:[32,32], iconAnchor:[16,16] });
+    const tel = String(d.phone||"").replace(/[^\d+]/g,"");
+    const pop = `<b>${esc(d.name)}</b><br>${esc(d.vehicule||"")} · ${esc(d.categorie||"")}<br>${on?"🟢 En ligne":"⚪ Hors ligne"} · ${fdt(tms(d.positionAt))}<br><a href="tel:${tel}">📞 ${esc(d.phone)}</a><br><a href="#" data-act="parcours" data-id="${d.id}">Voir son parcours</a>`;
+    if (markers[d.id]) markers[d.id].setLatLng(ll).setIcon(ic).setPopupContent(pop); else markers[d.id] = L.marker(ll, { icon:ic }).addTo(map).bindPopup(pop);
+  });
+  Object.keys(markers).forEach(id => { if (!seen[id]) { map.removeLayer(markers[id]); delete markers[id]; } });
+  if (!fitted && Object.keys(markers).length) { fitted = true; map.fitBounds(L.featureGroup(Object.values(markers)).getBounds().pad(.3), { maxZoom:15 }); }
+}
+function voirCarte(id){ goTab("map"); const d = DRV[id]; if (d && d.position) setTimeout(() => { map.setView([d.position.lat, d.position.lng], 16); markers[id] && markers[id].openPopup(); }, 160); }
+function fillSel(){ const cur = $("#trSel").value; $("#trSel").innerHTML = `<option value="">Choisir…</option>` + arr().filter(d => d.statutCompte==="actif").sort((a,b) => String(a.name).localeCompare(String(b.name))).map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join(""); $("#trSel").value = cur; }
+function showTrack(id){ $("#trSel").value = id; loadTrack(); $("#trSel").scrollIntoView({ behavior:"smooth", block:"center" }); }
+function loadTrack(){
+  if (unsubT) { unsubT(); unsubT = null; } if (trackLayer) { map.removeLayer(trackLayer); trackLayer = null; }
+  const id = $("#trSel").value, day = $("#trDate").value, info = $("#trInfo");
+  if (!id || !day) { info.textContent = "Choisis un chauffeur pour voir son trajet de la journée."; return; }
+  unsubT = onSnapshot(doc(db,"gst_parcours", id+"_"+day), s => {
+    if (trackLayer) { map.removeLayer(trackLayer); trackLayer = null; }
+    const pts = s.exists() ? (s.data().points||[]).slice().sort((a,b) => a.t-b.t) : [];
+    if (!pts.length) { info.textContent = "Aucun parcours enregistré ce jour-là (le chauffeur doit être en ligne avec le GPS actif)."; return; }
+    let km = 0; for (let i=1; i<pts.length; i++) km += dist(pts[i-1], pts[i]);
+    const ll = pts.map(p => [p.lat, p.lng]);
+    const g = L.featureGroup([ L.polyline(ll, { color:"#FAB202", weight:5, opacity:.9 }),
+      L.circleMarker(ll[0], { radius:8, color:"#fff", weight:2, fillColor:"#17A34A", fillOpacity:1 }).bindTooltip("Départ "+fh(pts[0].t)),
+      L.circleMarker(ll[ll.length-1], { radius:8, color:"#fff", weight:2, fillColor:"#D9060C", fillOpacity:1 }).bindTooltip("Dernière position "+fh(pts[pts.length-1].t)) ]).addTo(map);
+    trackLayer = g; map.fitBounds(g.getBounds().pad(.2), { maxZoom:17 });
+    info.innerHTML = `<b>${esc(DRV[id]?DRV[id].name:"")}</b> · ${km.toFixed(1)} km parcourus · de ${fh(pts[0].t)} à ${fh(pts[pts.length-1].t)} · ${pts.length} points<br>🟢 départ &nbsp; 🔴 dernière position`;
+    $("#trMap").scrollIntoView({ behavior:"smooth", block:"center" });
+  }, () => { info.textContent = "Lecture impossible : vérifie les règles Firestore."; });
+}
+document.querySelector('.admin-tabs button[data-tab="transport"]').addEventListener("click", () => {
+  if (!started) { started = true; init(); } else if (map) setTimeout(() => map.invalidateSize(), 80);
+});
 </script>
 </body>
 </html>
