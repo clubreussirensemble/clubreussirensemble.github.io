@@ -423,6 +423,64 @@ input:checked + .slider::before{transform:translateX(20px);}
 
   <!-- ============ BOTTOM NAV (dynamic) ============ -->
   <div id="bottomnav" class="bottomnav" style="display:none;"></div>
+
+  <!-- ============ PUBLICITÉS (Monetag + Adsterra) ============ -->
+  <style>
+  #ad-zone{padding:0 20px 24px}
+  #bottomnav:not([style*="none"]) + #ad-zone{padding-bottom:90px}
+  .ad-banner,.adx-native{display:none;margin:14px 0 0}
+  .ad-banner.on,.adx-native.on{display:block}
+  .ad-label,.adx-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6b7280;margin-bottom:6px;text-align:center}
+  .ad-slot,.adx-slot{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:10px;min-height:90px;overflow:hidden;max-width:100%}
+  .ad-slot{display:flex;align-items:center;justify-content:center}
+  .ad-slot>*,.adx-slot>*{max-width:100%}
+  </style>
+  <div id="ad-zone">
+    <!-- ═══ Bannière publicitaire Monetag ═══ -->
+    <div class="ad-banner" id="adBanner" aria-label="Publicité">
+      <div class="ad-label">Publicité</div>
+      <div class="ad-slot" id="adSlot">
+        <!-- ▼▼▼ CODE MONETAG (zone 12025962) ▼▼▼ -->
+        <script>(function(s){s.dataset.zone='12025962',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+        <!-- ▲▲▲ FIN DU CODE MONETAG ▲▲▲ -->
+      </div>
+    </div>
+    <script>
+    /* Affiche le cadre seulement quand la pub a réellement chargé du contenu */
+    (function(){
+      var b=document.getElementById('adBanner'),s=document.getElementById('adSlot');
+      function check(){ if(s.querySelector('iframe,img,ins,a,div,video')) b.classList.add('on'); }
+      new MutationObserver(check).observe(s,{childList:true,subtree:true});
+      window.addEventListener('load',function(){setTimeout(check,2500)});
+    })();
+    </script>
+
+    <!-- ═══ Publicité Adsterra (Native Banner) — chargement différé ═══ -->
+    <div id="adxSentinel" style="height:1px"></div>
+    <div class="adx-native" id="adxNative" aria-label="Publicité">
+      <div class="adx-label">Publicité</div>
+      <div class="adx-slot" id="adxSlot"><div id="container-acce816c2ce0b09023a7d29ca5f8ea05"></div></div>
+    </div>
+    <script>
+    (function(){
+      var box=document.getElementById('adxNative'),slot=document.getElementById('adxSlot'),done=false;
+      if(!box||!slot)return;
+      function show(){ if(slot.querySelector('iframe,img,ins,a,video')) box.classList.add('on'); }
+      new MutationObserver(show).observe(slot,{childList:true,subtree:true});
+      function load(){
+        if(done)return; done=true;
+        var s=document.createElement('script');
+        s.async=true; s.setAttribute('data-cfasync','false'); s.src='https://bauval.org/21/acce816c2ce0b09023a7d29ca5f8ea05';
+        slot.parentNode.insertBefore(s,slot);
+        setTimeout(show,3000);
+      }
+      if('IntersectionObserver' in window){
+        var io=new IntersectionObserver(function(e){ if(e[0].isIntersecting){io.disconnect();load();} },{rootMargin:'400px'});
+        io.observe(document.getElementById('adxSentinel'));
+      } else { window.addEventListener('load',function(){setTimeout(load,1500)}); }
+    })();
+    </script>
+  </div>
 </div>
 
 <div class="modal-bg" id="modal-bg"><div class="modal-sheet" id="modal-sheet"></div></div>
@@ -541,7 +599,6 @@ function setAuthTab(tab, idx){
   $('form-login').style.display = tab==='login' ? 'block':'none';
   $('form-register').style.display = tab==='register' ? 'block':'none';
   $('msg-auth').className = 'msg';
-  if(tab === 'register' && !$('reg-quartier').value) autoQuartier('reg-quartier', null, true);
 }
 function pickRole(role){
   selectedRole = role;
@@ -701,7 +758,7 @@ function entrerApp(){
   $('p-depart').oninput = updatePrixPreview;
   $('p-destination').oninput = updatePrixPreview;
 
-  if(currentProfile.role === 'passager'){ goTab('home'); listenMesTrajets(); listenChauffeursDispo(); if(!$('p-depart').value) autoQuartier('p-depart', null, true); }
+  if(currentProfile.role === 'passager'){ goTab('home'); listenMesTrajets(); listenChauffeursDispo(); }
   else if(currentProfile.role === 'chauffeur'){
     if(currentProfile.statutCompte === 'en_attente'){
       showBlockedDriver();
