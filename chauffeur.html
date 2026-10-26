@@ -133,7 +133,7 @@ function setCat(){const v=$("mycat").value;profile.categorie=v;db.collection("gs
 /* Installation de l'application (PWA) */
 (function(){
   var box=document.getElementById("inst"),btn=document.getElementById("inst-btn"),txt=document.getElementById("inst-txt"),dp=null;
-  if("serviceWorker" in navigator&&location.protocol!=="file:")navigator.serviceWorker.register("sw-chauffeur-passager.js").catch(function(){});
+  if("serviceWorker" in navigator&&location.protocol!=="file:")navigator.serviceWorker.register("sw-transport.js").catch(function(){});
   if((window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||navigator.standalone)return;
   var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
   window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();dp=e;box.classList.remove("hide")});
