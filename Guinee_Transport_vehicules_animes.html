@@ -289,6 +289,7 @@ input:checked + .slider::before{transform:translateX(20px);}
         <div class="field"><label>Mot de passe</label><input id="reg-pass" type="password" placeholder="6 caractères min."></div>
         <div class="field" id="quartier-field"><label>Quartier</label>
           <input id="reg-quartier" type="text" list="dl-quartiers" placeholder="Écris ton quartier" autocomplete="off"><datalist id="dl-quartiers"></datalist>
+          <button type="button" class="btn btn-outline btn-sm" style="margin-top:6px;" onclick="autoQuartier('reg-quartier', this)">📍 Détecter mon quartier</button>
         </div>
         <div class="field" id="vehicule-field"><label>Véhicule (type + plaque)</label><input id="reg-vehicule" type="text" placeholder="Ex: Moto - RC 1234"></div>
         <button class="btn btn-gold" onclick="doRegister()">Créer mon compte chauffeur</button>
@@ -320,7 +321,7 @@ input:checked + .slider::before{transform:translateX(20px);}
 
     <div class="section-title">Nouveau trajet</div>
     <div class="card">
-      <div class="field"><label>Départ</label><input id="p-depart" type="text" list="dl-quartiers" placeholder="Écris ton quartier de départ" autocomplete="off"></div>
+      <div class="field"><label>Départ</label><input id="p-depart" type="text" list="dl-quartiers" placeholder="Écris ton quartier de départ" autocomplete="off"><button type="button" class="btn btn-outline btn-sm" style="margin-top:6px;" onclick="autoQuartier('p-depart', this)">📍 Détecter mon quartier</button></div>
       <div class="field"><label>Destination</label><input id="p-destination" type="text" list="dl-quartiers" placeholder="Écris ta destination" autocomplete="off"></div>
       <div class="field"><label>Note pour le chauffeur (optionnel)</label><input id="p-note" type="text" placeholder="Ex: près du grand marché"></div>
       <div class="row-between" style="margin-bottom:14px;">
@@ -478,6 +479,36 @@ function fillQuartiers(sel, placeholder){
   sel.innerHTML = (placeholder? `<option value="">${placeholder}</option>` : '') +
     QUARTIERS.map(q=>`<option value="${q}">${q}</option>`).join('');
 }
+const _norm=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[-_']/g," ").replace(/\s+/g," ").trim();
+const _has=(txt,q)=>new RegExp("(^|[^a-z0-9])"+_norm(q).replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"([^a-z0-9]|$)").test(_norm(txt));
+function detectQuartier(list){
+  return new Promise((res,rej)=>{
+    if(!window.isSecureContext||!navigator.geolocation){rej(new Error("gps"));return}
+    navigator.geolocation.getCurrentPosition(p=>{
+      const la=p.coords.latitude,lo=p.coords.longitude;
+      fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=17&addressdetails=1&accept-language=fr&lat="+la+"&lon="+lo)
+        .then(r=>r.json()).then(j=>{
+          const a=j.address||{};
+          const cands=[a.neighbourhood,a.suburb,a.quarter,a.city_district,a.hamlet,a.village,a.town,a.city].filter(Boolean);
+          let hit=list.find(q=>_has(j.display_name||"",q));
+          if(!hit){for(const c of cands){hit=list.find(q=>_has(c,q));if(hit)break}}
+          res({name:hit||cands[0]||"",inList:!!hit});
+        }).catch(rej);
+    },rej,{enableHighAccuracy:true,timeout:15000});
+  });
+}
+function autoQuartier(inputId, btn, silent){
+  const old = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Détection…'; }
+  detectQuartier(QUARTIERS).then(r=>{
+    if(r.name){
+      $(inputId).value = r.name;
+      if(inputId === 'p-depart') updatePrixPreview();
+      if(!silent) toast('Quartier détecté : ' + r.name);
+    } else if(!silent) toast('Quartier introuvable : choisis-le dans la liste.');
+  }).catch(()=>{ if(!silent) toast('Détection impossible : active le GPS et autorise la localisation (HTTPS requis).'); })
+  .finally(()=>{ if(btn){ btn.disabled = false; btn.textContent = old; } });
+}
 function calcPrix(depart, destination){
   if(!depart || !destination) return null;
   return depart.trim().toLowerCase() === destination.trim().toLowerCase() ? TARIFS.meme : TARIFS.standard;
@@ -510,6 +541,7 @@ function setAuthTab(tab, idx){
   $('form-login').style.display = tab==='login' ? 'block':'none';
   $('form-register').style.display = tab==='register' ? 'block':'none';
   $('msg-auth').className = 'msg';
+  if(tab === 'register' && !$('reg-quartier').value) autoQuartier('reg-quartier', null, true);
 }
 function pickRole(role){
   selectedRole = role;
@@ -669,7 +701,7 @@ function entrerApp(){
   $('p-depart').oninput = updatePrixPreview;
   $('p-destination').oninput = updatePrixPreview;
 
-  if(currentProfile.role === 'passager'){ goTab('home'); listenMesTrajets(); listenChauffeursDispo(); }
+  if(currentProfile.role === 'passager'){ goTab('home'); listenMesTrajets(); listenChauffeursDispo(); if(!$('p-depart').value) autoQuartier('p-depart', null, true); }
   else if(currentProfile.role === 'chauffeur'){
     if(currentProfile.statutCompte === 'en_attente'){
       showBlockedDriver();
