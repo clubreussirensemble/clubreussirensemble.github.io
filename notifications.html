@@ -245,7 +245,9 @@ a{text-decoration:none;color:inherit}
 .rx-big{width:84px;height:84px;font-size:28px}
 .rx-act{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 </style>
-<style>.rx-wrap.two{grid-template-columns:240px minmax(0,1fr)}@media(max-width:860px){.rx-wrap.two{grid-template-columns:minmax(0,1fr)}}.rx-ico button.on{color:#fff;box-shadow:inset 0 -3px 0 #fff;border-radius:10px 10px 0 0}.pg .pick{border:none;background:none;font-family:inherit}.pg .pick.on{background:var(--blue)!important;color:#fff}.pg h2{font-size:22px;margin:4px 0 14px}.pg .rx-row{padding:12px 14px;border-bottom:1px solid var(--line)}.pg .rx-row:last-child{border:none}.pg .rx-row .av{width:48px;height:48px}.pg .rx-row button,.pg .rx-row a.bt{border:none;background:rgba(37,99,235,.12);color:var(--blue);font-weight:700;font-size:13px;padding:8px 14px;border-radius:8px;cursor:pointer;white-space:nowrap}.pg .rx-row button.gr{background:rgba(127,127,127,.2);color:var(--ink)}.pg .rx-row button.pri,.pg .rx-row a.bt{background:var(--blue);color:#fff}.pg .btns{display:flex;gap:8px;flex-wrap:wrap}.pg .tabsx{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.pg .nrow{display:flex;gap:12px;align-items:flex-start;padding:14px;border-bottom:1px solid var(--line)}.pg .nrow.new{background:rgba(37,99,235,.08)}.pg .nrow .ic{width:48px;height:48px;border-radius:50%;background:rgba(37,99,235,.14);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}.pg .nrow .tx{flex:1;min-width:0;font-size:15px}.pg .nrow small{color:var(--ink2)}.pg .srch{width:100%;border:none;border-radius:999px;padding:11px 18px;background:rgba(127,127,127,.13);color:var(--ink);font:inherit;font-size:14px;margin-bottom:12px}</style>
+<style>.rx-wrap.two{grid-template-columns:240px minmax(0,1fr)}@media(max-width:860px){.rx-wrap.two{grid-template-columns:minmax(0,1fr)}}.rx-ico button.on{color:#fff;box-shadow:inset 0 -3px 0 #fff;border-radius:10px 10px 0 0}.pg .pick{border:none;background:none;font-family:inherit}.pg .pick.on{background:var(--blue)!important;color:#fff}.pg h2{font-size:22px;margin:4px 0 14px}.pg .rx-row{padding:12px 14px;border-bottom:1px solid var(--line)}.pg .rx-row:last-child{border:none}.pg .rx-row .av{width:48px;height:48px}.pg .rx-row button,.pg .rx-row a.bt{border:none;background:rgba(37,99,235,.12);color:var(--blue);font-weight:700;font-size:13px;padding:8px 14px;border-radius:8px;cursor:pointer;white-space:nowrap}.pg .rx-row button.gr{background:rgba(127,127,127,.2);color:var(--ink)}.pg .rx-row button.pri,.pg .rx-row a.bt{background:var(--blue);color:#fff}.pg .btns{display:flex;gap:8px;flex-wrap:wrap}.pg .tabsx{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.pg .nrow{display:flex;gap:12px;align-items:flex-start;padding:14px;border-bottom:1px solid var(--line)}.pg .nrow.new{background:rgba(37,99,235,.08)}.pg .nrow .ic{width:48px;height:48px;border-radius:50%;background:rgba(37,99,235,.14);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}.pg .nrow .tx{flex:1;min-width:0;font-size:15px}.pg .nrow small{color:var(--ink2)}
+.nrow .ndel{flex-shrink:0;width:32px;height:32px;border:none;border-radius:50%;background:rgba(127,127,127,.16);color:var(--ink2);font-size:16px;line-height:1;cursor:pointer}
+.nrow .ndel:hover{background:#EF4444;color:#fff}.pg .srch{width:100%;border:none;border-radius:999px;padding:11px 18px;background:rgba(127,127,127,.13);color:var(--ink);font:inherit;font-size:14px;margin-bottom:12px}</style>
 </head>
 <body>
 
@@ -353,14 +355,14 @@ a{text-decoration:none;color:inherit}
 <div class="rx-center pg">
 <div class="card empty" id="gate">Chargement…</div>
 <div id="app" style="display:none"><div class="card" style="padding:16px 16px 6px">
-  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><h2 style="margin:0;flex:1">🔔 Notifications</h2><button class="pick" id="allread">✓ Tout marquer comme lu</button></div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><h2 style="margin:0;flex:1">🔔 Notifications</h2><button class="pick" id="allread">✓ Tout marquer comme lu</button><button class="pick" id="delread">🗑 Supprimer les lues</button><button class="pick" id="delall" style="color:#EF4444">🗑 Tout supprimer</button></div>
   <div class="tabsx" id="ntabs"></div>
 </div>
 <div class="card" id="nlist"></div></div>
 </div>
 </div>
 <script type="module">
-import { fbAuth, fbDB, C_ELEVES, collection, doc, getDoc, setDoc, addDoc, updateDoc, query, where, onSnapshot, onAuthStateChanged } from "./firebase.js";
+import { fbAuth, fbDB, C_ELEVES, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot, onAuthStateChanged } from "./firebase.js";
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ini = n => String(n || "?").split(" ").map(x => x[0]).slice(0, 2).join("").toUpperCase();
@@ -430,11 +432,15 @@ function draw() {
     const icon = n.fromUid ? av(n.fromUid, n.from) : `<span class="ic">${IC[n.type] || "🔔"}</span>`;
     const act = n.type === "ami" ? (myAmis.includes(n.fromUid) ? "<br><small>✓ Vous êtes amis</small>" : `<div class="btns" style="margin-top:8px"><button class="rx-mini" data-am="ok" data-u="${esc(n.fromUid)}">Accepter</button><button class="rx-mini gr" data-am="no" data-u="${esc(n.fromUid)}">Refuser</button></div>`) : "";
     const link = n.postId ? ` href="reseau.html" ` : "";
-    return `<div class="nrow ${n.lu ? "" : "new"}">${icon}<div class="tx"><b>${esc(n.from)}</b> ${TX[n.type] || "a interagi avec toi"}<br><small>${ago(n.createdAt)}</small>${act}${n.postId ? `<br><a class="lnk" style="color:var(--blue)" href="reseau.html">Voir la publication →</a>` : ""}</div></div>`;
+    return `<div class="nrow ${n.lu ? "" : "new"}">${icon}<div class="tx"><b>${esc(n.from)}</b> ${TX[n.type] || "a interagi avec toi"}<br><small>${ago(n.createdAt)}</small>${act}${n.postId ? `<br><a class="lnk" style="color:var(--blue)" href="reseau.html">Voir la publication →</a>` : ""}</div><button class="ndel" data-del="${esc(n.id)}" title="Supprimer cette notification" aria-label="Supprimer cette notification">✕</button></div>`;
   }).join("") : '<p class="empty">Aucune notification.</p>';
   refreshAv();
 }
 $("ntabs").onclick = e => { const b = e.target.closest("[data-f]"); if (b) { nf = b.dataset.f; draw(); } };
+const delN = ids => Promise.all(ids.map(id => deleteDoc(doc(fbDB, "reseau_notifs", id)).catch(() => {})));
+$("nlist").onclick = e => { const b = e.target.closest("[data-del]"); if (b) { b.disabled = true; delN([b.dataset.del]); } };
+$("delread").onclick = () => { const ids = notifs.filter(x => x.lu).map(x => x.id); if (!ids.length) return alert("Aucune notification lue à supprimer."); if (confirm("Supprimer les " + ids.length + " notification(s) déjà lue(s) ?")) delN(ids); };
+$("delall").onclick = () => { const ids = notifs.map(x => x.id); if (!ids.length) return alert("Aucune notification à supprimer."); if (confirm("Supprimer TOUTES vos notifications (" + ids.length + ") ? Cette action est irréversible.")) delN(ids); };
 $("allread").onclick = () => notifs.filter(x => !x.lu).forEach(n => updateDoc(doc(fbDB, "reseau_notifs", n.id), { lu: true }).catch(() => {}));
 </script>
 <footer class="site-footer">
