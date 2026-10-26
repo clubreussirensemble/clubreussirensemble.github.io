@@ -134,6 +134,55 @@ a{text-decoration:none;color:inherit}
 #rec #recOk{background:var(--blue);color:#fff}
 #micBtn.on{color:var(--red)}
 @media (max-width:420px){.callb{padding:8px 9px;font-size:12px}}
+.tabs{flex-wrap:wrap}
+.newg{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--line);font-weight:700;color:var(--blue)}
+.newg:hover{background:var(--paper2)}
+.newg .av{background:var(--green)}
+.mact{background:none;border:0;cursor:pointer;font-size:12px;opacity:.55;padding:0 3px;line-height:1}
+.mact:hover{opacity:1}
+.rq{border-left:3px solid var(--blue);background:rgba(37,99,235,.10);border-radius:6px;padding:4px 8px;margin-bottom:4px;cursor:pointer;font-size:12.5px}
+.rq b{display:block;color:var(--blue);font-size:11.5px}
+.rq span{display:block;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+.rxs{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.rx{background:var(--paper2);border:1px solid var(--line);border-radius:999px;padding:1px 8px;font-size:12.5px;cursor:pointer;color:var(--ink)}
+.rx.mine{border-color:var(--blue);background:rgba(37,99,235,.15)}
+#rp{position:fixed;z-index:250;display:none;background:var(--card);border:1px solid var(--line);border-radius:999px;box-shadow:var(--shadow);padding:4px 6px;gap:2px}
+#rp.open{display:flex}
+#rp button{border:none;background:none;font-size:22px;padding:3px 5px;cursor:pointer;border-radius:50%}
+#rp button:hover{background:var(--paper2)}
+#rbar{display:none;align-items:center;gap:10px;padding:8px 12px;background:var(--card);border-top:1px solid var(--line);font-size:13px}
+#rbar div{flex:1;min-width:0;border-left:3px solid var(--blue);padding-left:8px}
+#rbar b{display:block;color:var(--blue);font-size:12px}
+#rbar span{display:block;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rbar button{border:none;background:none;font-size:18px;color:var(--red);cursor:pointer}
+.bw.flash .bb{outline:2px solid var(--gold)}
+#gm{position:fixed;inset:0;z-index:320;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px}
+#gm.open{display:flex}
+.gbox{background:var(--card);color:var(--ink);border-radius:18px;width:100%;max-width:420px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--shadow)}
+.gbox h3{margin:0;padding:16px 18px 8px;font:800 18px 'Poppins',sans-serif}
+.gbox input[type=text]{margin:6px 18px;border:1px solid var(--line);border-radius:12px;padding:11px 14px;background:var(--paper2);color:var(--ink);font-size:14.5px;outline:none}
+#gpick{flex:1;overflow-y:auto;margin:4px 8px;min-height:120px}
+#gpick label{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;font-size:14px}
+#gpick label:hover{background:var(--paper2)}
+#gpick small{color:var(--ink2)}
+.gact{display:flex;gap:8px;padding:12px 18px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid var(--line)}
+.gact button{border:none;border-radius:999px;padding:10px 18px;font-weight:700;cursor:pointer;background:var(--paper2);color:var(--ink)}
+.gact #gsave{background:var(--blue);color:#fff}
+.gact #gleave{background:none;color:var(--red);margin-right:auto}
+#fm{position:fixed;inset:0;z-index:320;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px}
+#fm.open{display:flex}
+#fm .gbox input[type=text]{margin:6px 18px}
+#fpick{flex:1;overflow-y:auto;min-height:160px}
+.fwd{font-size:11.5px;font-style:italic;opacity:.7;margin-bottom:2px}
+.gone{font-style:italic;opacity:.65}
+#callov{position:fixed;inset:0;z-index:400;background:#000;display:none;flex-direction:column}
+#callov.open{display:flex}
+#callov .cbar{display:flex;align-items:center;gap:10px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));background:var(--navy-deep);color:#fff;flex-shrink:0}
+#callov .cbar b{flex:1;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#callov .cbar a{color:var(--gold);font-weight:700;font-size:12.5px}
+#callov .cbar button{border:none;border-radius:999px;background:var(--red);color:#fff;font-weight:700;padding:9px 16px;cursor:pointer}
+#callov iframe{flex:1;border:0;width:100%;background:#000}
+.gtag{font-size:11px;color:var(--red);font-weight:700;margin-bottom:2px}
 </style>
 </head>
 <body>
@@ -143,6 +192,7 @@ a{text-decoration:none;color:inherit}
   <img src="/icon-512.png" alt="" onerror="this.style.display='none'">
   <div><b>Messages</b><small>CLUB RÉUSSIR ENSEMBLE</small></div>
   <span class="sp"></span>
+  <button class="ib" id="notifBtn" aria-label="Notifications" title="Activer les notifications" style="display:none">🔕</button>
   <button class="ib" id="themeBtn" aria-label="Thème">🌙</button>
 </header>
 
@@ -155,6 +205,7 @@ a{text-decoration:none;color:inherit}
       <input class="srch" id="q" type="search" placeholder="Rechercher un élève ou une discussion…" autocomplete="off">
       <div class="tabs">
         <button class="tab on" id="tChats">💬 Discussions</button>
+        <button class="tab" id="tGroups">👪 Groupes</button>
         <button class="tab" id="tPeople">👥 Tous les élèves</button>
         <button class="tab" id="tAdmin" style="display:none">🛡️ Supervision</button>
       </div>
@@ -171,10 +222,12 @@ a{text-decoration:none;color:inherit}
         <div style="min-width:0;flex:1"><b id="cname"></b><small id="csub"></small></div>
         <button class="callb" id="callMeet" type="button" title="Appel vidéo Google Meet">📹 Meet</button>
         <button class="callb" id="callJitsi" type="button" title="Appel vidéo Jitsi Meet">📞 Jitsi</button>
+        <button class="callb" id="ginfo" type="button" title="Infos du groupe" style="display:none">ℹ️ Groupe</button>
       </div>
       <div id="msgs"></div>
       <div class="note" id="cnote">🔒 Pour la sécurité des élèves, l’administration du club peut consulter les messages.</div>
       <div id="prev"></div>
+      <div id="rbar"><div><b id="rbN"></b><span id="rbT"></span></div><button type="button" id="rbX" aria-label="Annuler la réponse">✕</button></div>
       <div id="rec"><i class="dot"></i><span id="recT">0:00</span><button type="button" id="recX" aria-label="Annuler">✕</button><button type="button" id="recOk" aria-label="Envoyer le vocal">➤</button></div>
       <div class="composer" id="composer">
         <div id="emo"></div>
@@ -190,6 +243,21 @@ a{text-decoration:none;color:inherit}
 </div>
 
 <div id="vw"><button id="vx" aria-label="Fermer">✕</button><div id="vm"></div></div>
+<div id="rp"></div>
+<div id="callov"><div class="cbar"><b id="callT">Appel vidéo</b><a id="callTab" href="#" target="_blank" rel="noopener noreferrer">↗ Onglet</a><button type="button" id="callX">📞 Quitter</button></div><iframe id="callF" title="Appel vidéo" allow="camera; microphone; display-capture; autoplay; fullscreen; clipboard-write"></iframe></div>
+<div id="fm"><div class="gbox">
+  <h3>Transférer à…</h3>
+  <input type="text" id="fq" placeholder="Rechercher un groupe ou un élève…" autocomplete="off">
+  <div id="fpick"></div>
+  <div class="gact"><button type="button" id="fcancel">Annuler</button></div>
+</div></div>
+<div id="gm"><div class="gbox">
+  <h3 id="gtitle">Nouveau groupe</h3>
+  <input type="text" id="gname" maxlength="60" placeholder="Nom du groupe" autocomplete="off">
+  <input type="text" id="gq" placeholder="Rechercher un élève…" autocomplete="off">
+  <div id="gpick"></div>
+  <div class="gact"><button type="button" id="gleave">Quitter le groupe</button><button type="button" id="gcancel">Annuler</button><button type="button" id="gsave">Enregistrer</button></div>
+</div></div>
 
 <script type="module">
 import { fbAuth, fbDB, C_ELEVES, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot, onAuthStateChanged } from "./firebase.js";
@@ -197,7 +265,8 @@ import { fbAuth, fbDB, C_ELEVES, collection, doc, getDoc, setDoc, addDoc, update
 /* Cloudinary (mêmes réglages que reseau.html) */
 const CLOUD_NAME = "dctxjclv8", UPLOAD_PRESET = "reseau_eleves";
 const MAX_VIDEO = 30 * 1024 * 1024;
-const M = "reseau_messages", MEM = "reseau_membres";
+const M = "reseau_messages", MEM = "reseau_membres", GRP = "reseau_groupes";
+const REACTS = ["👍","❤️","😂","😮","😢","🙏"];
 const EMOJIS = ["😀","😂","😍","🥰","😎","🤔","😢","😡","👍","👏","🙏","💪","🔥","🎉","❤️","📚","✅","❌","💡","🎓","🏆","🤝","👋","😅"];
 
 const $ = id => document.getElementById(id);
@@ -221,7 +290,73 @@ const short = t => {
 let me = null, isAdmin = false;
 let msgs = [], allMsgs = [], mem = {}, members = [];
 let tab = "chats", chat = null, aconv = null, pending = null;
-let mUnsub = null, memUnsub = null, aUnsub = null;
+let mUnsub = null, memUnsub = null, aUnsub = null, gUnsub = null;
+let groups = {}, replying = null, gEdit = null;
+let pres = {}, typRaw = {}, pUnsub = null, tUnsub = null, lastTyp = 0, beatT = null, tickT = null;
+const PRES = "reseau_presence", FRAPPE = "reseau_frappe";
+const typingUids = () => Object.entries(typRaw).filter(([u, t]) => u !== (me && me.uid) && Date.now() - Number(t) < 6000).map(([u]) => u);
+const vuTxt = t => {
+  const d = new Date(t), now = Date.now();
+  if (now - t < 100000) return "en ligne";
+  if (d.toDateString() === new Date().toDateString()) return "vu à " + hhmm(t);
+  if (d.toDateString() === new Date(now - 864e5).toDateString()) return "vu hier à " + hhmm(t);
+  return "vu le " + d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+};
+function beat() {
+  if (!me || document.visibilityState !== "visible") return;
+  setDoc(doc(fbDB, PRES, me.uid), { t: Date.now() }, { merge: true }).catch(() => {});
+}
+function unwatch() {
+  [pUnsub, tUnsub].forEach(u => u && u());
+  pUnsub = tUnsub = null; pres = {}; typRaw = {};
+}
+function watchChat() {
+  unwatch();
+  if (aconv || !chat) return;
+  tUnsub = onSnapshot(doc(fbDB, FRAPPE, curConv()), s => { typRaw = s.exists() ? s.data() : {}; renderHead(); }, () => {});
+  if (!chat.g) pUnsub = onSnapshot(doc(fbDB, PRES, chat.uid), s => { pres = s.exists() ? s.data() : {}; renderHead(); }, () => {});
+}
+function typ(on) {
+  if (!me || !chat) return;
+  const now = Date.now();
+  if (on) { if (now - lastTyp < 2500) return; lastTyp = now; } else lastTyp = 0;
+  setDoc(doc(fbDB, FRAPPE, curConv()), { [me.uid]: on ? now : 0 }, { merge: true }).catch(() => {});
+}
+const curConv = () => chat ? (chat.g ? "g_" + chat.gid : convId(me.uid, chat.uid)) : "";
+const dest = () => chat.g
+  ? { conv: "g_" + chat.gid, membres: (groups[chat.gid] && groups[chat.gid].membres) || [me.uid], groupe: chat.gid, groupeNom: chat.nom }
+  : { conv: convId(me.uid, chat.uid), membres: [me.uid, chat.uid], a: chat.uid, aNom: chat.nom };
+
+/* ── Notifications push (Firebase Cloud Messaging) ──
+   À remplir : Console Firebase > Paramètres du projet > Général (config web) et Cloud Messaging (clé VAPID). */
+const PUSH_CFG = { apiKey: "", authDomain: "", projectId: "", messagingSenderId: "", appId: "" };
+const VAPID_KEY = "";
+const pushOK = () => !!(PUSH_CFG.apiKey && PUSH_CFG.projectId && PUSH_CFG.messagingSenderId && PUSH_CFG.appId && VAPID_KEY);
+let pushApp = null;
+async function enablePush(silent) {
+  if (!me) return;
+  if (!pushOK()) { if (!silent) alert("Les notifications ne sont pas encore configurées (clés Firebase à renseigner dans messages.html)."); return; }
+  try {
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) throw new Error("Navigateur non compatible");
+    let perm = Notification.permission;
+    if (perm === "default" && !silent) perm = await Notification.requestPermission();
+    if (perm !== "granted") { if (!silent) alert("Notifications refusées. Autorise-les dans les réglages du navigateur."); return; }
+    const A = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+    const Mg = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js");
+    if (!(await Mg.isSupported())) throw new Error("Notifications non prises en charge sur cet appareil");
+    pushApp = pushApp || A.initializeApp(PUSH_CFG, "push");
+    const reg = await navigator.serviceWorker.register("firebase-messaging-sw.js?c=" + encodeURIComponent(JSON.stringify(PUSH_CFG)));
+    await navigator.serviceWorker.ready;
+    const token = await Mg.getToken(Mg.getMessaging(pushApp), { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+    if (!token) throw new Error("Jeton indisponible");
+    const ref = doc(fbDB, "reseau_tokens", me.uid), snap = await getDoc(ref).catch(() => null);
+    const old = snap && snap.exists() ? (snap.data().tokens || []) : [];
+    if (!old.includes(token)) await setDoc(ref, { tokens: [...old, token].slice(-5), maj: Date.now() }, { merge: true });
+    $("notifBtn").textContent = "🔔"; $("notifBtn").title = "Notifications activées";
+    if (!silent) alert("Notifications activées ✅");
+  } catch (err) { if (!silent) alert("Activation impossible : " + (err.message || err)); }
+}
+$("notifBtn").onclick = () => enablePush(false);
 
 /* Thème (même réglage que le reste du site) */
 function applyTheme(t) {
@@ -244,8 +379,8 @@ function avatar(uid, nom, cls) {
 }
 
 onAuthStateChanged(fbAuth, async user => {
-  [mUnsub, memUnsub, aUnsub].forEach(u => u && u());
-  mUnsub = memUnsub = aUnsub = null; chat = null; aconv = null;
+  [mUnsub, memUnsub, aUnsub, gUnsub].forEach(u => u && u());
+  mUnsub = memUnsub = aUnsub = gUnsub = null; chat = null; aconv = null; groups = {}; unwatch();
   if (!user) { me = null; return gate("Connecte-toi avec ton compte élève pour accéder à tes messages.", true); }
   const [e, a] = await Promise.all([
     getDoc(doc(fbDB, C_ELEVES, user.uid)).catch(() => null),
@@ -261,6 +396,12 @@ onAuthStateChanged(fbAuth, async user => {
 });
 
 function start() {
+  if ("Notification" in window) {
+    $("notifBtn").style.display = "";
+    if (Notification.permission === "granted") { $("notifBtn").textContent = "🔔"; enablePush(true); }
+  }
+  beat(); clearInterval(beatT); beatT = setInterval(beat, 60000);
+  clearInterval(tickT); tickT = setInterval(() => { if (chat) renderHead(); }, 4000);
   setDoc(doc(fbDB, MEM, me.uid), { uid: me.uid, nom: me.name, classe: me.classe }, { merge: true }).catch(() => {});
   memUnsub = onSnapshot(collection(fbDB, MEM), s => {
     mem = {}; s.docs.forEach(x => mem[x.id] = x.data());
@@ -271,6 +412,13 @@ function start() {
   mUnsub = onSnapshot(query(collection(fbDB, M), where("membres", "array-contains", me.uid)), s => {
     msgs = s.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => a.createdAt - b.createdAt);
     renderList(); if (chat) renderChat();
+  }, () => {});
+  gUnsub = onSnapshot(query(collection(fbDB, GRP), where("membres", "array-contains", me.uid)), s => {
+    groups = {}; s.docs.forEach(x => groups[x.id] = { id: x.id, ...x.data() });
+    if (chat && chat.g) {
+      if (!groups[chat.gid]) closePane(); else { chat.nom = groups[chat.gid].nom; renderHead(); }
+    }
+    renderList(); openFromHash();
   }, () => {});
   if (isAdmin) aUnsub = onSnapshot(collection(fbDB, M), s => {
     allMsgs = s.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => a.createdAt - b.createdAt);
@@ -283,48 +431,71 @@ function convRows(src) {
   const c = {}; src.forEach(m => c[m.conv] = m);
   return Object.values(c).sort((a, b) => b.createdAt - a.createdAt);
 }
-const preview = m => m.mediaUrl ? (m.mediaType === "audio" ? "🎤 Message vocal" : m.mediaType === "video" ? "🎥 Vidéo" : "📷 Photo") : (m.texte || "");
+const preview = m => m.supprime ? "🚫 Message supprimé" : m.mediaUrl ? (m.mediaType === "audio" ? "🎤 Message vocal" : m.mediaType === "video" ? "🎥 Vidéo" : "📷 Photo") : (m.texte || "");
 function renderList() {
   if (!me) return;
   const q = $("q").value.trim().toLowerCase(), el = $("list");
   document.querySelectorAll(".tab").forEach(b => b.classList.remove("on"));
-  $({ chats: "tChats", people: "tPeople", admin: "tAdmin" }[tab]).classList.add("on");
+  $({ chats: "tChats", groups: "tGroups", people: "tPeople", admin: "tAdmin" }[tab]).classList.add("on");
   let h = "";
   if (tab === "chats") {
     const rows = convRows(msgs).map(m => {
-      const o = m.de === me.uid ? { uid: m.a, nom: m.aNom } : { uid: m.de, nom: m.deNom };
-      const nb = msgs.filter(x => x.conv === m.conv && x.a === me.uid && !x.lu).length;
-      return { m, o, nb };
-    }).filter(r => !q || String(r.o.nom).toLowerCase().includes(q));
-    h = rows.length ? rows.map(({ m, o, nb }) => `<div class="row ${nb ? "unread" : ""} ${chat && chat.uid === o.uid ? "on" : ""}" data-chat="${esc(o.uid)}" data-nom="${esc(o.nom)}">${avatar(o.uid, o.nom)}<div class="mid"><div class="t1"><b>${esc(o.nom)}</b><small>${short(m.createdAt)}</small></div><div class="t2"><span>${m.de === me.uid ? "Toi : " : ""}${esc(preview(m).slice(0, 60))}</span>${nb ? `<i class="badge">${nb}</i>` : ""}</div></div></div>`).join("")
-      : `<p class="empty">${q ? "Aucune discussion trouvée." : "Aucune discussion pour le moment.<br>Va dans « Tous les élèves » pour écrire à un camarade."}</p>`;
+      const g = !!m.groupe;
+      const o = g ? { uid: "g:" + m.groupe, nom: (groups[m.groupe] && groups[m.groupe].nom) || m.groupeNom || "Groupe" }
+        : m.de === me.uid ? { uid: m.a, nom: m.aNom } : { uid: m.de, nom: m.deNom };
+      const nb = g ? msgs.filter(x => x.conv === m.conv && x.de !== me.uid && !(x.luPar || []).includes(me.uid)).length
+        : msgs.filter(x => x.conv === m.conv && x.a === me.uid && !x.lu).length;
+      return { m, o, nb, g };
+    }).filter(r => (!r.g || groups[r.m.groupe]) && (!q || String(r.o.nom).toLowerCase().includes(q)));
+    h = rows.length ? rows.map(({ m, o, nb, g }) => {
+      const on = chat && (g ? chat.g && "g:" + chat.gid === o.uid : !chat.g && chat.uid === o.uid);
+      const who = m.de === me.uid ? "Toi : " : g ? esc(String(m.deNom).split(" ")[0]) + " : " : "";
+      const av = g ? '<div class="av">👪</div>' : avatar(o.uid, o.nom);
+      const attr = g ? `data-gid="${esc(m.groupe)}"` : `data-chat="${esc(o.uid)}"`;
+      return `<div class="row ${nb ? "unread" : ""} ${on ? "on" : ""}" ${attr} data-nom="${esc(o.nom)}">${av}<div class="mid"><div class="t1"><b>${esc(o.nom)}</b><small>${short(m.createdAt)}</small></div><div class="t2"><span>${who}${esc(preview(m).slice(0, 60))}</span>${nb ? `<i class="badge">${nb}</i>` : ""}</div></div></div>`;
+    }).join("")
+      : `<p class="empty">${q ? "Aucune discussion trouvée." : "Aucune discussion pour le moment.<br>Va dans « Tous les élèves » pour écrire à un camarade, ou crée un groupe."}</p>`;
+  } else if (tab === "groups") {
+    const l = Object.values(groups).filter(g => !q || String(g.nom).toLowerCase().includes(q)).sort((a, b) => String(a.nom).localeCompare(String(b.nom)));
+    h = '<div class="newg" id="newg"><div class="av sm">＋</div>Nouveau groupe</div>' + (l.length
+      ? l.map(g => `<div class="row ${chat && chat.g && chat.gid === g.id ? "on" : ""}" data-gid="${esc(g.id)}" data-nom="${esc(g.nom)}"><div class="av">👪</div><div class="mid"><div class="t1"><b>${esc(g.nom)}</b></div><div class="t2"><span>${(g.membres || []).length} membres</span></div></div></div>`).join("")
+      : '<p class="empty">Tu n’as encore aucun groupe.</p>');
   } else if (tab === "people") {
     const l = members.filter(m => !q || String(m.nom).toLowerCase().includes(q) || String(m.classe || "").toLowerCase().includes(q));
     h = l.length ? l.map(m => `<div class="row" data-chat="${esc(m.uid)}" data-nom="${esc(m.nom)}">${avatar(m.uid, m.nom)}<div class="mid"><div class="t1"><b>${esc(m.nom)}</b></div><div class="t2"><span>${esc(m.classe || "Club")}</span></div></div></div>`).join("")
       : '<p class="empty">Aucun élève trouvé.</p>';
   } else {
-    const rows = convRows(allMsgs).filter(m => !q || (String(m.deNom) + " " + String(m.aNom)).toLowerCase().includes(q));
-    h = rows.length ? rows.map(m => `<div class="row" data-conv="${esc(m.conv)}"><div class="av">🛡️</div><div class="mid"><div class="t1"><b>${esc(m.deNom)} ↔ ${esc(m.aNom)}</b><small>${short(m.createdAt)}</small></div><div class="t2"><span>${esc(preview(m).slice(0, 60))}</span></div></div></div>`).join("")
+    const rows = convRows(allMsgs).filter(m => !q || (String(m.deNom) + " " + String(m.aNom || m.groupeNom || "")).toLowerCase().includes(q));
+    h = rows.length ? rows.map(m => `<div class="row" data-conv="${esc(m.conv)}"><div class="av">🛡️</div><div class="mid"><div class="t1"><b>${m.groupe ? "👪 " + esc(m.groupeNom || "Groupe") : esc(m.deNom) + " ↔ " + esc(m.aNom)}</b><small>${short(m.createdAt)}</small></div><div class="t2"><span>${esc(preview(m).slice(0, 60))}</span></div></div></div>`).join("")
       : '<p class="empty">Aucune conversation.</p>';
   }
   el.innerHTML = h;
 }
 $("q").oninput = renderList;
 $("tChats").onclick = () => { tab = "chats"; renderList(); };
+$("tGroups").onclick = () => { tab = "groups"; renderList(); };
 $("tPeople").onclick = () => { tab = "people"; renderList(); };
 $("tAdmin").onclick = () => { tab = "admin"; renderList(); };
 $("list").addEventListener("click", e => {
+  if (e.target.closest("#newg")) { openGroupModal(null); return; }
   const r = e.target.closest(".row"); if (!r) return;
   if (r.dataset.conv) { aconv = r.dataset.conv; chat = null; openPane(true); return; }
+  if (r.dataset.gid) { aconv = null; chat = { g: true, gid: r.dataset.gid, nom: r.dataset.nom }; openPane(false); return; }
   aconv = null; chat = { uid: r.dataset.chat, nom: r.dataset.nom }; openPane(false);
 });
 
 function openFromHash() {
   const h = decodeURIComponent((location.hash || "").slice(1));
   if (!h || chat || aconv) return;
+  if (h.startsWith("g:")) {
+    const g = groups[h.slice(2)];
+    if (g) { chat = { g: true, gid: g.id, nom: g.nom }; openPane(false); }
+    return;
+  }
   const m = members.find(x => x.uid === h);
   if (m) { chat = { uid: m.uid, nom: m.nom }; openPane(false); }
 }
+window.addEventListener("hashchange", () => { if (me && location.hash.length > 1) { chat = null; aconv = null; openFromHash(); } });
 
 /* ── Conversation ── */
 function openPane(readOnly) {
@@ -332,12 +503,12 @@ function openPane(readOnly) {
   document.body.classList.add("chat-open");
   $("composer").style.display = readOnly ? "none" : "";
   $("cnote").textContent = readOnly ? "🛡️ Mode supervision : lecture seule." : "🔒 Pour la sécurité des élèves, l’administration du club peut consulter les messages.";
-  stopRec(true); clearPending();
-  renderHead(); renderChat(true); renderList();
+  stopRec(true); clearPending(); clearReply();
+  watchChat(); renderHead(); renderChat(true); renderList();
   if (!readOnly) $("inp").focus({ preventScroll: true });
 }
 function closePane() {
-  stopRec(true);
+  stopRec(true); unwatch();
   chat = null; aconv = null; document.body.classList.remove("chat-open");
   $("chatbox").style.display = "none"; $("ph").style.display = "";
   history.replaceState(null, "", location.pathname); renderList();
@@ -345,56 +516,75 @@ function closePane() {
 $("back").onclick = closePane;
 
 function renderHead() {
-  $("callMeet").style.display = $("callJitsi").style.display = aconv ? "none" : "";
+  const isG = !!(chat && chat.g);
+  $("callMeet").style.display = (aconv || isG) ? "none" : "";
+  $("callJitsi").style.display = aconv ? "none" : "";
+  $("ginfo").style.display = isG ? "" : "none";
   if (aconv) {
     const l = allMsgs.filter(m => m.conv === aconv);
     $("cav").className = "av sm"; $("cav").textContent = "🛡️"; $("cav").style.backgroundImage = "";
-    $("cname").textContent = l.length ? l[0].deNom + " ↔ " + l[0].aNom : "Conversation";
+    $("cname").textContent = l.length ? (l[0].groupe ? "👪 " + (l[0].groupeNom || "Groupe") : l[0].deNom + " ↔ " + l[0].aNom) : "Conversation";
     $("csub").textContent = "Supervision"; return;
   }
   if (!chat) return;
+  if (isG) {
+    const g = groups[chat.gid], ms = (g && g.membres) || [];
+    $("cav").className = "av sm"; $("cav").textContent = "👪"; $("cav").style.backgroundImage = "";
+    $("cname").textContent = chat.nom;
+    const tp = typingUids().map(u => ((mem[u] && mem[u].nom) || "Quelqu’un").split(" ")[0]);
+    $("csub").textContent = tp.length ? tp.join(", ") + " écrit…" : (ms.map(u => (mem[u] && mem[u].nom) || "").filter(Boolean).map(n => n.split(" ")[0]).join(", ").slice(0, 70) || ms.length + " membres");
+    return;
+  }
   const p = mem[chat.uid] && mem[chat.uid].photo;
   $("cav").className = "av sm" + (p ? " has" : ""); $("cav").textContent = ini(chat.nom);
   $("cav").style.backgroundImage = p ? `url('${p}')` : "";
   $("cname").textContent = chat.nom;
-  $("csub").textContent = (mem[chat.uid] && mem[chat.uid].classe) || "Club Réussir Ensemble";
+  $("csub").textContent = typingUids().length ? "écrit…" : (pres.t ? vuTxt(pres.t) : ((mem[chat.uid] && mem[chat.uid].classe) || "Club Réussir Ensemble"));
 }
 
 function bubble(m, withName) {
   const mine = m.de === me.uid && !aconv;
+  if (m.supprime && !aconv) return `<div class="bw ${mine ? "me" : ""}" id="m_${esc(m.id)}"><div class="bb gone">${withName ? `<div class="who">${esc(m.deNom)}</div>` : ""}🚫 Message supprimé<div class="meta"><span>${hhmm(m.createdAt)}</span></div></div></div>`;
+  const fw = (m.transfere ? '<div class="fwd">↪ Transféré</div>' : "") + (m.supprime ? '<div class="gtag">🚫 Supprimé par l’expéditeur</div>' : "");
   const media = m.mediaUrl ? (m.mediaType === "audio" ? `<audio src="${esc(m.mediaUrl)}" controls preload="metadata"></audio>` : m.mediaType === "video"
     ? `<video src="${esc(m.mediaUrl)}" controls preload="metadata" playsinline></video>`
     : `<img src="${esc(m.mediaUrl)}" alt="Photo" loading="lazy" data-zoom="${esc(m.mediaUrl)}">`) : "";
   const txt = m.mediaUrl && /^(📷 Photo|🎥 Vidéo|🎤 Message vocal)$/.test(m.texte || "") ? "" : (m.texte || "");
-  const tick = mine ? `<span class="tick ${m.lu ? "lu" : ""}">${m.lu ? "✓✓" : "✓"}</span>` : "";
-  const call = callOk(m.callUrl) ? `<a class="callj" href="${esc(m.callUrl)}" target="_blank" rel="noopener noreferrer">📞 Rejoindre l’appel ${m.callType === "meet" ? "Google Meet" : "Jitsi"}</a>` : "";
-  return `<div class="bw ${mine ? "me" : ""}"><div class="bb">${withName ? `<div class="who">${esc(m.deNom)}</div>` : ""}${media}${txt ? `<p>${esc(txt)}</p>` : ""}${call}<div class="meta">${mine ? `<button type="button" class="mdel" data-del="${esc(m.id)}" aria-label="Supprimer ce message" title="Supprimer">🗑</button>` : ""}<span>${hhmm(m.createdAt)}</span>${tick}</div></div></div>`;
+  const seen = m.groupe ? (m.luPar || []).some(u => u !== me.uid) : m.lu;
+  const tick = mine ? `<span class="tick ${seen ? "lu" : ""}">${seen ? "✓✓" : "✓"}</span>` : "";
+  const rq = m.replyTo ? `<div class="rq" data-goto="${esc(m.replyTo.id)}"><b>${esc(m.replyTo.nom)}</b><span>${esc(m.replyTo.texte)}</span></div>` : "";
+  const rc = {}; Object.entries(m.react || {}).forEach(([u, em]) => { if (em) (rc[em] = rc[em] || []).push(u); });
+  const rxs = Object.keys(rc).length ? `<div class="rxs">${Object.entries(rc).map(([em, us]) => `<span class="rx ${us.includes(me.uid) ? "mine" : ""}" data-rxchip="${esc(m.id)}" data-em="${esc(em)}">${esc(em)} ${us.length}</span>`).join("")}</div>` : "";
+  const acts = aconv ? "" : `<button type="button" class="mact" data-reply="${esc(m.id)}" aria-label="Répondre" title="Répondre">↩</button><button type="button" class="mact" data-react="${esc(m.id)}" aria-label="Réagir" title="Réagir">😊</button>${m.callUrl ? "" : `<button type="button" class="mact" data-fwd="${esc(m.id)}" aria-label="Transférer" title="Transférer">↪</button>`}`;
+  const call = callOk(m.callUrl) ? `<a class="callj" href="${esc(m.callUrl)}" ${m.callType === "meet" ? "" : `data-call="${esc(m.callUrl)}"`} target="_blank" rel="noopener noreferrer">📞 Rejoindre l’appel ${m.callType === "meet" ? "Google Meet" : "Jitsi"}</a>` : "";
+  return `<div class="bw ${mine ? "me" : ""}" id="m_${esc(m.id)}"><div class="bb">${withName ? `<div class="who">${esc(m.deNom)}</div>` : ""}${fw}${rq}${media}${txt ? `<p>${esc(txt)}</p>` : ""}${call}${rxs}<div class="meta">${acts}${mine ? `<button type="button" class="mdel" data-del="${esc(m.id)}" aria-label="Supprimer ce message" title="Supprimer">🗑</button>` : ""}<span>${hhmm(m.createdAt)}</span>${tick}</div></div></div>`;
 }
 let lastCount = -1;
 function renderChat(force) {
-  const l = aconv ? allMsgs.filter(m => m.conv === aconv) : (chat ? msgs.filter(m => m.conv === convId(me.uid, chat.uid)) : []);
+  const l = aconv ? allMsgs.filter(m => m.conv === aconv) : (chat ? msgs.filter(m => m.conv === curConv()) : []);
   const box = $("msgs"), nearEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
   let h = "", last = "";
   l.forEach(m => {
     const d = new Date(m.createdAt).toDateString();
     if (d !== last) { h += `<div class="day">${esc(dayLabel(m.createdAt))}</div>`; last = d; }
-    h += bubble(m, !!aconv);
+    h += bubble(m, !!aconv || !!(chat && chat.g));
   });
   box.innerHTML = h || '<p class="empty">Écris le premier message 👋</p>';
   if (force || nearEnd || l.length !== lastCount) box.scrollTop = box.scrollHeight;
   lastCount = l.length;
   if (!aconv && chat && document.visibilityState === "visible") {
-    l.filter(m => m.a === me.uid && !m.lu).forEach(m => updateDoc(doc(fbDB, M, m.id), { lu: true }).catch(() => {}));
+    if (chat.g) l.filter(m => m.de !== me.uid && !(m.luPar || []).includes(me.uid)).forEach(m => updateDoc(doc(fbDB, M, m.id), { luPar: [...(m.luPar || []), me.uid] }).catch(() => {}));
+    else l.filter(m => m.a === me.uid && !m.lu).forEach(m => updateDoc(doc(fbDB, M, m.id), { lu: true }).catch(() => {}));
   }
 }
-document.addEventListener("visibilitychange", () => { if (chat) renderChat(); });
+document.addEventListener("visibilitychange", () => { beat(); if (chat) renderChat(); });
 
 /* Suppression d'un message envoyé par moi */
 $("msgs").addEventListener("click", async e => {
   const b = e.target.closest("[data-del]"); if (!b) return;
   if (!confirm("Supprimer ce message pour tout le monde ?")) return;
   b.disabled = true;
-  try { await deleteDoc(doc(fbDB, M, b.dataset.del)); }
+  try { await updateDoc(doc(fbDB, M, b.dataset.del), { supprime: true }); }
   catch (err) { b.disabled = false; alert("Suppression impossible : " + (err.code || err.message)); }
 });
 
@@ -414,7 +604,7 @@ $("emo").addEventListener("click", e => {
   const i = $("inp"); i.value += e.target.textContent; i.focus();
 });
 const grow = () => { const i = $("inp"); i.style.height = "auto"; i.style.height = Math.min(i.scrollHeight, 120) + "px"; };
-$("inp").addEventListener("input", grow);
+$("inp").addEventListener("input", () => { grow(); if ($("inp").value.trim()) typ(true); });
 $("inp").addEventListener("keydown", e => {
   if (e.key === "Enter" && !e.shiftKey && window.matchMedia("(hover:hover)").matches) { e.preventDefault(); sendMsg(); }
 });
@@ -464,13 +654,13 @@ async function sendMsg() {
     let media = null;
     if (pending) media = await upload(pending);
     const data = {
-      conv: convId(me.uid, chat.uid), membres: [me.uid, chat.uid],
-      de: me.uid, deNom: me.name, a: chat.uid, aNom: chat.nom,
+      ...dest(), de: me.uid, deNom: me.name,
       texte: t || (media ? (media.type === "video" ? "🎥 Vidéo" : "📷 Photo") : ""),
       lu: false, createdAt: Date.now()
     };
     if (media) { data.mediaUrl = media.url; data.mediaType = media.type; }
-    i.value = ""; grow(); clearPending(); $("emo").classList.remove("open");
+    if (replying) data.replyTo = replying;
+    i.value = ""; grow(); clearPending(); clearReply(); typ(false); $("emo").classList.remove("open");
     await addDoc(collection(fbDB, M), data);
   } catch (err) {
     alert("Message non envoyé : " + (err.code || err.message));
@@ -478,24 +668,39 @@ async function sendMsg() {
 }
 
 /* ── Appels vidéo : Google Meet / Jitsi Meet (lien envoyé dans la discussion) ── */
-const callOk = u => typeof u === "string" && /^https:\/\/(meet\.jit\.si|meet\.google\.com)\/[\w\-./?=&%]+$/i.test(u);
+const JITSI_BASE = "https://meet.jit.si/"; // pour un service sans limite : "https://8x8.vc/<ton-appId>/"
+const callOk = u => typeof u === "string" && /^https:\/\/(meet\.jit\.si|8x8\.vc|meet\.google\.com)\/[\w\-./?=&%]+$/i.test(u);
 async function sendCall(url, type) {
   if (!chat) return;
   try {
     await addDoc(collection(fbDB, M), {
-      conv: convId(me.uid, chat.uid), membres: [me.uid, chat.uid],
-      de: me.uid, deNom: me.name, a: chat.uid, aNom: chat.nom,
+      ...dest(), de: me.uid, deNom: me.name,
       texte: "📞 Appel vidéo " + (type === "meet" ? "Google Meet" : "Jitsi"),
       callUrl: url, callType: type, lu: false, createdAt: Date.now()
     });
   } catch (err) { alert("Invitation non envoyée : " + (err.code || err.message)); }
 }
+/* Appel intégré à la page (Jitsi) */
+function openCall(url) {
+  if (!callOk(url)) return;
+  if (/meet\.google\.com/i.test(url)) { window.open(url, "_blank", "noopener"); return; }
+  $("callT").textContent = "Appel vidéo" + (chat ? " — " + chat.nom : "");
+  $("callTab").href = url;
+  $("callF").src = url + "#userInfo.displayName=" + encodeURIComponent(JSON.stringify(me.name));
+  $("callov").classList.add("open");
+}
+function closeCall() { $("callF").src = "about:blank"; $("callov").classList.remove("open"); }
+$("callX").onclick = closeCall;
+$("msgs").addEventListener("click", e => {
+  const cj = e.target.closest("[data-call]"); if (!cj) return;
+  e.preventDefault(); openCall(cj.dataset.call);
+});
 $("callJitsi").onclick = () => {
   if (!chat) return;
-  if (!confirm("Lancer un appel vidéo Jitsi avec " + chat.nom + " ?\nUne invitation sera envoyée dans la discussion.")) return;
+  if (!confirm("Lancer un appel vidéo avec " + chat.nom + " ?\nUne invitation sera envoyée dans la discussion.")) return;
   const room = "CRE" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-  const url = "https://meet.jit.si/" + room;
-  window.open(url, "_blank", "noopener");
+  const url = JITSI_BASE + room;
+  openCall(url);
   sendCall(url, "jitsi");
 };
 $("callMeet").onclick = () => {
@@ -553,15 +758,138 @@ async function sendAudio(blob, dur) {
     const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`, { method: "POST", body: fd });
     const j = await r.json();
     if (!j.secure_url) throw new Error((j.error && j.error.message) || "Échec de l’envoi");
-    await addDoc(collection(fbDB, M), {
-      conv: convId(me.uid, chat.uid), membres: [me.uid, chat.uid],
-      de: me.uid, deNom: me.name, a: chat.uid, aNom: chat.nom,
+    const vocal = {
+      ...dest(), de: me.uid, deNom: me.name,
       texte: "🎤 Message vocal", mediaUrl: j.secure_url, mediaType: "audio", duree: dur,
       lu: false, createdAt: Date.now()
-    });
+    };
+    if (replying) vocal.replyTo = replying;
+    clearReply();
+    await addDoc(collection(fbDB, M), vocal);
   } catch (err) { alert("Vocal non envoyé : " + (err.code || err.message)); }
   finally { sending = false; $("send").disabled = false; }
 }
+/* ── Répondre / réagir ── */
+function clearReply() { replying = null; $("rbar").style.display = "none"; }
+function setReply(id) {
+  const m = msgs.find(x => x.id === id); if (!m) return;
+  const t = m.mediaUrl ? preview(m) : (m.texte || "");
+  replying = { id: m.id, nom: m.deNom, texte: String(t).slice(0, 80) };
+  $("rbN").textContent = m.de === me.uid ? "Toi" : m.deNom; $("rbT").textContent = replying.texte;
+  $("rbar").style.display = "flex"; $("inp").focus();
+}
+$("rbX").onclick = clearReply;
+const rp = $("rp"); let rpId = null;
+rp.innerHTML = REACTS.map(x => `<button type="button">${x}</button>`).join("");
+async function setReact(id, em) {
+  const m = msgs.find(x => x.id === id); if (!m) return;
+  const cur = (m.react || {})[me.uid] || "";
+  try { await updateDoc(doc(fbDB, M, id), { ["react." + me.uid]: cur === em ? "" : em }); }
+  catch (err) { alert("Réaction impossible : " + (err.code || err.message)); }
+}
+rp.addEventListener("click", e => {
+  if (e.target.tagName !== "BUTTON") return;
+  const id = rpId; rp.classList.remove("open"); setReact(id, e.target.textContent);
+});
+$("msgs").addEventListener("click", e => {
+  const rb = e.target.closest("[data-reply]"); if (rb) { setReply(rb.dataset.reply); return; }
+  const fb = e.target.closest("[data-fwd]"); if (fb) { openFwd(fb.dataset.fwd); return; }
+  const xb = e.target.closest("[data-react]");
+  if (xb) {
+    rpId = xb.dataset.react; rp.classList.add("open");
+    const r = xb.getBoundingClientRect(), w = rp.offsetWidth;
+    rp.style.top = Math.max(8, r.top - rp.offsetHeight - 6) + "px";
+    rp.style.left = Math.min(Math.max(8, r.left - w / 2), window.innerWidth - w - 8) + "px";
+    e.stopPropagation(); return;
+  }
+  const ch = e.target.closest("[data-rxchip]"); if (ch) { setReact(ch.dataset.rxchip, ch.dataset.em); return; }
+  const g = e.target.closest("[data-goto]");
+  if (g) { const el = $("m_" + g.dataset.goto); if (el) { el.scrollIntoView({ block: "center" }); el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1400); } }
+});
+document.addEventListener("click", e => { if (!e.target.closest("#rp") && !e.target.closest("[data-react]")) rp.classList.remove("open"); });
+
+/* ── Transférer ── */
+let fwdMsg = null;
+function renderFwd() {
+  const q = $("fq").value.trim().toLowerCase();
+  const gl = Object.values(groups).filter(g => !q || String(g.nom).toLowerCase().includes(q));
+  const pl = members.filter(m => !q || String(m.nom).toLowerCase().includes(q));
+  $("fpick").innerHTML = gl.map(g => `<div class="row" data-fg="${esc(g.id)}" data-nom="${esc(g.nom)}"><div class="av sm">👪</div><div class="mid"><div class="t1"><b>${esc(g.nom)}</b></div></div></div>`).join("")
+    + pl.map(m => `<div class="row" data-fu="${esc(m.uid)}" data-nom="${esc(m.nom)}">${avatar(m.uid, m.nom, "sm")}<div class="mid"><div class="t1"><b>${esc(m.nom)}</b></div><div class="t2"><span>${esc(m.classe || "Club")}</span></div></div></div>`).join("")
+    || '<p class="empty">Aucun résultat.</p>';
+}
+function openFwd(id) {
+  const m = msgs.find(x => x.id === id); if (!m || m.supprime) return;
+  fwdMsg = m; $("fq").value = ""; renderFwd(); $("fm").classList.add("open");
+}
+$("fq").oninput = renderFwd;
+$("fcancel").onclick = () => $("fm").classList.remove("open");
+$("fm").addEventListener("click", e => { if (e.target.id === "fm") $("fm").classList.remove("open"); });
+$("fpick").addEventListener("click", async e => {
+  const r = e.target.closest(".row"); if (!r || !fwdMsg || sending) return;
+  const nom = r.dataset.nom, gid = r.dataset.fg, uid = r.dataset.fu;
+  const d = gid ? { conv: "g_" + gid, membres: (groups[gid] && groups[gid].membres) || [me.uid], groupe: gid, groupeNom: nom }
+    : { conv: convId(me.uid, uid), membres: [me.uid, uid], a: uid, aNom: nom };
+  const data = { ...d, de: me.uid, deNom: me.name, texte: fwdMsg.texte || "", lu: false, createdAt: Date.now(), transfere: true };
+  if (fwdMsg.mediaUrl) { data.mediaUrl = fwdMsg.mediaUrl; data.mediaType = fwdMsg.mediaType; if (fwdMsg.duree) data.duree = fwdMsg.duree; }
+  sending = true;
+  try {
+    await addDoc(collection(fbDB, M), data);
+    $("fm").classList.remove("open"); fwdMsg = null;
+    aconv = null; chat = gid ? { g: true, gid, nom } : { uid, nom };
+    openPane(false);
+  } catch (err) { alert("Transfert impossible : " + (err.code || err.message)); }
+  finally { sending = false; }
+});
+
+/* ── Groupes ── */
+let gSel = new Set();
+const gCanEdit = () => { const g = gEdit ? groups[gEdit] : null; return !g || g.createur === me.uid || isAdmin; };
+function renderPick() {
+  const q = $("gq").value.trim().toLowerCase(), ok = gCanEdit();
+  const l = members.filter(m => !q || String(m.nom).toLowerCase().includes(q) || String(m.classe || "").toLowerCase().includes(q));
+  $("gpick").innerHTML = l.length ? l.map(m => `<label><input type="checkbox" value="${esc(m.uid)}" ${gSel.has(m.uid) ? "checked" : ""} ${ok ? "" : "disabled"}>${avatar(m.uid, m.nom, "sm")}<span>${esc(m.nom)}<br><small>${esc(m.classe || "Club")}</small></span></label>`).join("")
+    : '<p class="empty">Aucun élève.</p>';
+}
+function openGroupModal(gid) {
+  gEdit = gid; const g = gid ? groups[gid] : null;
+  $("gtitle").textContent = g ? "Infos du groupe" : "Nouveau groupe";
+  $("gname").value = g ? g.nom : ""; $("gq").value = "";
+  gSel = new Set(g ? g.membres : []);
+  $("gleave").style.display = g ? "" : "none";
+  $("gname").disabled = !gCanEdit(); $("gsave").style.display = gCanEdit() ? "" : "none";
+  renderPick(); $("gm").classList.add("open");
+}
+$("gpick").addEventListener("change", e => { const c = e.target; if (c.type !== "checkbox") return; if (c.checked) gSel.add(c.value); else gSel.delete(c.value); });
+$("gq").oninput = renderPick;
+$("gcancel").onclick = () => $("gm").classList.remove("open");
+$("gm").addEventListener("click", e => { if (e.target.id === "gm") $("gm").classList.remove("open"); });
+$("ginfo").onclick = () => { if (chat && chat.g) openGroupModal(chat.gid); };
+$("gsave").onclick = async () => {
+  const nom = $("gname").value.trim();
+  if (!nom) { alert("Donne un nom au groupe."); return; }
+  const ids = gEdit ? [...gSel] : [me.uid, ...[...gSel].filter(u => u !== me.uid)];
+  if (gEdit && !ids.includes(me.uid)) ids.push(me.uid);
+  if (ids.length < 2) { alert("Choisis au moins un membre."); return; }
+  $("gsave").disabled = true;
+  try {
+    if (gEdit) await updateDoc(doc(fbDB, GRP, gEdit), { nom, membres: ids });
+    else {
+      const ref = await addDoc(collection(fbDB, GRP), { nom, membres: ids, createur: me.uid, createdAt: Date.now() });
+      groups[ref.id] = { id: ref.id, nom, membres: ids, createur: me.uid };
+      tab = "groups"; chat = { g: true, gid: ref.id, nom }; aconv = null;
+      $("gm").classList.remove("open"); openPane(false); return;
+    }
+    $("gm").classList.remove("open");
+  } catch (err) { alert("Enregistrement impossible : " + (err.code || err.message)); }
+  finally { $("gsave").disabled = false; }
+};
+$("gleave").onclick = async () => {
+  const g = groups[gEdit]; if (!g || !confirm("Quitter ce groupe ?")) return;
+  try { await updateDoc(doc(fbDB, GRP, gEdit), { membres: g.membres.filter(u => u !== me.uid) }); $("gm").classList.remove("open"); }
+  catch (err) { alert("Impossible de quitter : " + (err.code || err.message)); }
+};
+
 $("micBtn").onclick = startRec;
 $("recX").onclick = () => stopRec(true);
 $("recOk").onclick = () => stopRec(false);
