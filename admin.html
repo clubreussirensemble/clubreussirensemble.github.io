@@ -930,6 +930,7 @@ function renderBoutiques(){
         <button class="small-btn" data-bqren="${b.id}" data-j="90" style="background:var(--navy)">+3 mois</button>
         <button class="small-btn" data-bqblk="${b.id}" data-v="${b.blocked?'0':'1'}" style="background:${b.blocked?'#017529':'var(--red)'}">${b.blocked?'Débloquer':'Bloquer'}</button>
         ${wa?`<a class="small-btn" style="background:#25D366;display:inline-block" href="https://wa.me/${wa}" target="_blank" rel="noopener">WhatsApp</a>`:''}
+        <button class="small-btn" data-bqdel="${b.id}" style="background:var(--red)">🗑 Supprimer</button>
       </td>
     </tr>`;
   }).join('') : '<tr><td colspan="5">Aucune boutique inscrite pour le moment.</td></tr>';
@@ -946,6 +947,19 @@ function renderBoutiques(){
       const bloquer = btn.dataset.v==='1';
       if(bloquer && !confirm('Bloquer cette boutique ? Son propriétaire ne pourra plus y accéder.')) return;
       updateDoc(doc(fbDB,'site_boutiques',btn.dataset.bqblk), { blocked: bloquer });
+    };
+  });
+  document.querySelectorAll('[data-bqdel]').forEach(btn=>{
+    btn.onclick = async ()=>{
+      const b = boutiquesList.find(x=>x.id===btn.dataset.bqdel); if(!b) return;
+      if(!confirm('Supprimer DÉFINITIVEMENT la boutique « '+(b.name||'sans nom')+' » ?\n\nSon compte sera retiré de la liste et son propriétaire ne pourra plus y accéder. Cette action est irréversible.')) return;
+      btn.disabled = true;
+      try{
+        await deleteDoc(doc(fbDB,'site_boutiques',b.id));
+      }catch(e){
+        btn.disabled = false;
+        alert('Suppression impossible : '+(e.message||e)+'\n\nVérifiez que les règles Firestore autorisent « delete » pour l\'admin sur site_boutiques.');
+      }
     };
   });
 }
