@@ -97,7 +97,9 @@ db.collection("gst_users").where("role","==","chauffeur").where("statutCompte","
   btn.onclick=function(){
     if(dp){dp.prompt();dp.userChoice.then(function(){dp=null;box.classList.add("hide")})}
     else if(ios){txt.textContent="Sur iPhone : touche le bouton Partager, puis « Sur l'écran d'accueil »."}
+    else{txt.textContent="Sur Android : ouvre le menu ⋮ de Chrome, puis touche « Installer l'application » ou « Ajouter à l'écran d'accueil »."}
   };
+  setTimeout(function(){if(!dp&&!ios){box.classList.remove("hide");btn.textContent="Comment ?"}},2500);
   if(ios){box.classList.remove("hide");btn.textContent="Comment ?"}
 })();
 </script></body></html>
