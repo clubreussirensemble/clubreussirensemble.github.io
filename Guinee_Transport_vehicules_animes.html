@@ -256,45 +256,17 @@ input:checked + .slider::before{transform:translateX(20px);}
         <a class="btn btn-outline" style="flex:1;text-align:center;text-decoration:none;padding:12px 8px;font-size:13px;" href="passager.html">📍 Espace Passager<br><span style="font-weight:400;font-size:11px;">Appeler un chauffeur</span></a>
         <a class="btn btn-outline" style="flex:1;text-align:center;text-decoration:none;padding:12px 8px;font-size:13px;" href="chauffeur.html">🛺 Espace Chauffeur<br><span style="font-weight:400;font-size:11px;">Recevoir les positions</span></a>
       </div>
-      <div class="tabs">
-        <button class="tab-btn active" onclick="setAuthTab('guest')">Réserver</button>
-        <button class="tab-btn" onclick="setAuthTab('login')">Connexion</button>
-        <button class="tab-btn" onclick="setAuthTab('register')">Chauffeur</button>
-      </div>
 
       <div id="msg-auth" class="msg"></div>
 
-      <!-- Passager : réservation sans compte -->
-      <div id="form-guest">
-        <div class="field"><label>Nom</label><input id="guest-name" type="text" placeholder="Ex: Mamadou Diallo"></div>
-        <div class="field"><label>Téléphone</label><input id="guest-phone" type="tel" placeholder="Ex: 622 00 00 00"></div>
-        <button class="btn btn-gold" onclick="doGuest()">Réserver un trajet</button>
-        <p class="hint">Aucun compte ni mot de passe : ton nom et ton téléphone suffisent.<br>Chauffeur ou administrateur ? <a onclick="setAuthTab('login', 1)">Connecte-toi</a></p>
-      </div>
-
       <!-- Login (chauffeur / admin) -->
-      <div id="form-login" style="display:none;">
+      <div id="form-login">
         <div class="field"><label>Téléphone ou email</label><input id="login-email" type="text" placeholder="ex: 622000000 ou email"></div>
         <div class="field"><label>Mot de passe</label><input id="login-pass" type="password" placeholder="••••••••"></div>
         <button class="btn btn-primary" onclick="doLogin()">Se connecter</button>
-        <p class="hint">Réservé aux chauffeurs et à l'administrateur. Passager ? <a onclick="setAuthTab('guest', 0)">Réserve sans compte</a></p>
+        <p class="hint">Réservé aux chauffeurs et à l'administrateur.</p>
       </div>
 
-      <!-- Register -->
-      <div id="form-register" style="display:none;">
-        <p class="hint" style="margin:0 0 12px;">Inscription réservée aux chauffeurs (validation par l'administrateur).</p>
-        <div class="field"><label>Nom complet</label><input id="reg-name" type="text" placeholder="Ex: Mamadou Diallo"></div>
-        <div class="field"><label>Téléphone</label><input id="reg-phone" type="text" placeholder="Ex: 622 00 00 00"></div>
-        <div class="field"><label>Email</label><input id="reg-email" type="email" placeholder="ton@email.com"></div>
-        <div class="field"><label>Mot de passe</label><input id="reg-pass" type="password" placeholder="6 caractères min."></div>
-        <div class="field" id="quartier-field"><label>Quartier</label>
-          <input id="reg-quartier" type="text" list="dl-quartiers" placeholder="Écris ton quartier" autocomplete="off"><datalist id="dl-quartiers"></datalist>
-          <button type="button" class="btn btn-outline btn-sm" style="margin-top:6px;" onclick="autoQuartier('reg-quartier', this)">📍 Détecter mon quartier</button>
-        </div>
-        <div class="field" id="vehicule-field"><label>Véhicule (type + plaque)</label><input id="reg-vehicule" type="text" placeholder="Ex: Moto - RC 1234"></div>
-        <button class="btn btn-gold" onclick="doRegister()">Créer mon compte chauffeur</button>
-        <p class="hint">Déjà inscrit ? <a onclick="setAuthTab('login')">Connecte-toi</a></p>
-      </div>
     </div>
   </div>
 
@@ -591,15 +563,7 @@ function statutLabel(s){
 /* ======================================================================
    AUTH — onglets & rôle
 ====================================================================== */
-function setAuthTab(tab, idx){
-  const btns = document.querySelectorAll('.tab-btn');
-  btns.forEach(b=>b.classList.remove('active'));
-  btns[{guest:0, login:1, register:2}[tab]].classList.add('active');
-  $('form-guest').style.display = tab==='guest' ? 'block':'none';
-  $('form-login').style.display = tab==='login' ? 'block':'none';
-  $('form-register').style.display = tab==='register' ? 'block':'none';
-  $('msg-auth').className = 'msg';
-}
+function setAuthTab(){ $('msg-auth').className = 'msg'; }
 function pickRole(role){
   selectedRole = role;
   document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
