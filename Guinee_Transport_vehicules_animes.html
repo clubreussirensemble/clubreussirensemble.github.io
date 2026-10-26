@@ -274,7 +274,7 @@ input:checked + .slider::before{transform:translateX(20px);}
         <div class="field"><label>Email</label><input id="reg-email" type="email" placeholder="ton@email.com"></div>
         <div class="field"><label>Mot de passe</label><input id="reg-pass" type="password" placeholder="6 caractères min."></div>
         <div class="field" id="quartier-field"><label>Quartier</label>
-          <select id="reg-quartier"></select>
+          <input id="reg-quartier" type="text" list="dl-quartiers" placeholder="Écris ton quartier" autocomplete="off"><datalist id="dl-quartiers"></datalist>
         </div>
         <div class="field" id="vehicule-field"><label>Véhicule (type + plaque)</label><input id="reg-vehicule" type="text" placeholder="Ex: Moto - RC 1234"></div>
         <button class="btn btn-gold" onclick="doRegister()">Créer mon compte chauffeur</button>
@@ -298,8 +298,8 @@ input:checked + .slider::before{transform:translateX(20px);}
 
     <div class="section-title">Nouveau trajet</div>
     <div class="card">
-      <div class="field"><label>Départ</label><select id="p-depart"></select></div>
-      <div class="field"><label>Destination</label><select id="p-destination"></select></div>
+      <div class="field"><label>Départ</label><input id="p-depart" type="text" list="dl-quartiers" placeholder="Écris ton quartier de départ" autocomplete="off"></div>
+      <div class="field"><label>Destination</label><input id="p-destination" type="text" list="dl-quartiers" placeholder="Écris ta destination" autocomplete="off"></div>
       <div class="field"><label>Note pour le chauffeur (optionnel)</label><input id="p-note" type="text" placeholder="Ex: près du grand marché"></div>
       <div class="row-between" style="margin-bottom:14px;">
         <span style="font-size:13px;color:var(--texte-doux);">Tarif indicatif</span>
@@ -458,7 +458,7 @@ function fillQuartiers(sel, placeholder){
 }
 function calcPrix(depart, destination){
   if(!depart || !destination) return null;
-  return depart === destination ? TARIFS.meme : TARIFS.standard;
+  return depart.trim().toLowerCase() === destination.trim().toLowerCase() ? TARIFS.meme : TARIFS.standard;
 }
 function fmtGNF(n){ return Number(n||0).toLocaleString('fr-FR') + ' GNF'; }
 function fmtDate(ts){
@@ -506,10 +506,10 @@ function doRegister(){
   const phone = $('reg-phone').value.trim();
   const email = $('reg-email').value.trim();
   const pass = $('reg-pass').value;
-  const quartier = $('reg-quartier').value;
+  const quartier = $('reg-quartier').value.trim().slice(0,60);
   const vehicule = $('reg-vehicule').value.trim();
 
-  if(!quartier){ showAuthMsg('Choisis ton quartier.', 'error'); return; }
+  if(!quartier){ showAuthMsg('Écris ton quartier.', 'error'); return; }
   if(!name || !phone || !email || !pass){ showAuthMsg('Remplis tous les champs obligatoires.', 'error'); return; }
   if(pass.length < 6){ showAuthMsg('Mot de passe : 6 caractères minimum.', 'error'); return; }
   selectedRole = 'chauffeur';
@@ -590,7 +590,7 @@ function traduireErreur(err){
 /* ======================================================================
    ROUTEUR / ÉTAT DE SESSION
 ====================================================================== */
-fillQuartiers($('reg-quartier'), 'Choisis ton quartier');
+$('dl-quartiers').innerHTML = QUARTIERS.map(q=>`<option value="${q}">`).join('');
 function chargerProfil(user){
   currentUser = user;
   return db.collection('gst_users').doc(user.uid).get().then(doc=>{
@@ -622,10 +622,8 @@ function entrerApp(){
   $('topbar-sub').textContent = `Bonjour ${currentProfile.name.split(' ')[0]} 👋 · ${roleLabel(currentProfile.role)}`;
 
   buildNav();
-  fillQuartiers($('p-depart'));
-  fillQuartiers($('p-destination'));
-  $('p-depart').onchange = updatePrixPreview;
-  $('p-destination').onchange = updatePrixPreview;
+  $('p-depart').oninput = updatePrixPreview;
+  $('p-destination').oninput = updatePrixPreview;
 
   if(currentProfile.role === 'passager'){ goTab('home'); listenMesTrajets(); listenChauffeursDispo(); }
   else if(currentProfile.role === 'chauffeur'){
@@ -721,7 +719,7 @@ function updatePrixPreview(){
 }
 
 function reserverTrajet(){
-  const depart = $('p-depart').value, destination = $('p-destination').value, note = $('p-note').value.trim();
+  const depart = $('p-depart').value.trim().slice(0,80), destination = $('p-destination').value.trim().slice(0,80), note = $('p-note').value.trim();
   if(!depart || !destination){ toast('Choisis un départ et une destination.'); return; }
   const prix = calcPrix(depart, destination);
 
