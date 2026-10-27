@@ -151,7 +151,8 @@ th.onclick=()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light
 document.getElementById('tog').onclick=()=>document.getElementById('nav').classList.toggle('open');
 </script>
 <script type="module">
-import {fbDB,C_EVENEMENTS,C_CONFIG,C_BLOG_ATTENTE,collection,doc,getDoc,setDoc,deleteDoc,orderBy,query,onSnapshot} from "./firebase.js";
+import * as FB from "./firebase.js";
+const {fbDB,C_EVENEMENTS,C_CONFIG,C_BLOG_ATTENTE,collection,doc,getDoc,setDoc,deleteDoc,orderBy,query,onSnapshot}=FB;
 const CATS=[["Conseils d'études","🎓","#17A34A"],["Méthodes de travail","📖","#2563EB"],["Motivation","🧠","#F5820A"],["Examens & Révisions","📝","#8B5CF6"],["Vie du club","👥","#D9060C"],["Cours & Ressources","📚","#0A2A57"],["Témoignages","💬","#B98700"],["Éducation dans le monde","🌍","#0E7490"],["Sciences & Innovation","🔬","#7C3AED"],["Guinée","🇬🇳","#009460"],["Afrique","🌍","#B45309"],["Orientation & Emploi","💼","#0369A1"],["Maths & Physique","➗","#4F46E5"],["Santé","🩺","#DB2777"],["Environnement","🌱","#15803D"],["Économie & Entrepreneuriat","💡","#CA8A04"],["Sport","⚽","#EA580C"],["Culture & Langue","🎭","#9333EA"]];
 const XC=["Sciences & Innovation","Guinée","Afrique","Orientation & Emploi","Maths & Physique","Santé","Environnement","Économie & Entrepreneuriat","Sport","Culture & Langue"];
 const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -281,13 +282,26 @@ const SOURCES=[
 ];
 const strip=h=>{const d=document.createElement('div');d.innerHTML=String(h||'');return(d.textContent||'').replace(/\s+/g,' ').trim()};
 const firstImg=h=>{const m=String(h||'').match(/<img[^>]+src=["']([^"']+)["']/i);return m?m[1]:''};
+async function viaProxy(url){
+ const r=await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url));
+ if(!r.ok)throw 0;
+ const x=new DOMParser().parseFromString(await r.text(),'text/xml');
+ return [...x.querySelectorAll('item,entry')].map(n=>{
+  const g=t=>{const el=n.getElementsByTagName(t)[0];return el?el.textContent:''};
+  const l=n.getElementsByTagName('link')[0],link=l?(l.getAttribute('href')||l.textContent):'';
+  const en=n.getElementsByTagName('enclosure')[0],mt=n.getElementsByTagName('media:thumbnail')[0]||n.getElementsByTagName('media:content')[0];
+  let pd='';try{pd=new Date(g('pubDate')||g('published')||g('updated')).toISOString().slice(0,19).replace('T',' ')}catch(_){}
+  return{title:g('title'),link:link.trim(),description:g('description')||g('summary'),content:g('content:encoded')||g('content'),pubDate:pd,thumbnail:mt?mt.getAttribute('url'):'',enclosure:en?{link:en.getAttribute('url')}:null};
+ });
+}
 async function pullFeed(src){
  const k='cre-feed-'+src.url;
  try{const c=JSON.parse(sessionStorage.getItem(k)||'null');if(c&&Date.now()-c.t<18e5)return c.v}catch(_){}
- const r=await fetch('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(src.url));
- const j=await r.json();if(j.status!=='ok')throw 0;
+ let items;
+ try{const r=await fetch('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(src.url));const j=await r.json();if(j.status!=='ok')throw 0;items=j.items||[]}
+ catch(_){items=await viaProxy(src.url)}
  const re=src.filtre?new RegExp(src.filtre,'i'):null;
- const v=(j.items||[]).map(i=>{
+ const v=items.map(i=>{
   const img=[i.thumbnail,i.enclosure&&i.enclosure.link,firstImg(i.content),firstImg(i.description)].find(u=>/^https:\/\//.test(u||''))||'';
   const t=Date.parse(String(i.pubDate||'').replace(' ','T')+'Z');
   return{id:'x'+btoa(unescape(encodeURIComponent(i.link||''))).slice(-16),ext:true,titre:strip(i.title),extrait:strip(i.description||i.content).slice(0,160)+'…',couverture:img,publishedAt:isNaN(t)?0:t,source:src.nom,lien:i.link,categorie:src.categorie||'Éducation dans le monde'};
