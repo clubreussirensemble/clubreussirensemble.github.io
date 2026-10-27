@@ -222,6 +222,7 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
       <button data-tab="reseau" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">💬 Réseau</button>
       <button data-tab="boutiques" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">🏬 Boutiques</button>
       <button data-tab="transport" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">🛺 Transport</button>
+      <button data-tab="ouvriers" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">👷 Ouvriers</button>
     </div>
 
     <div id="tab-transport" class="panel" style="display:none">
@@ -248,6 +249,28 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
             <div id="trInfo" class="tr-meta" style="margin-top:8px">Choisis un chauffeur pour voir son trajet de la journée.</div></div>
         </div>
       </div>
+    </div>
+
+    <div id="tab-ouvriers" class="panel" style="display:none">
+      <h2>👷 Ouvriers qualifiés — annuaire (page ouvriers.html)</h2>
+      <form id="ouvForm" class="row-form">
+        <div class="field"><label>Nom complet</label><input name="nom" required maxlength="80" placeholder="Mamadou Barry"></div>
+        <div class="field"><label>Métier</label><input name="metier" list="ouvMetiers" required maxlength="40" placeholder="Électricien, plombier…">
+          <datalist id="ouvMetiers"><option>Électricien</option><option>Plombier</option><option>Maçon</option><option>Menuisier</option><option>Soudeur</option><option>Peintre</option><option>Carreleur</option><option>Mécanicien</option><option>Couvreur</option><option>Frigoriste</option></datalist></div>
+        <div class="field"><label>Ville / quartier</label><input name="ville" required maxlength="60" placeholder="Mamou"></div>
+        <div class="field"><label>Téléphone</label><input name="telephone" required maxlength="20" inputmode="tel" placeholder="620 00 00 00"></div>
+        <div class="field" style="width:110px"><label>Expérience (ans)</label><input name="experience" type="number" min="0" max="60"></div>
+        <div class="field"><label>Disponibilité</label><select name="disponible"><option value="1">Disponible</option><option value="0">Occupé</option></select></div>
+        <div class="field" style="flex:1 1 260px"><label>Précisions (spécialités, tarifs…)</label><input name="description" maxlength="300"></div>
+        <div class="field"><label>Photo</label><input id="ouvPhoto" type="file" accept="image/*"></div>
+        <img id="ouvPrev" alt="" style="display:none;width:56px;height:56px;border-radius:8px;object-fit:cover">
+        <button class="btn btn-navy" id="ouvBtn" type="submit">Ajouter</button>
+      </form>
+      <p id="ouvNote" style="min-height:18px;font-size:13px;color:var(--ink2);margin:-8px 0 12px"></p>
+      <table>
+        <thead><tr><th>Photo</th><th>Nom</th><th>Métier</th><th>Ville</th><th>Téléphone</th><th></th></tr></thead>
+        <tbody id="ouvBody"><tr><td colspan="6">Chargement…</td></tr></tbody>
+      </table>
     </div>
 
     <div id="tab-boutiques" class="panel" style="display:none">
@@ -2288,6 +2311,65 @@ function loadTrack(){
 }
 document.querySelector('.admin-tabs button[data-tab="transport"]').addEventListener("click", () => {
   if (!started) { started = true; init(); } else if (map) setTimeout(() => map.invalidateSize(), 80);
+});
+</script>
+<script type="module">
+/* ── Annuaire des ouvriers : collection Firestore « ouvriers » (page publique ouvriers.html) ── */
+import { fbDB as db, collection, doc, addDoc, deleteDoc, onSnapshot, query, orderBy } from "./firebase.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t==null?"":t).replace(/[&<>"']/g, x => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[x]));
+let photo = "", started = false, nt = null;
+const note = (m, bad) => { const n = $("ouvNote"); n.textContent = m; n.style.color = bad ? "var(--red)" : "var(--green)"; clearTimeout(nt); nt = setTimeout(() => n.textContent = "", 4000); };
+
+function start(){
+  onSnapshot(query(collection(db,"ouvriers"), orderBy("createdAt","desc")), s => {
+    $("ouvBody").innerHTML = s.size ? s.docs.map(x => { const d = x.data(); return `<tr>
+      <td>${d.photo ? `<img src="${d.photo}" alt="" style="width:44px;height:44px;border-radius:8px;object-fit:cover">` : "—"}</td>
+      <td>${esc(d.nom)}</td>
+      <td>${esc(d.metier)} <span class="pill ${d.disponible?"ok":"attente"}">${d.disponible?"Disponible":"Occupé"}</span></td>
+      <td>${esc(d.ville)}</td><td>${esc(d.telephone)}</td>
+      <td><button class="small-btn" data-delouv="${x.id}" data-n="${esc(d.nom)}" style="background:var(--red)">Supprimer</button></td></tr>`; }).join("")
+      : '<tr><td colspan="6">Aucun ouvrier pour le moment.</td></tr>';
+  }, () => note("Lecture impossible : vérifiez les règles Firestore (collection « ouvriers »).", true));
+}
+document.querySelector('.admin-tabs button[data-tab="ouvriers"]').addEventListener("click", () => { if (!started) { started = true; start(); } });
+
+/* Photo : recadrée en carré 400 px et compressée (≈ 30 Ko) */
+$("ouvPhoto").onchange = e => {
+  const f = e.target.files[0]; photo = ""; $("ouvPrev").style.display = "none";
+  if (!f) return;
+  const img = new Image(), u = URL.createObjectURL(f);
+  img.onload = () => {
+    const s = Math.min(img.width, img.height), c = document.createElement("canvas"); c.width = c.height = 400;
+    c.getContext("2d").drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, 400, 400);
+    photo = c.toDataURL("image/jpeg", .78); URL.revokeObjectURL(u);
+    $("ouvPrev").src = photo; $("ouvPrev").style.display = "block";
+  };
+  img.onerror = () => note("Cette image ne peut pas être lue. Choisissez une autre photo.", true);
+  img.src = u;
+};
+
+$("ouvForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target); $("ouvBtn").disabled = true;
+  try {
+    await addDoc(collection(db,"ouvriers"), {
+      nom: fd.get("nom").trim(), metier: fd.get("metier").trim(), ville: fd.get("ville").trim(),
+      telephone: fd.get("telephone").trim(), experience: Number(fd.get("experience")) || 0,
+      disponible: fd.get("disponible") === "1", description: (fd.get("description")||"").trim(),
+      photo, createdAt: Date.now()
+    });
+    e.target.reset(); photo = ""; $("ouvPrev").style.display = "none"; note("Ouvrier ajouté.");
+  } catch (x) { note("Enregistrement impossible : vérifiez vos droits (règles Firestore).", true); }
+  $("ouvBtn").disabled = false;
+});
+
+$("ouvBody").addEventListener("click", async e => {
+  const b = e.target.closest("[data-delouv]");
+  if (b && confirm("Supprimer " + b.dataset.n + " de l'annuaire ?")) {
+    try { await deleteDoc(doc(db,"ouvriers",b.dataset.delouv)); note("Ouvrier supprimé."); }
+    catch (x) { note("Suppression impossible : vérifiez vos droits.", true); }
+  }
 });
 </script>
 </body>
