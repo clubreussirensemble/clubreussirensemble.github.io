@@ -15,7 +15,7 @@
   <url><loc>https://clubreussirensemble.github.io/sciences_decouvertes.html</loc><lastmod>2026-10-17</lastmod><priority>0.8</priority></url>
   <url><loc>https://clubreussirensemble.github.io/concours_olympiades.html</loc><lastmod>2026-10-17</lastmod><priority>0.8</priority></url>
   <url><loc>https://clubreussirensemble.github.io/evenements.html</loc><lastmod>2026-10-17</lastmod><priority>0.8</priority></url>
-  <url><loc>https://clubreussirensemble.github.io/evenements_webinaire.html</loc><lastmod>2026-10-17</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/evenements_webinaires.html</loc><lastmod>2026-10-17</lastmod><priority>0.8</priority></url>
   <url><loc>https://clubreussirensemble.github.io/blog.html</loc><lastmod>2026-10-17</lastmod><priority>0.8</priority></url>
   <url><loc>https://clubreussirensemble.github.io/olympiades.html</loc><lastmod>2026-10-17</lastmod><priority>0.8</priority></url>
   <url><loc>https://clubreussirensemble.github.io/olympiades-inscription.html</loc><lastmod>2026-10-17</lastmod><priority>0.8</priority></url>
@@ -30,4 +30,45 @@
   <url><loc>https://clubreussirensemble.github.io/resultats.html</loc><lastmod>2026-10-17</lastmod><priority>0.8</priority></url>
   <url><loc>https://clubreussirensemble.github.io/mentions-legales.html</loc><lastmod>2026-10-17</lastmod><priority>0.8</priority></url>
   <url><loc>https://clubreussirensemble.github.io/politique-confidentialite.html</loc><lastmod>2026-10-17</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/simulateurs.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/informatique.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/langues.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/actus-education.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/resultats-evaluations.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/bourses.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/orientation.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/emissions.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/tv-gratuite.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/radio.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/metiers.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/fiches-techniques.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/glossaire-technique.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/textes-officiels.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/annuaire-centres.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/offres-emplois.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/entrepreneuriat.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/energie.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/technologie.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/veille-technologique.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/coran.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/fetes.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/cartes.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/meteo.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/tourisme.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/sante.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/droit.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/politique.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/civisme.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/economie.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/environnement.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/sport.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/cultures-africaines.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/verification.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/jeux-educatifs.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/jeux-adultes.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/jeux-mondes-virtuels.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/Guinee_Transport_vehicules_animes.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/boutiques.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/espace-eleve.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
+  <url><loc>https://clubreussirensemble.github.io/reseau.html</loc><lastmod>2026-10-27</lastmod><priority>0.8</priority></url>
 </urlset>
