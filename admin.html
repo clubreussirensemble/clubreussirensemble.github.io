@@ -205,6 +205,7 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
       <button data-tab="evaluations">Évaluations</button>
       <button data-tab="objectifs">Objectifs</button>
       <button data-tab="contenu">Contenu</button>
+      <button data-tab="position" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">📍 Position</button>
       <button data-tab="videos">Vidéos</button>
       <button data-tab="equipe">Équipe</button>
       <button data-tab="ressources">Ressources</button>
@@ -223,6 +224,18 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
       <button data-tab="boutiques" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">🏬 Boutiques</button>
       <button data-tab="transport" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">🛺 Transport</button>
       <button data-tab="ouvriers" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">👷 Ouvriers</button>
+    </div>
+
+    <div id="tab-position" class="panel" style="display:none">
+      <h2>📍 Position du club (page Contact)</h2>
+      <p style="margin-bottom:12px">Place-toi sur le lieu du club, appuie sur le bouton, puis enregistre. La carte de la page Contact se met à jour.</p>
+      <form id="configPositionForm" class="content-block">
+        <div class="field"><label>Coordonnées « 10.3754,-12.0915 » ou adresse</label>
+          <input name="carte" id="carteInput" placeholder="Ex : 10.3754,-12.0915"></div>
+        <button type="button" class="btn btn-navy" id="btnMaPosition" style="margin-bottom:8px">📍 Utiliser ma position actuelle</button>
+        <small id="carteMsg" style="display:block;margin-bottom:12px;color:var(--ink2)"></small>
+        <button type="submit" class="btn btn-gold">Enregistrer la position</button>
+      </form>
     </div>
 
     <div id="tab-transport" class="panel" style="display:none">
@@ -517,9 +530,6 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
             <div class="field"><label>Kicker contact</label><input name="contactKicker"></div>
             <div class="field"><label>Titre contact</label><input name="contactTitle"></div>
             <div class="field"><label>Adresse</label><input name="adresse"></div>
-            <div class="field" style="grid-column:1/-1"><label>📍 Position sur la carte (page Contact) : coordonnées « 10.3754,-12.0915 » ou adresse</label>
-              <div style="display:flex;gap:8px;flex-wrap:wrap"><input name="carte" id="carteInput" placeholder="Ex : 10.3754,-12.0915" style="flex:1;min-width:200px"><button type="button" class="btn btn-navy" id="btnMaPosition">📍 Utiliser ma position actuelle</button></div>
-              <small id="carteMsg" style="display:block;margin-top:6px;color:var(--ink2)">Place-toi sur le lieu du club, appuie sur le bouton, puis enregistre.</small></div>
             <div class="field"><label>WhatsApp — texte affiché</label><input name="whatsapp"></div>
             <div class="field"><label>WhatsApp — lien (wa.me/…)</label><input name="whatsappLink" type="url" placeholder="https://wa.me/224xxxxxxxxx"></div>
             <div class="field"><label>E-mail</label><input name="email"></div>
@@ -1314,6 +1324,7 @@ function startListeners(){
       const input = form.elements.namedItem(k);
       if(input) input.value = data[k];
     });
+    if(docId==='apropos' && data.carte){ const pf=document.getElementById('configPositionForm'); if(pf) pf.elements.namedItem('carte').value=data.carte; }
   });
 
   onSnapshot(query(collection(fbDB, C_VIDEOS), orderBy('ordre','asc')), snap=>{
@@ -1684,10 +1695,11 @@ function formToObject(form){
   return o;
 }
 
-['configAccueilForm','configAproposForm','configVideosForm','configReseauxForm'].forEach(id=>{
+['configAccueilForm','configAproposForm','configVideosForm','configReseauxForm','configPositionForm'].forEach(id=>{
   document.getElementById(id).addEventListener('submit', async e=>{
     e.preventDefault();
-    const docId = id.replace('config','').replace('Form','').toLowerCase();
+    let docId = id.replace('config','').replace('Form','').toLowerCase();
+    if(docId==='position') docId='apropos';
     await setDoc(doc(fbDB, C_CONFIG, docId), formToObject(e.target), { merge: true });
     alert('Enregistré ✔');
   });
