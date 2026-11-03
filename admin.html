@@ -517,6 +517,9 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
             <div class="field"><label>Kicker contact</label><input name="contactKicker"></div>
             <div class="field"><label>Titre contact</label><input name="contactTitle"></div>
             <div class="field"><label>Adresse</label><input name="adresse"></div>
+            <div class="field" style="grid-column:1/-1"><label>📍 Position sur la carte (page Contact) : coordonnées « 10.3754,-12.0915 » ou adresse</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap"><input name="carte" id="carteInput" placeholder="Ex : 10.3754,-12.0915" style="flex:1;min-width:200px"><button type="button" class="btn btn-navy" id="btnMaPosition">📍 Utiliser ma position actuelle</button></div>
+              <small id="carteMsg" style="display:block;margin-top:6px;color:var(--ink2)">Place-toi sur le lieu du club, appuie sur le bouton, puis enregistre.</small></div>
             <div class="field"><label>WhatsApp — texte affiché</label><input name="whatsapp"></div>
             <div class="field"><label>WhatsApp — lien (wa.me/…)</label><input name="whatsappLink" type="url" placeholder="https://wa.me/224xxxxxxxxx"></div>
             <div class="field"><label>E-mail</label><input name="email"></div>
@@ -2371,6 +2374,20 @@ $("ouvBody").addEventListener("click", async e => {
     catch (x) { note("Suppression impossible : vérifiez vos droits.", true); }
   }
 });
+</script>
+<script>
+(function(){
+  var b=document.getElementById("btnMaPosition"),i=document.getElementById("carteInput"),m=document.getElementById("carteMsg");
+  if(!b) return;
+  b.addEventListener("click",function(){
+    if(!navigator.geolocation){m.textContent="La géolocalisation n’est pas disponible sur cet appareil.";return;}
+    m.textContent="Recherche de ta position…";
+    navigator.geolocation.getCurrentPosition(function(p){
+      i.value=p.coords.latitude.toFixed(6)+","+p.coords.longitude.toFixed(6);
+      m.textContent="Position trouvée (précision ≈ "+Math.round(p.coords.accuracy)+" m). Clique sur « Enregistrer À propos » pour la publier sur la page Contact.";
+    },function(){m.textContent="Impossible d’obtenir la position : autorise la localisation dans ton navigateur.";},{enableHighAccuracy:true,timeout:15000});
+  });
+})();
 </script>
 </body>
 </html>
