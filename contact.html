@@ -192,8 +192,11 @@ import { fbDB, C_CONTACTS, C_CONFIG, collection, addDoc, doc, getDoc } from "./f
 // Carte Google Maps (sans clé API) : adresse de l'admin si elle existe, sinon l'école de Pétel
 function setMap(q){
   const e = encodeURIComponent(q);
-  document.getElementById('mapFrame').src = 'https://www.google.com/maps?q=' + e + '&output=embed';
-  document.getElementById('mapOpen').href = 'https://www.google.com/maps/search/?api=1&query=' + e;
+  // Si ce sont des coordonnées, on ajoute le nom du club pour qu'il s'affiche sur le repère
+  const isPt = /^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(String(q).trim());
+  const named = isPt ? encodeURIComponent(String(q).replace(/\s+/g,'')) + '(' + encodeURIComponent('Club Réussir Ensemble') + ')' : e;
+  document.getElementById('mapFrame').src = 'https://www.google.com/maps?q=' + named + '&output=embed';
+  document.getElementById('mapOpen').href = isPt ? 'https://www.google.com/maps?q=' + named : 'https://www.google.com/maps/search/?api=1&query=' + e;
   document.getElementById('mapRoute').href = 'https://www.google.com/maps/dir/?api=1&destination=' + e;
 }
 setMap('École Primaire de Pétel, Mamou, Guinée');
