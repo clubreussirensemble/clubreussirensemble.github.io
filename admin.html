@@ -411,6 +411,12 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
         <div id="exoaMsg" style="margin-top:10px;font-size:13px;font-weight:600"></div>
         <button type="button" class="btn btn-gold" id="exoaSend" style="margin-top:12px">📤 Envoyer l'exercice</button>
       </div>
+      <div class="content-block">
+        <h3 style="font-size:15px;margin-bottom:6px">Exercices envoyés</h3>
+        <p style="color:var(--ink2);font-size:13px;margin-bottom:10px">Retire un exercice chez tous les élèves, ou chez un seul avec la croix à côté de son nom. Il disparaît aussitôt de leur espace.</p>
+        <button type="button" class="btn btn-navy" id="exoaSentReload" style="padding:8px 14px;font-size:13px;margin-bottom:10px">↻ Actualiser la liste</button>
+        <div id="exoaSent" style="display:flex;flex-direction:column;gap:12px"><span style="color:var(--ink2)">Chargement…</span></div>
+      </div>
     </div>
 
     <div id="tab-blog" class="panel" style="display:none;padding:0">
@@ -987,7 +993,7 @@ import { fbAuth, fbDB, C_MATIERES, C_PAIEMENTS, C_ELEVES, C_EVENEMENTS, C_EVALUA
 // ── Connexion au projet Firebase "emploi-temps" (même base que Chat_eleves.html) ──
 // Sert uniquement à créer le lien personnel (token) de l'élève lors de la validation de son compte.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc as edtDoc, setDoc as edtSetDoc, serverTimestamp as edtServerTimestamp, collection as edtCollection, getDocs as edtGetDocs, addDoc as edtAddDoc, updateDoc as edtUpdateDoc, increment as edtIncrement } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc as edtDoc, setDoc as edtSetDoc, serverTimestamp as edtServerTimestamp, collection as edtCollection, getDocs as edtGetDocs, addDoc as edtAddDoc, updateDoc as edtUpdateDoc, increment as edtIncrement, deleteDoc as edtDeleteDoc, query as edtQuery, where as edtWhere } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const edtFirebaseConfig = {
   apiKey: "AIzaSyBYeYPOptN2wEak_Ctcr4a8t5qXpj4riLE",
   authDomain: "emploi-temps.firebaseapp.com",
@@ -1238,9 +1244,10 @@ document.getElementById('exoaSend').onclick = async () => {
   if(!tokens.length){ msg.textContent = 'Choisis au moins un élève.'; return; }
   const btn = document.getElementById('exoaSend'); btn.disabled = true; btn.textContent = 'Envoi…';
   let ok = 0, ko = 0;
+  const batchId = 'b_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
   for(const tk of tokens){
     try{
-      await edtAddDoc(edtCollection(edtDb, CHAT_ELEVES_COL, tk, 'messages'), { type:'exercice', titre, text:consigne, images, drive, from:'admin', read:false, at: edtServerTimestamp() });
+      await edtAddDoc(edtCollection(edtDb, CHAT_ELEVES_COL, tk, 'messages'), { type:'exercice', titre, text:consigne, images, drive, from:'admin', read:false, batchId, at: edtServerTimestamp() });
       await edtUpdateDoc(edtDoc(edtDb, CHAT_ELEVES_COL, tk), { lastMsg: ('📝 Exercice : ' + titre).slice(0,80), lastAt: edtServerTimestamp(), unreadEleve: edtIncrement(1) });
       ok++;
     }catch(e){ ko++; }
@@ -1249,12 +1256,77 @@ document.getElementById('exoaSend').onclick = async () => {
   msg.style.color = ko ? '#b3261e' : '#017529';
   msg.textContent = (ok ? '✅ Envoyé à ' + ok + ' élève' + (ok>1?'s':'') + '.' : '') + (ko ? ' ❌ Échec pour ' + ko + ' élève' + (ko>1?'s':'') + '.' : '');
   if(ok && !ko){ ['exoaTitre','exoaConsigne','exoaImages','exoaDrive'].forEach(id => document.getElementById(id).value = ''); }
+  if(ok) exoaLoadSent();
 };
+
+// ── Liste des exercices envoyés + retrait ──
+let exoaSentMsgs = [];
+async function exoaLoadSent(){
+  const box = document.getElementById('exoaSent');
+  box.innerHTML = '<span style="color:var(--ink2)">Chargement…</span>';
+  try{
+    if(!exoaEleves.length){
+      const snap = await edtGetDocs(edtCollection(edtDb, CHAT_ELEVES_COL));
+      exoaEleves = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (a.nom||'').localeCompare(b.nom||'','fr'));
+    }
+    const res = await Promise.all(exoaEleves.map(async e => {
+      try{
+        const sn = await edtGetDocs(edtQuery(edtCollection(edtDb, CHAT_ELEVES_COL, e.id, 'messages'), edtWhere('type','==','exercice')));
+        return sn.docs.map(d => ({ ref: d.ref, id: d.id, token: e.id, nom: e.nom || 'Élève', ...d.data() }));
+      }catch(_){ return []; }
+    }));
+    exoaSentMsgs = res.flat();
+    exoaRenderSent();
+  }catch(err){
+    box.innerHTML = '<span style="color:#b3261e">Impossible de charger : ' + exoaEsc(err.code||err.message) + '</span>';
+  }
+}
+function exoaRenderSent(){
+  const box = document.getElementById('exoaSent');
+  const groups = new Map();
+  exoaSentMsgs.forEach(m => {
+    const k = m.batchId || ('old|' + (m.titre||'') + '|' + (m.drive||'') + '|' + (m.images||[]).join(','));
+    if(!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(m);
+  });
+  const arr = [...groups.entries()].map(([k, list]) => ({ k, list, t: Math.max(...list.map(m => m.at?.toMillis ? m.at.toMillis() : 0)) })).sort((a,b) => b.t - a.t);
+  if(!arr.length){ box.innerHTML = '<span style="color:var(--ink2)">Aucun exercice envoyé.</span>'; return; }
+  box.innerHTML = arr.map((g, gi) => {
+    const f = g.list[0];
+    const date = g.t ? new Date(g.t).toLocaleString('fr-FR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+    const nbImg = (f.images||[]).length;
+    return `<div style="border:1.5px solid var(--line);border-radius:10px;padding:12px 14px">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between">
+        <div><b>📝 ${exoaEsc(f.titre||'Exercice')}</b><div style="font-size:12px;color:var(--ink2)">${exoaEsc(date)} · ${g.list.length} élève${g.list.length>1?'s':''}${nbImg?` · ${nbImg} image${nbImg>1?'s':''}`:''}${f.drive?' · Drive':''}</div></div>
+        <button type="button" class="btn btn-navy" data-exoa-grp="${gi}" style="padding:7px 12px;font-size:12.5px;background:#b3261e">🗑 Retirer pour tous</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">${g.list.map(m => `<span style="display:inline-flex;align-items:center;gap:6px;background:var(--paper2);border-radius:999px;padding:4px 6px 4px 11px;font-size:12.5px;font-weight:600">${exoaEsc(m.nom)}<button type="button" data-exoa-one="${exoaEsc(m.token)}|${exoaEsc(m.id)}" title="Retirer chez ${exoaEsc(m.nom)}" style="border:0;background:#e2e8f0;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:11px;line-height:1">✕</button></span>`).join('')}</div>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('[data-exoa-grp]').forEach(b => b.onclick = async () => {
+    const g = arr[Number(b.dataset.exoaGrp)];
+    if(!confirm('Retirer « ' + (g.list[0].titre||'cet exercice') + ' » chez ' + g.list.length + ' élève(s) ?')) return;
+    b.disabled = true; b.textContent = 'Retrait…';
+    let ko = 0;
+    for(const m of g.list){ try{ await edtDeleteDoc(m.ref); }catch(_){ ko++; } }
+    if(ko) alert('Échec pour ' + ko + ' élève(s).');
+    exoaLoadSent();
+  });
+  box.querySelectorAll('[data-exoa-one]').forEach(b => b.onclick = async () => {
+    const [tk, id] = b.dataset.exoaOne.split('|');
+    const m = exoaSentMsgs.find(x => x.token === tk && x.id === id); if(!m) return;
+    if(!confirm('Retirer cet exercice chez ' + m.nom + ' ?')) return;
+    b.disabled = true;
+    try{ await edtDeleteDoc(m.ref); }catch(e){ alert('Échec : ' + (e.code||e.message)); }
+    exoaLoadSent();
+  });
+}
+document.getElementById('exoaSentReload').onclick = exoaLoadSent;
 
 // Onglets
 document.querySelectorAll('.admin-tabs button').forEach(b=>{
   b.onclick = ()=>{
-    if(b.dataset.tab==='exoeleves') exoaLoad();
+    if(b.dataset.tab==='exoeleves'){ exoaLoad().then(exoaLoadSent); }
     if(b.dataset.tab==='classroom'){ const fr=document.getElementById('classroomFrame'); if(fr.src==='about:blank'||!fr.src) fr.src=fr.dataset.src; }
     if(b.dataset.tab==='olyjeu'){ const fr=document.getElementById('olyJeuFrame'); if(!fr.src) fr.src=fr.dataset.src; }
     if(b.dataset.tab==='reseau'){ const fr=document.getElementById('reseauFrame'); if(fr.src==='about:blank'||!fr.src) fr.src=fr.dataset.src; }

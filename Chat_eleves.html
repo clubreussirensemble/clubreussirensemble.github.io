@@ -3983,10 +3983,11 @@ document.getElementById('exoSend').onclick = async () => {
   if(!tokens.length){ err.textContent = 'Choisis au moins un élève.'; return; }
   const btn = document.getElementById('exoSend'); btn.disabled = true;
   try {
+    const batchId = 'b_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
     for(const tk of tokens){
       await addDoc(collection(db, ELEVES_COL, tk, 'messages'), {
         type: 'exercice', titre, text: consigne, images, drive,
-        from: 'admin', read: false, at: serverTimestamp()
+        from: 'admin', read: false, batchId, at: serverTimestamp()
       });
       await updateDoc(doc(db, ELEVES_COL, tk), {
         lastMsg: ('📝 Exercice : ' + titre).slice(0, 80),
