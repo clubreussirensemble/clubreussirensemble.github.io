@@ -219,6 +219,7 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
       <button data-tab="quizq">Quiz</button>
       <button data-tab="liens">Réseaux sociaux</button>
       <button data-tab="espace">Espace élève (Chat, devoirs…)</button>
+      <button data-tab="exoeleves" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">📝 Exercices élèves</button>
       <button data-tab="blog">Blog</button>
       <button data-tab="reseau" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">💬 Réseau</button>
       <button data-tab="boutiques" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">🏬 Boutiques</button>
@@ -386,6 +387,30 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
     <div id="tab-espace" class="panel" style="display:none;padding:0">
       <p style="margin:14px 0;color:var(--ink2);font-size:13px">Devoirs, évaluations, emploi du temps, sondages, groupe de classe, progression et messagerie — tout se gère ici, comme dans Chat_eleves.html. La première fois, saisis le mot de passe professeur habituel.</p>
       <iframe src="Chat_eleves.html" style="width:100%;height:80vh;min-height:640px;border:0;border-radius:var(--radius);box-shadow:var(--shadow);background:#fff" title="Espace numérique de l'élève — administration"></iframe>
+    </div>
+
+    <div id="tab-exoeleves" class="panel" style="display:none">
+      <h2>📝 Envoyer un exercice aux élèves</h2>
+      <p style="color:var(--ink2);font-size:13px;margin-bottom:14px">L'exercice arrive dans l'espace de chaque élève choisi (onglet « Le professeur »). Mets tes images sur Postimages (lien direct <code>i.postimg.cc</code>) et/ou ton document sur Google Drive (partage « Toute personne disposant du lien »).</p>
+      <div class="row-form">
+        <div class="field" style="flex:1 1 100%"><label>Titre de l'exercice</label><input id="exoaTitre" maxlength="120" placeholder="Ex : Limites — exercices 1 à 5" style="width:100%"></div>
+        <div class="field" style="flex:1 1 100%"><label>Consigne (facultatif)</label><textarea id="exoaConsigne" rows="3" maxlength="800" style="padding:9px 11px;border:1.5px solid var(--line);border-radius:7px;font-size:13.5px;font-family:inherit;background:var(--paper2);width:100%" placeholder="Ex : À rendre avant jeudi. Détaillez vos calculs."></textarea></div>
+        <div class="field" style="flex:1 1 100%"><label>Liens d'images Postimages (un lien par ligne)</label><textarea id="exoaImages" rows="3" style="padding:9px 11px;border:1.5px solid var(--line);border-radius:7px;font-size:13.5px;font-family:inherit;background:var(--paper2);width:100%" placeholder="https://i.postimg.cc/xxxx/exercice1.jpg"></textarea></div>
+        <div class="field" style="flex:1 1 100%"><label>Lien Google Drive (facultatif)</label><input id="exoaDrive" type="url" placeholder="https://drive.google.com/..." style="width:100%"></div>
+      </div>
+      <div class="content-block">
+        <h3 style="font-size:15px;margin-bottom:8px">Destinataires</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+          <select id="exoaClasse" style="padding:8px 10px;border:1.5px solid var(--line);border-radius:7px;font-size:13px;background:var(--paper2)"><option value="">Toutes les classes</option></select>
+          <button type="button" class="btn btn-navy" id="exoaAll" style="padding:8px 14px;font-size:13px">Tout cocher</button>
+          <button type="button" class="btn btn-navy" id="exoaNone" style="padding:8px 14px;font-size:13px;background:#64748b">Tout décocher</button>
+          <button type="button" class="btn btn-navy" id="exoaReload" style="padding:8px 14px;font-size:13px;background:#64748b">↻ Actualiser</button>
+          <span id="exoaCount" style="font-size:12.5px;color:var(--ink2)"></span>
+        </div>
+        <div id="exoaList" style="max-height:300px;overflow-y:auto;border:1.5px solid var(--line);border-radius:8px;padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:2px 14px;font-size:13.5px"><span style="color:var(--ink2)">Chargement…</span></div>
+        <div id="exoaMsg" style="margin-top:10px;font-size:13px;font-weight:600"></div>
+        <button type="button" class="btn btn-gold" id="exoaSend" style="margin-top:12px">📤 Envoyer l'exercice</button>
+      </div>
     </div>
 
     <div id="tab-blog" class="panel" style="display:none;padding:0">
@@ -962,7 +987,7 @@ import { fbAuth, fbDB, C_MATIERES, C_PAIEMENTS, C_ELEVES, C_EVENEMENTS, C_EVALUA
 // ── Connexion au projet Firebase "emploi-temps" (même base que Chat_eleves.html) ──
 // Sert uniquement à créer le lien personnel (token) de l'élève lors de la validation de son compte.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc as edtDoc, setDoc as edtSetDoc, serverTimestamp as edtServerTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc as edtDoc, setDoc as edtSetDoc, serverTimestamp as edtServerTimestamp, collection as edtCollection, getDocs as edtGetDocs, addDoc as edtAddDoc, updateDoc as edtUpdateDoc, increment as edtIncrement } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const edtFirebaseConfig = {
   apiKey: "AIzaSyBYeYPOptN2wEak_Ctcr4a8t5qXpj4riLE",
   authDomain: "emploi-temps.firebaseapp.com",
@@ -1164,9 +1189,72 @@ document.getElementById('loginForm').addEventListener('submit', async e=>{
 });
 document.getElementById('logoutLink').onclick = e=>{ e.preventDefault(); signOut(fbAuth); };
 
+// ── Exercices élèves (liens Postimages / Drive) → messagerie de chaque élève ──
+let exoaEleves = [];
+const exoaEsc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const exoaUrl = u => { u = (u||'').trim(); return /^https?:\/\/[^\s'"<>]+$/i.test(u) ? u : ''; };
+function exoaRenderList(){
+  const cl = document.getElementById('exoaClasse').value;
+  const box = document.getElementById('exoaList');
+  const list = exoaEleves.filter(e => !cl || (e.classe||'') === cl);
+  box.innerHTML = list.length ? list.map(e => `<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-weight:600;color:var(--ink)"><input type="checkbox" value="${exoaEsc(e.id)}"> ${exoaEsc(e.nom||'Élève')}${e.classe?` <span style="color:var(--ink2);font-weight:500">· ${exoaEsc(e.classe)}</span>`:''}</label>`).join('') : '<span style="color:var(--ink2)">Aucun élève.</span>';
+  box.querySelectorAll('input').forEach(c => c.onchange = exoaCount);
+  exoaCount();
+}
+function exoaCount(){
+  const n = document.querySelectorAll('#exoaList input:checked').length;
+  document.getElementById('exoaCount').textContent = n ? n + ' élève' + (n>1?'s':'') + ' sélectionné' + (n>1?'s':'') : '';
+}
+async function exoaLoad(){
+  document.getElementById('exoaList').innerHTML = '<span style="color:var(--ink2)">Chargement…</span>';
+  try{
+    const snap = await edtGetDocs(edtCollection(edtDb, CHAT_ELEVES_COL));
+    exoaEleves = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (a.nom||'').localeCompare(b.nom||'','fr'));
+    const sel = document.getElementById('exoaClasse'), keep = sel.value;
+    const classes = [...new Set(exoaEleves.map(e => e.classe).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
+    sel.innerHTML = '<option value="">Toutes les classes</option>' + classes.map(c => `<option value="${exoaEsc(c)}">${exoaEsc(c)}</option>`).join('');
+    sel.value = classes.includes(keep) ? keep : '';
+    exoaRenderList();
+  }catch(err){
+    document.getElementById('exoaList').innerHTML = '<span style="color:#b3261e">Impossible de charger les élèves : ' + exoaEsc(err.code||err.message) + '</span>';
+  }
+}
+document.getElementById('exoaClasse').onchange = exoaRenderList;
+document.getElementById('exoaReload').onclick = exoaLoad;
+document.getElementById('exoaAll').onclick = () => { document.querySelectorAll('#exoaList input').forEach(c => c.checked = true); exoaCount(); };
+document.getElementById('exoaNone').onclick = () => { document.querySelectorAll('#exoaList input').forEach(c => c.checked = false); exoaCount(); };
+document.getElementById('exoaSend').onclick = async () => {
+  const msg = document.getElementById('exoaMsg'); msg.style.color = '#b3261e'; msg.textContent = '';
+  const titre = document.getElementById('exoaTitre').value.trim();
+  const consigne = document.getElementById('exoaConsigne').value.trim();
+  const rawImgs = document.getElementById('exoaImages').value.split(/\s+/).map(x => x.trim()).filter(Boolean);
+  const images = rawImgs.map(exoaUrl).filter(Boolean);
+  const driveRaw = document.getElementById('exoaDrive').value.trim();
+  const drive = driveRaw ? exoaUrl(driveRaw) : '';
+  const tokens = [...document.querySelectorAll('#exoaList input:checked')].map(c => c.value);
+  if(!titre){ msg.textContent = "Donne un titre à l'exercice."; return; }
+  if(rawImgs.length !== images.length || (driveRaw && !drive)){ msg.textContent = 'Un lien est invalide : il doit commencer par https://'; return; }
+  if(!images.length && !drive && !consigne){ msg.textContent = 'Ajoute au moins une image, un lien Drive ou une consigne.'; return; }
+  if(!tokens.length){ msg.textContent = 'Choisis au moins un élève.'; return; }
+  const btn = document.getElementById('exoaSend'); btn.disabled = true; btn.textContent = 'Envoi…';
+  let ok = 0, ko = 0;
+  for(const tk of tokens){
+    try{
+      await edtAddDoc(edtCollection(edtDb, CHAT_ELEVES_COL, tk, 'messages'), { type:'exercice', titre, text:consigne, images, drive, from:'admin', read:false, at: edtServerTimestamp() });
+      await edtUpdateDoc(edtDoc(edtDb, CHAT_ELEVES_COL, tk), { lastMsg: ('📝 Exercice : ' + titre).slice(0,80), lastAt: edtServerTimestamp(), unreadEleve: edtIncrement(1) });
+      ok++;
+    }catch(e){ ko++; }
+  }
+  btn.disabled = false; btn.textContent = "📤 Envoyer l'exercice";
+  msg.style.color = ko ? '#b3261e' : '#017529';
+  msg.textContent = (ok ? '✅ Envoyé à ' + ok + ' élève' + (ok>1?'s':'') + '.' : '') + (ko ? ' ❌ Échec pour ' + ko + ' élève' + (ko>1?'s':'') + '.' : '');
+  if(ok && !ko){ ['exoaTitre','exoaConsigne','exoaImages','exoaDrive'].forEach(id => document.getElementById(id).value = ''); }
+};
+
 // Onglets
 document.querySelectorAll('.admin-tabs button').forEach(b=>{
   b.onclick = ()=>{
+    if(b.dataset.tab==='exoeleves') exoaLoad();
     if(b.dataset.tab==='classroom'){ const fr=document.getElementById('classroomFrame'); if(fr.src==='about:blank'||!fr.src) fr.src=fr.dataset.src; }
     if(b.dataset.tab==='olyjeu'){ const fr=document.getElementById('olyJeuFrame'); if(!fr.src) fr.src=fr.dataset.src; }
     if(b.dataset.tab==='reseau'){ const fr=document.getElementById('reseauFrame'); if(fr.src==='about:blank'||!fr.src) fr.src=fr.dataset.src; }

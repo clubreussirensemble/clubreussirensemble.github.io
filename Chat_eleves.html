@@ -463,6 +463,18 @@ body{background:#f0f4f8;font-family:'DM Sans',sans-serif;overflow:hidden}
 .sp-savebar{padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:#fff;border-top:1px solid #e2e8f0;flex-shrink:0}
 .sp-copy{width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:12.5px;font-family:'DM Sans',sans-serif;background:#fff;margin-bottom:12px;color:#475569}
 @media (prefers-reduced-motion:reduce){.sv-bar-ok,.sv-bar-wait,.sv-chev{transition:none}}
+
+/* ── EXERCICES (liens Postimages / Drive) ── */
+.exo-card{min-width:230px;max-width:100%}
+.exo-head{display:flex;align-items:center;gap:6px;font-weight:800;font-size:13.5px;margin-bottom:4px}
+.exo-consigne{font-size:13px;white-space:pre-wrap;margin:4px 0 8px}
+.exo-img{display:block;width:100%;max-height:340px;object-fit:contain;background:#f1f5f9;border-radius:10px;margin-bottom:6px;cursor:zoom-in}
+.exo-link{display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 10px;border-radius:10px;background:rgba(15,23,42,.08);color:inherit;text-decoration:none;font-size:12.5px;font-weight:700;margin-bottom:6px}
+.exo-link.drive{background:#1a73e8;color:#fff}
+.exo-dest{max-height:170px;overflow-y:auto;border:1.5px solid #e2e8f0;border-radius:10px;padding:6px 10px}
+.exo-dest label{display:flex;align-items:center;gap:8px;margin:0;padding:5px 0;font-size:13px;font-weight:600;color:#1a1f2e}
+.exo-dest input{width:auto}
+.exo-ta{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;font-family:'DM Sans',sans-serif;resize:vertical}
 </style>
 </head>
 <body>
@@ -582,6 +594,7 @@ body{background:#f0f4f8;font-family:'DM Sans',sans-serif;overflow:hidden}
     <button class="hdr-btn" id="adminEdtManualBtn" title="Ajouter/modifier son emploi du temps">📅</button>
     <button class="hdr-btn" id="adminProgManualBtn" title="Ajouter/modifier ses notes et présences">🎯</button>
     <button class="hdr-btn" id="adminSuiviEleveBtn" title="Suivi des matières de cet élève" aria-label="Suivi des matières de cet élève">✅</button>
+    <button class="hdr-btn" id="adminExoBtn" title="Envoyer un exercice (Postimages / Drive)" aria-label="Envoyer un exercice">📝</button>
     <button class="hdr-btn" id="adminDeleteBtn" title="Supprimer la conversation">🗑</button>
   </div>
   <div class="msgs" id="adminMsgs"></div>
@@ -731,6 +744,31 @@ body{background:#f0f4f8;font-family:'DM Sans',sans-serif;overflow:hidden}
 </div>
 
 <!-- EMPLOI DU TEMPS : AJOUT DIRECT -->
+<div id="exoModal" class="modal-bg hidden">
+  <div class="modal-box" style="max-width:420px">
+    <h2>📝 Envoyer un exercice</h2>
+    <label>Titre</label>
+    <input type="text" id="exoTitre" placeholder="Ex : Limites — exercices 1 à 5">
+    <label>Consigne (optionnel)</label>
+    <textarea class="exo-ta" id="exoConsigne" rows="3" placeholder="Ex : À rendre avant jeudi. Détaillez vos calculs."></textarea>
+    <label>Liens d'images Postimages (un lien par ligne)</label>
+    <textarea class="exo-ta" id="exoImages" rows="3" placeholder="https://i.postimg.cc/xxxx/exercice1.jpg"></textarea>
+    <label>Lien Google Drive (PDF, document…) — partage « Toute personne disposant du lien »</label>
+    <input type="url" id="exoDrive" placeholder="https://drive.google.com/...">
+    <label>Envoyer à</label>
+    <div style="display:flex;gap:8px;margin-bottom:6px">
+      <button type="button" class="btn btn-ghost" id="exoAll" style="padding:6px 10px;font-size:12px">Tous</button>
+      <button type="button" class="btn btn-ghost" id="exoNone" style="padding:6px 10px;font-size:12px">Aucun</button>
+    </div>
+    <div class="exo-dest" id="exoDest"></div>
+    <div id="exoErr" style="color:#ef4444;font-size:12px;margin-top:8px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="exoCancel">Annuler</button>
+      <button class="btn btn-primary" id="exoSend">📤 Envoyer</button>
+    </div>
+  </div>
+</div>
+
 <div id="edtManualModal" class="modal-bg hidden">
   <div class="modal-box" style="max-width:420px">
     <h2>📅 Emploi du temps direct</h2>
@@ -3469,6 +3507,7 @@ function openAdminChat(token){
   document.getElementById('adminEdtManualBtn').classList.remove('hidden');
   document.getElementById('adminProgManualBtn').classList.remove('hidden');
   document.getElementById('adminSuiviEleveBtn').classList.remove('hidden');
+  document.getElementById('adminExoBtn').classList.remove('hidden');
   showScreen('adminChat');
 
   const ref = doc(db, ELEVES_COL, token);
@@ -3502,6 +3541,7 @@ function openAdminChat(token){
   document.getElementById('adminEdtManualBtn').onclick = () => openEdtManualModal(token, data.nom);
   document.getElementById('adminProgManualBtn').onclick = () => openProgManualModal(token, data.nom);
   document.getElementById('adminSuiviEleveBtn').onclick = () => openSuiviEleve(token, 'adminChat');
+  document.getElementById('adminExoBtn').onclick = () => openExoModal(token);
 
   wireAdminToolbar('private', token);
 }
@@ -3856,6 +3896,82 @@ function renderPmMatieres(){
   });
 }
 
+// ═══════════════════════════════════════════════════════════════
+// EXERCICES PAR LIENS (Postimages / Google Drive) — envoi à un ou plusieurs élèves
+// ═══════════════════════════════════════════════════════════════
+function exoSafeUrl(u){
+  u = (u || '').trim();
+  if(!/^https?:\/\/[^\s'"<>]+$/i.test(u)) return '';
+  return u;
+}
+function exoIsDirectImage(u){
+  return /^https?:\/\/i\.postimg\.cc\//i.test(u) || /\.(jpe?g|png|gif|webp)(\?.*)?$/i.test(u);
+}
+function exoRenderHTML(m){
+  let h = `<div class="exo-card"><div class="exo-head">📝 ${esc(m.titre || 'Exercice')}</div>`;
+  if(m.text) h += `<div class="exo-consigne">${esc(m.text)}</div>`;
+  (m.images || []).forEach((raw, i) => {
+    const u = exoSafeUrl(raw); if(!u) return;
+    if(exoIsDirectImage(u)){
+      h += `<img class="exo-img" src="${esc(u)}" alt="Exercice ${i+1}" loading="lazy" onclick="window.__openLightbox('${esc(u)}')" onerror="this.outerHTML='<a class=\\'exo-link\\' href=\\'${esc(u)}\\' target=\\'_blank\\' rel=\\'noopener\\'>🖼️ Ouvrir l’image ${i+1}</a>'">`;
+    } else {
+      h += `<a class="exo-link" href="${esc(u)}" target="_blank" rel="noopener">🖼️ Ouvrir l’image ${i+1}</a>`;
+    }
+  });
+  const d = exoSafeUrl(m.drive);
+  if(d) h += `<a class="exo-link drive" href="${esc(d)}" target="_blank" rel="noopener">📂 Ouvrir le document (Drive)</a>`;
+  return h + '</div>';
+}
+
+let exoCurrentToken = null;
+function openExoModal(token){
+  exoCurrentToken = token;
+  ['exoTitre','exoConsigne','exoImages','exoDrive'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('exoErr').textContent = '';
+  const cur = allEleves.find(e => e.id === token) || {};
+  const list = allEleves.slice().sort((a, b) => (a.nom || '').localeCompare(b.nom || '', 'fr'));
+  document.getElementById('exoDest').innerHTML = list.map(e =>
+    `<label><input type="checkbox" value="${esc(e.id)}" ${e.id === token ? 'checked' : ''}> ${esc(e.nom || 'Élève')}${e.classe ? ' <span style="color:#94a3b8;font-weight:500">· ' + esc(e.classe) + '</span>' : ''}</label>`
+  ).join('') || `<div style="font-size:12px;color:#94a3b8;padding:6px">Aucun élève.</div>`;
+  document.getElementById('exoModal').classList.remove('hidden');
+}
+function exoClose(){ document.getElementById('exoModal').classList.add('hidden'); }
+document.getElementById('exoCancel').onclick = exoClose;
+document.getElementById('exoAll').onclick = () => document.querySelectorAll('#exoDest input').forEach(c => c.checked = true);
+document.getElementById('exoNone').onclick = () => document.querySelectorAll('#exoDest input').forEach(c => c.checked = false);
+document.getElementById('exoSend').onclick = async () => {
+  const err = document.getElementById('exoErr'); err.textContent = '';
+  const titre = document.getElementById('exoTitre').value.trim();
+  const consigne = document.getElementById('exoConsigne').value.trim();
+  const rawImgs = document.getElementById('exoImages').value.split(/\s+/).map(x => x.trim()).filter(Boolean);
+  const images = rawImgs.map(exoSafeUrl).filter(Boolean);
+  const driveRaw = document.getElementById('exoDrive').value.trim();
+  const drive = driveRaw ? exoSafeUrl(driveRaw) : '';
+  const tokens = [...document.querySelectorAll('#exoDest input:checked')].map(c => c.value);
+  if(!titre){ err.textContent = 'Donne un titre à l’exercice.'; return; }
+  if(rawImgs.length !== images.length || (driveRaw && !drive)){ err.textContent = 'Un lien est invalide : il doit commencer par https://'; return; }
+  if(!images.length && !drive && !consigne){ err.textContent = 'Ajoute au moins une image, un lien Drive ou une consigne.'; return; }
+  if(!tokens.length){ err.textContent = 'Choisis au moins un élève.'; return; }
+  const btn = document.getElementById('exoSend'); btn.disabled = true;
+  try {
+    for(const tk of tokens){
+      await addDoc(collection(db, ELEVES_COL, tk, 'messages'), {
+        type: 'exercice', titre, text: consigne, images, drive,
+        from: 'admin', read: false, at: serverTimestamp()
+      });
+      await updateDoc(doc(db, ELEVES_COL, tk), {
+        lastMsg: ('📝 Exercice : ' + titre).slice(0, 80),
+        lastAt: serverTimestamp(),
+        unreadEleve: increment(1)
+      });
+    }
+    exoClose();
+    alert('✅ Exercice envoyé à ' + tokens.length + ' élève' + (tokens.length > 1 ? 's' : '') + '.');
+  } catch(e){
+    err.textContent = e.message || 'Erreur lors de l’envoi.';
+  } finally { btn.disabled = false; }
+};
+
 function openAdminGroupChat(){
   adminMode = 'group';
   currentAdminToken = null;
@@ -3869,6 +3985,7 @@ function openAdminGroupChat(){
   document.getElementById('adminEdtManualBtn').classList.add('hidden');
   document.getElementById('adminProgManualBtn').classList.add('hidden');
   document.getElementById('adminSuiviEleveBtn').classList.add('hidden');
+  document.getElementById('adminExoBtn').classList.add('hidden');
   showScreen('adminChat');
 
   if(adminUnsub) adminUnsub();
@@ -4168,6 +4285,8 @@ function renderMessages(containerId, list, opts){
         </span>
       </a>`;
       if(m.text) html += `<div>${esc(m.text)}</div>`;
+    } else if(m.type === 'exercice'){
+      html += exoRenderHTML(m);
     } else if(m.type === 'audio'){
       html += `<audio controls src="${m.data}"></audio>`;
       if(m.text) html += `<div>${esc(m.text)}</div>`;
