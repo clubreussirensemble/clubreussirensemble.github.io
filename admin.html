@@ -2731,11 +2731,22 @@ import { fbDB, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, orderBy, q
       await sans(() => reste.length ? updateDoc(doc(fbDB, COL_S, x.id), { groupes: reste }) : deleteDoc(doc(fbDB, COL_S, x.id)));
     }
   }
+  /* Envoi du code du groupe au chef ou à l'adjoint (WhatsApp / SMS, message pré-rempli) */
+  function envoiGrp(g, role) {
+    const nom = role === 'chef' ? g.chef : g.adjoint, t = role === 'chef' ? g.chefTel : g.adjointTel;
+    if (!nom && !t) return '';
+    const d = tel(t), fonction = role === 'chef' ? 'chef de groupe' : 'adjoint(e) du chef de groupe';
+    const msg = 'Bonjour ' + (nom || '') + ', voici le code du groupe « ' + (g.nom || '') + ' » (' + fonction + ') : ' + g.code +
+      '\nOuvre ' + new URL('groupes.html', location.href).href + ' puis saisis ce code dans « Code du groupe ». Ne le partage qu’avec ton groupe.';
+    const wa = 'https://wa.me/' + d + '?text=' + encodeURIComponent(msg), sms = 'sms:' + (d ? '+' + d : '') + '?body=' + encodeURIComponent(msg);
+    return '<div style="margin-top:6px;white-space:nowrap"><a class="btn btn-navy" style="padding:4px 9px;font-size:11.5px;background:#25D366;text-decoration:none" href="' + wa +
+      '" target="_blank" rel="noopener">Code · WhatsApp</a> <a class="btn btn-navy" style="padding:4px 9px;font-size:11.5px;text-decoration:none" href="' + sms + '">Code · SMS</a></div>';
+  }
   function rGroupes() {
     $('grpBody').innerHTML = G.length ? G.map(g => {
       const n = R.filter(r => r.groupeId === g.id).length;
       return '<tr><td><b>' + esc(g.nom) + '</b>' + (g.note ? '<br><span style="color:var(--ink2);font-size:12px">' + esc(g.note) + '</span>' : '') + '</td><td>' +
-        contact(g.chef, g.chefTel) + '</td><td>' + contact(g.adjoint, g.adjointTel) + '</td><td>' + confirmation(g) + '</td><td><b>' + esc(g.code) + '</b></td><td>' + n +
+        contact(g.chef, g.chefTel) + envoiGrp(g, 'chef') + '</td><td>' + contact(g.adjoint, g.adjointTel) + envoiGrp(g, 'adjoint') + '</td><td>' + confirmation(g) + '</td><td><b>' + esc(g.code) + '</b></td><td>' + n +
         '</td><td style="white-space:nowrap"><button class="btn btn-navy" style="padding:6px 12px;font-size:12px" data-edg="' + g.id + '">Modifier</button> ' +
         '<button class="btn btn-navy" style="padding:6px 12px;font-size:12px;background:#D9060C" data-delg="' + g.id + '">Supprimer</button></td></tr>';
     }).join('') : '<tr><td colspan="7">Aucun groupe. Ajoute le premier ci-dessus.</td></tr>';
@@ -2867,6 +2878,16 @@ import { fbDB, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, orderBy, q
     await addDoc(C(COL_E), { groupeId: g.id, groupeNom: g.nom, nom: f.nom.value.trim(), tel: f.tel.value.trim(), code: c, creeLe: Date.now() });
     f.nom.value = ''; f.tel.value = ''; f.code.value = code();
   });
+  /* Envoi du code de l'élève par WhatsApp ou SMS (message pré-rempli) */
+  const pageEleve = () => new URL('groupes.html', location.href).href;
+  function envoiCode(x) {
+    const g = G.find(y => y.id === x.groupeId) || {}, d = tel(x.tel);
+    const msg = 'Bonjour ' + (x.nom || '') + ', voici ton code d’accès élève (' + (g.nom || x.groupeNom || 'groupe') + ') : ' + x.code +
+      '\nOuvre ' + pageEleve() + ' puis saisis ce code dans « Code de l’élève ». Ne le partage pas.';
+    const wa = 'https://wa.me/' + d + '?text=' + encodeURIComponent(msg), sms = 'sms:' + (d ? '+' + d : '') + '?body=' + encodeURIComponent(msg);
+    return '<a class="btn btn-navy" style="padding:6px 12px;font-size:12px;background:#25D366;text-decoration:none" href="' + wa + '" target="_blank" rel="noopener" title="Envoyer le code par WhatsApp">WhatsApp</a> ' +
+      '<a class="btn btn-navy" style="padding:6px 12px;font-size:12px;text-decoration:none" href="' + sms + '" title="Envoyer le code par SMS">SMS</a> ';
+  }
   function rEleves() {
     const l = [...E].sort((x, y) => (x.nom || '').localeCompare(y.nom || '')).filter(visE);
     $('eleBody').innerHTML = l.length ? l.map(x => {
@@ -2874,7 +2895,7 @@ import { fbDB, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, orderBy, q
       return '<tr><td><b>' + esc(x.nom) + '</b>' + (x.tel ? '<br><span style="color:var(--ink2);font-size:12px">' + esc(x.tel) + '</span>' : '') + '</td><td>' + esc(g.nom || x.groupeNom || '—') + '</td><td><b>' + esc(x.code) + '</b></td><td>' +
         (p ? '<span class="pill ' + (frais ? 'ok' : 'attente') + '">' + (frais ? 'En ligne · ' : 'Dernière position · ') + ago(p.majLe) + '</span>' : '<span class="pill refuse">Ne partage pas</span>') +
         '</td><td style="white-space:nowrap">' + (p ? '<button class="btn btn-navy" style="padding:6px 12px;font-size:12px" data-cele="' + x.id + '">Voir sur la carte</button> ' + lien(gmaps(p.lat, p.lng), 'Google Maps') + ' ' : '') +
-        '<button class="btn btn-navy" style="padding:6px 12px;font-size:12px;background:#D9060C" data-dele="' + x.id + '">Supprimer</button></td></tr>';
+        envoiCode(x) + '<button class="btn btn-navy" style="padding:6px 12px;font-size:12px;background:#D9060C" data-dele="' + x.id + '">Supprimer</button></td></tr>';
     }).join('') : '<tr><td colspan="5">Aucun élève. Ajoute le premier ci-dessus.</td></tr>';
     document.querySelectorAll('[data-cele]').forEach(b => b.onclick = () => {
       const p = posE(b.dataset.cele); if (!p || !carte) return;
