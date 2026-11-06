@@ -2706,6 +2706,31 @@ import { fbDB, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, orderBy, q
       '</div><button class="btn btn-navy" style="padding:5px 10px;font-size:12px;margin-top:6px" data-appl="' + g.id + '">Appliquer</button>';
     return '<span class="pill refuse">À reconfirmer</span>';
   }
+  /* Suppression d'un groupe + nettoyage de tout ce qui lui est rattaché */
+  async function supprimerGroupe(id, btn) {
+    const g = G.find(x => x.id === id); if (!g) return;
+    const els = E.filter(x => x.groupeId === id), crs = R.filter(x => x.groupeId === id);
+    if (!confirm('Supprimer le groupe « ' + (g.nom || '') + ' » ?\n\nSeront aussi supprimés : ' + els.length + ' élève(s), ' + crs.length +
+      ' compte(s) rendu(s), sa position et sa confirmation.\nLes sujets qui ne concernaient que ce groupe seront retirés.\n\nCette action est définitive.')) return;
+    if (btn) { btn.disabled = true; btn.textContent = 'Suppression…'; }
+    try {
+      await deleteDoc(doc(fbDB, COL_G, id));          // le groupe lui-même
+    } catch (e) {
+      console.error(e); if (btn) { btn.disabled = false; btn.textContent = 'Supprimer'; }
+      alert('Suppression impossible (' + (e && e.code ? e.code : 'erreur') + ').\nSi c’est « permission-denied » : dans Firebase > Firestore > Règles, autorise la suppression (delete) sur la collection groupes_travail.');
+      return;
+    }
+    if (editId === id) finEdition();
+    const sans = async f => { try { await f(); } catch (e) { console.warn('Nettoyage partiel :', e); } };
+    for (const x of crs) await sans(() => deleteDoc(doc(fbDB, COL_R, x.id)));
+    for (const x of els) { await sans(() => deleteDoc(doc(fbDB, COL_E, x.id))); await sans(() => deleteDoc(doc(fbDB, COL_PE, x.id))); }
+    await sans(() => deleteDoc(doc(fbDB, COL_P, id)));
+    await sans(() => deleteDoc(doc(fbDB, COL_C, id)));
+    for (const x of S.filter(y => y.cible !== 'tous' && (y.groupes || []).includes(id))) {
+      const reste = (x.groupes || []).filter(i => i !== id);
+      await sans(() => reste.length ? updateDoc(doc(fbDB, COL_S, x.id), { groupes: reste }) : deleteDoc(doc(fbDB, COL_S, x.id)));
+    }
+  }
   function rGroupes() {
     $('grpBody').innerHTML = G.length ? G.map(g => {
       const n = R.filter(r => r.groupeId === g.id).length;
@@ -2714,9 +2739,7 @@ import { fbDB, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, orderBy, q
         '</td><td style="white-space:nowrap"><button class="btn btn-navy" style="padding:6px 12px;font-size:12px" data-edg="' + g.id + '">Modifier</button> ' +
         '<button class="btn btn-navy" style="padding:6px 12px;font-size:12px;background:#D9060C" data-delg="' + g.id + '">Supprimer</button></td></tr>';
     }).join('') : '<tr><td colspan="7">Aucun groupe. Ajoute le premier ci-dessus.</td></tr>';
-    document.querySelectorAll('[data-delg]').forEach(b => b.onclick = async () => {
-      if (confirm('Supprimer ce groupe ?')) { if (editId === b.dataset.delg) finEdition(); await deleteDoc(doc(fbDB, COL_G, b.dataset.delg)); }
-    });
+    document.querySelectorAll('[data-delg]').forEach(b => b.onclick = () => supprimerGroupe(b.dataset.delg, b));
     document.querySelectorAll('[data-appl]').forEach(b => b.onclick = async () => {
       const c = CF.find(x => x.groupeId === b.dataset.appl); if (!c) return;
       await updateDoc(doc(fbDB, COL_G, b.dataset.appl), { chef: c.chef || '', chefTel: c.chefTel || '', adjoint: c.adjoint || '', adjointTel: c.adjointTel || '', majLe: Date.now() });

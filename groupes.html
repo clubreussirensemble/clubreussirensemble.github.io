@@ -163,6 +163,10 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const jour = t => t ? new Date(t).toLocaleDateString('fr-FR') : '';
 const lienOk = u => /^https?:\/\//i.test(u || '');
 const lien = (u, txt, alt) => lienOk(u) ? `<a class="doc-link ${alt?'alt':''}" href="${esc(u)}" target="_blank" rel="noopener">${txt}</a>` : '';
+/* Lien Google Drive « aperçu » → lien de téléchargement direct */
+const idDrive = u => { const m = String(u || '').match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:[^#]*&)?id=)([\w-]{10,})/i) || String(u || '').match(/docs\.google\.com\/\w+\/d\/([\w-]{10,})/i); return m ? m[1] : ''; };
+const lienDl = u => { const id = idDrive(u); return id ? 'https://drive.usercontent.google.com/download?id=' + id + '&export=download&confirm=t' : u; };
+const boutonDl = (u, txt) => lienOk(u) ? `<a class="doc-link" href="${esc(lienDl(u))}" download target="_blank" rel="noopener">⬇ ${txt}</a> <a class="doc-link alt" href="${esc(u)}" target="_blank" rel="noopener">Ouvrir / aperçu</a>` : '';
 
 let groupe = null, S = [], R = [], unsubs = [], conf = null, sale = false, eleve = null, veille = null, dernierEnvoi = 0;
 const arreter = () => { unsubs.forEach(u => u()); unsubs = []; };
@@ -342,7 +346,7 @@ function rendreChef() {
       <div class="item"><h3>${esc(x.titre)}</h3><span class="pill ${cr ? 'ok' : 'attente'}">${cr ? 'Compte rendu envoyé' : 'À rendre'}</span></div>
       <p class="sub">Envoyé le ${jour(x.creeLe)}${x.limite ? ' · à rendre avant le ' + esc(x.limite) : ''}</p>
       ${x.consigne ? `<p style="margin-top:10px">${esc(x.consigne)}</p>` : ''}
-      ${lien(x.lien, 'Télécharger le sujet (PDF)')}
+      ${boutonDl(x.lien, 'Télécharger le sujet (PDF)')}
       ${cr ? `<div class="content-block"><p class="sub">Dernier envoi le ${jour(cr.envoyeLe)}</p><div class="cr">${esc(cr.texte)}</div>${lien(cr.lien, 'Fichier joint', true)}</div>` : ''}
       <div class="content-block">
         <div class="field"><label for="t-${x.id}">${cr ? 'Remplacer le compte rendu' : 'Ton compte rendu'}</label><textarea id="t-${x.id}" data-t="${x.id}"></textarea></div>
