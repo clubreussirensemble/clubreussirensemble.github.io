@@ -469,7 +469,7 @@ body{background:#f0f4f8;font-family:'DM Sans',sans-serif;overflow:hidden}
 .exo-head{display:flex;align-items:center;gap:6px;font-weight:800;font-size:13.5px;margin-bottom:4px}
 .exo-consigne{font-size:13px;white-space:pre-wrap;margin:4px 0 8px}
 .exo-img{display:block;width:100%;max-height:340px;object-fit:contain;background:#f1f5f9;border-radius:10px;margin-bottom:6px;cursor:zoom-in}
-.exo-link{display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 10px;border-radius:10px;background:rgba(15,23,42,.08);color:inherit;text-decoration:none;font-size:12.5px;font-weight:700;margin-bottom:6px}
+.exo-link{width:100%;border:0;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 10px;border-radius:10px;background:rgba(15,23,42,.08);color:inherit;text-decoration:none;font-size:12.5px;font-weight:700;margin-bottom:6px}
 .exo-link.drive{background:#1a73e8;color:#fff}
 .exo-dest{max-height:170px;overflow-y:auto;border:1.5px solid #e2e8f0;border-radius:10px;padding:6px 10px}
 .exo-dest label{display:flex;align-items:center;gap:8px;margin:0;padding:5px 0;font-size:13px;font-weight:600;color:#1a1f2e}
@@ -3907,19 +3907,48 @@ function exoSafeUrl(u){
 function exoIsDirectImage(u){
   return /^https?:\/\/i\.postimg\.cc\//i.test(u) || /\.(jpe?g|png|gif|webp)(\?.*)?$/i.test(u);
 }
+function exoDriveDl(u){
+  let m = u.match(/drive\.google\.com\/file\/d\/([\w-]+)/) || u.match(/drive\.google\.com\/(?:open|uc)\?(?:[^#]*&)?id=([\w-]+)/);
+  if(m) return 'https://drive.google.com/uc?export=download&id=' + m[1];
+  m = u.match(/docs\.google\.com\/(document|presentation|spreadsheets)\/d\/([\w-]+)/);
+  if(m) return 'https://docs.google.com/' + m[1] + '/d/' + m[2] + '/export?format=' + (m[1] === 'spreadsheets' ? 'xlsx' : (m[1] === 'presentation' ? 'pptx' : 'pdf'));
+  return '';
+}
+window.__exoDownload = async function(url, name){
+  try {
+    const r = await fetch(url, { mode: 'cors' });
+    if(!r.ok) throw new Error('http');
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name || 'exercice';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  } catch(e){
+    // Si le navigateur bloque le téléchargement direct, on ouvre l'image : appui long → « Enregistrer »
+    window.open(url, '_blank', 'noopener');
+  }
+};
 function exoRenderHTML(m){
+  const base = (m.titre || 'exercice').replace(/[^\w\u00C0-\u017F-]+/g, '_').slice(0, 40) || 'exercice';
   let h = `<div class="exo-card"><div class="exo-head">📝 ${esc(m.titre || 'Exercice')}</div>`;
   if(m.text) h += `<div class="exo-consigne">${esc(m.text)}</div>`;
   (m.images || []).forEach((raw, i) => {
     const u = exoSafeUrl(raw); if(!u) return;
+    const ext = (u.match(/\.(jpe?g|png|gif|webp)(?:\?|$)/i) || [,'jpg'])[1].toLowerCase();
+    const fname = base + '_' + (i + 1) + '.' + ext;
     if(exoIsDirectImage(u)){
       h += `<img class="exo-img" src="${esc(u)}" alt="Exercice ${i+1}" loading="lazy" onclick="window.__openLightbox('${esc(u)}')" onerror="this.outerHTML='<a class=\\'exo-link\\' href=\\'${esc(u)}\\' target=\\'_blank\\' rel=\\'noopener\\'>🖼️ Ouvrir l’image ${i+1}</a>'">`;
+      h += `<button type="button" class="exo-link" onclick="window.__exoDownload('${esc(u)}','${esc(fname)}')">⬇️ Télécharger l’image ${i+1}</button>`;
     } else {
       h += `<a class="exo-link" href="${esc(u)}" target="_blank" rel="noopener">🖼️ Ouvrir l’image ${i+1}</a>`;
     }
   });
   const d = exoSafeUrl(m.drive);
-  if(d) h += `<a class="exo-link drive" href="${esc(d)}" target="_blank" rel="noopener">📂 Ouvrir le document (Drive)</a>`;
+  if(d){
+    const dl = exoDriveDl(d);
+    if(dl) h += `<a class="exo-link drive" href="${esc(dl)}" target="_blank" rel="noopener">⬇️ Télécharger le document</a>`;
+    h += `<a class="exo-link ${dl ? '' : 'drive'}" href="${esc(d)}" target="_blank" rel="noopener">📂 Ouvrir dans Drive</a>`;
+  }
   return h + '</div>';
 }
 
