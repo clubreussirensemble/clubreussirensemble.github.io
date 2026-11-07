@@ -90,6 +90,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,.btn:focus-visib
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px}
 .cours{background:#fff;border:0;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;cursor:pointer;text-align:left;padding:0;font:inherit;color:inherit;transition:transform .2s var(--ease)}
 .cours:hover{transform:translateY(-3px)}
+.cwrap{position:relative;display:flex}
+.cwrap .cours{width:100%}
+.cdel{position:absolute;top:10px;right:10px;z-index:2;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;font-size:16px;line-height:1;cursor:pointer;display:grid;place-items:center}
+.cdel:hover{background:var(--rouge,#D9060C)}
 .cours .top{color:#fff;padding:22px;min-height:104px}
 .cours .top h3{margin:0;font-size:1.1rem;color:#fff}
 .cours .top small{opacity:.9}
@@ -375,9 +379,10 @@ async function listView() {
   app.innerHTML = `<div class="bar"><h2>Mes cours</h2>
     ${S.prof ? `<button class="btn or" data-act="new">Créer un cours</button>` : `<a class="btn or" href="cours.html" style="text-decoration:none">Voir les cours payants</a>`}</div>
     ${S.classes.length ? `<div class="grid">${S.classes.map(k => `
+      <div class="cwrap">${S.prof ? `<button class="cdel" data-act="delcours" data-id="${k.id}" title="Supprimer ce cours" aria-label="Supprimer le cours ${esc(k.nom)}">🗑</button>` : ''}
       <button class="cours" data-act="open" data-id="${k.id}">
         <div class="top" style="background:${k.couleur}"><h3>${esc(k.nom)}</h3><small>${esc(k.matiere)} · ${esc(k.niveau)}</small></div>
-        <div class="bas">${esc(k.profNom)}${S.prof ? ' · ' + ((k.membres||[]).length - 1) + ' élève(s)' : ''}</div></button>`).join('')}</div>`
+        <div class="bas">${esc(k.profNom)}${S.prof ? ' · ' + ((k.membres||[]).length - 1) + ' élève(s)' : ''}</div></button></div>`).join('')}</div>`
       : `<div class="vide">${S.prof ? "Aucun cours pour l'instant. Un cours est créé automatiquement dès que vous validez le premier paiement d'une matière." : "Vous n'avez accès à aucune salle de classe pour le moment.<br>Inscrivez-vous à un cours payant : dès que le club valide votre paiement, la salle de classe s'ouvre ici."}</div>`}`;
 }
 
@@ -446,6 +451,7 @@ function classView() {
   }
   app.innerHTML = `<button class="btn ghost sm" data-act="back" style="color:var(--marine);margin-bottom:10px">← Mes cours</button>
   <div class="banner" style="background:${k.couleur}"><h2>${esc(k.nom)}</h2><div>${esc(k.matiere)} · ${esc(k.niveau)} · ${esc(k.profNom)}</div><div id="livebox">${liveHtml()}</div>
+  ${S.prof ? `<div class="act" style="margin-top:12px"><button class="btn sm ghost" data-act="delcours" data-id="${k.id}" style="color:#fff">🗑 Supprimer ce cours</button></div>` : ''}
 </div>
   <div class="tabs">${tabs.map(([t,l]) => `<button data-act="tab" data-t="${t}" class="${S.tab===t?'on':''}">${l}</button>`).join('')}</div>${body}`;
 }
@@ -551,6 +557,20 @@ document.addEventListener('click', async e => {
       await addDoc(collection(db,'site_classes',S.cur.id,'posts'), {type:val('pt'), titre:val('ptit'), texte:val('ptxt'), lien:val('plien'), images, qcm,
         echeance:dv?val('pech'):'', points:dv?(Number(val('ppts'))||20):0, created:Date.now()});
       openClass(S.cur.id);
+    }
+    else if (a === 'delcours') {
+      const k = S.classes.find(x => x.id === id); if (!S.prof || !k) return;
+      if (!confirm('Supprimer définitivement le cours « ' + k.nom + ' » ?\n\nToutes les publications, devoirs, évaluations et rendus des élèves seront effacés. Cette action est irréversible.')) return;
+      b.disabled = true;
+      if (unsubLive) { unsubLive(); unsubLive = null; }
+      const ps = await getDocs(collection(db,'site_classes',id,'posts'));
+      for (const p of ps.docs) {
+        const rs = await getDocs(collection(db,'site_classes',id,'posts',p.id,'rendus'));
+        for (const r of rs.docs) await deleteDoc(r.ref);
+        await deleteDoc(p.ref);
+      }
+      await deleteDoc(doc(db,'site_classes',id));
+      listView();
     }
     else if (a === 'delpost') { if (confirm('Supprimer cette publication ?')) { await deleteDoc(doc(db,'site_classes',S.cur.id,'posts',id)); openClass(S.cur.id); } }
     else if (a === 'rendre') { const r = S.rendus[id] || {};
