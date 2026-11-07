@@ -92,8 +92,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,.btn:focus-visib
 .cours:hover{transform:translateY(-3px)}
 .cwrap{position:relative;display:flex}
 .cwrap .cours{width:100%}
-.cdel{position:absolute;top:10px;right:10px;z-index:2;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;font-size:16px;line-height:1;cursor:pointer;display:grid;place-items:center}
-.cdel:hover{background:var(--rouge,#D9060C)}
+.cdel{position:absolute;top:10px;right:10px;z-index:2;padding:8px 13px;border-radius:999px;border:0;background:#D9060C;color:#fff;font:700 13px/1 inherit;font-family:inherit;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.cdel:hover{background:#a80509}
+.cwrap .cours .top{padding-top:52px}
 .cours .top{color:#fff;padding:22px;min-height:104px}
 .cours .top h3{margin:0;font-size:1.1rem;color:#fff}
 .cours .top small{opacity:.9}
@@ -379,10 +380,10 @@ async function listView() {
   app.innerHTML = `<div class="bar"><h2>Mes cours</h2>
     ${S.prof ? `<button class="btn or" data-act="new">Créer un cours</button>` : `<a class="btn or" href="cours.html" style="text-decoration:none">Voir les cours payants</a>`}</div>
     ${S.classes.length ? `<div class="grid">${S.classes.map(k => `
-      <div class="cwrap">${S.prof ? `<button class="cdel" data-act="delcours" data-id="${k.id}" title="Supprimer ce cours" aria-label="Supprimer le cours ${esc(k.nom)}">🗑</button>` : ''}
+      <div class="cwrap">${S.prof ? `<button class="cdel" data-act="delcours" data-id="${k.id}" title="Supprimer ce cours" aria-label="Supprimer le cours ${esc(k.nom)}">🗑 Supprimer</button>` : ''}
       <button class="cours" data-act="open" data-id="${k.id}">
         <div class="top" style="background:${k.couleur}"><h3>${esc(k.nom)}</h3><small>${esc(k.matiere)} · ${esc(k.niveau)}</small></div>
-        <div class="bas">${esc(k.profNom)}${S.prof ? ' · ' + ((k.membres||[]).length - 1) + ' élève(s)' : ''}</div></button></div>`).join('')}</div>`
+        <div class="bas">${esc(k.profNom)}${S.prof ? ' · ' + Math.max(0, (k.membres||[]).length - 1) + ' élève(s)' : ''}</div></button></div>`).join('')}</div>`
       : `<div class="vide">${S.prof ? "Aucun cours pour l'instant. Un cours est créé automatiquement dès que vous validez le premier paiement d'une matière." : "Vous n'avez accès à aucune salle de classe pour le moment.<br>Inscrivez-vous à un cours payant : dès que le club valide votre paiement, la salle de classe s'ouvre ici."}</div>`}`;
 }
 
