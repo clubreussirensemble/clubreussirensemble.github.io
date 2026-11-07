@@ -296,11 +296,12 @@ fieldset.f{border:none;padding:0;margin:0}
         <div class="chips" id="discChips"></div>
       </fieldset>
 
-      <h2>Le contact du parent ou tuteur</h2>
+      <h2>Contact pour recevoir le code d'accès</h2>
+      <p style="margin:-6px 0 14px;color:var(--muted,#5b6b82);font-size:.95rem">Le code personnel du participant sera envoyé par <strong>WhatsApp</strong> et/ou par <strong>e-mail</strong>.</p>
       <div class="fgrid">
         <div class="f"><label for="resp">Nom du parent ou tuteur</label><input id="resp" name="resp" type="text" maxlength="80" required autocomplete="name"></div>
-        <div class="f"><label for="tel">Téléphone (WhatsApp de préférence)</label><input id="tel" name="tel" type="tel" maxlength="20" inputmode="tel" required autocomplete="tel" placeholder="Ex. 622 00 00 00"></div>
-        <div class="f"><label for="email">E-mail (facultatif)</label><input id="email" name="email" type="email" maxlength="120" inputmode="email" autocomplete="email" placeholder="exemple@email.com"></div>
+        <div class="f"><label for="tel">📱 Numéro WhatsApp</label><input id="tel" name="tel" type="tel" maxlength="20" inputmode="tel" required autocomplete="tel" placeholder="Ex. 622 00 00 00"></div>
+        <div class="f"><label for="email">📧 Adresse e-mail (recommandé)</label><input id="email" name="email" type="email" maxlength="120" inputmode="email" autocomplete="email" placeholder="exemple@email.com"></div>
       </div>
 
       <label class="chk consent" for="consent">
@@ -433,10 +434,10 @@ form.addEventListener('submit',async e=>{
   e.preventDefault(); err.hidden=true;
   const v=n=>form.elements[n].value.trim();
   const disc=[...form.querySelectorAll('input[name=disc]:checked')].map(i=>i.value);
-  for(const [n,l] of [['prenom','le prénom'],['nom','le nom'],['niveau','le niveau'],['classe','la classe'],['etab','l\'établissement'],['ville','la ville ou la préfecture'],['resp','le nom du parent ou tuteur'],['tel','le téléphone']]){
+  for(const [n,l] of [['prenom','le prénom'],['nom','le nom'],['niveau','le niveau'],['classe','la classe'],['etab','l\'établissement'],['ville','la ville ou la préfecture'],['resp','le nom du parent ou tuteur'],['tel','le numéro WhatsApp']]){
     if(!v(n)){form.elements[n].focus();return showErr('Renseignez '+l+'.');}
   }
-  if(!/^[+0-9 ().-]{8,20}$/.test(v('tel'))){form.elements.tel.focus();return showErr('Le numéro de téléphone semble incorrect.');}
+  if(!/^[+0-9 ().-]{8,20}$/.test(v('tel'))){form.elements.tel.focus();return showErr('Le numéro WhatsApp semble incorrect.');}
   if(v('email') && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v('email'))){form.elements.email.focus();return showErr('L\'adresse e-mail semble incorrecte.');}
   if(!disc.length) return showErr('Choisissez au moins une discipline.');
   if(!form.elements.consent.checked){form.elements.consent.focus();return showErr('Cochez la case d\'accord pour envoyer l\'inscription.');}
