@@ -5263,7 +5263,7 @@ function _doLogin(code, _retried){
     }
     const descEl = document.querySelector('.landing-desc');
     if (descEl) {
-      descEl.innerHTML = '&#10060; Lien invalide ou expir&#233;.<br>Contacte ton professeur pour obtenir un nouveau lien.<br><small style="opacity:.7">Code : '+String(code).replace(/[^A-Z0-9]/g,'')+' · joueurs chargés : '+d.players.length+'</small>';
+      descEl.innerHTML = '&#10060; Code introuvable. V&#233;rifie ton code ou recharge la page.<br>Si le probl&#232;me continue, contacte ton professeur.<br><small style="opacity:.7">Code : '+String(code).replace(/[^A-Z0-9]/g,'')+' · joueurs chargés : '+d.players.length+'</small>';
       descEl.style.color='#FF8A80';
     }
     return;
@@ -5730,7 +5730,7 @@ function fillFromInscription(id){
   _apInscId = r ? r.id : '';
   if(!r) return;
   const set=(i,v)=>{ const el=document.getElementById(i); if(el) el.value=v||''; };
-  set('ap-nom',r.nom); set('ap-prenom',r.prenom); set('ap-phone',r.telephone);
+  set('ap-nom',r.nom); set('ap-prenom',r.prenom); set('ap-phone',r.telephone); set('ap-email',r.email);
   set('ap-school',r.etablissement); set('ap-class',r.classe); set('ap-ville',r.ville);
 }
 function openImportPlayers(){ document.getElementById('modal-import').classList.add('open'); }
@@ -5855,6 +5855,7 @@ function renderPlayers(){
         </div>
         <div class="player-meta" style="margin-top:2px;">
           Code: <strong style="color:var(--accent);">${p.code}</strong>
+          ${p.codeSent&&(p.codeSent.wa||p.codeSent.mail)?'&nbsp;&bull;&nbsp;<span style="color:#4ade80;" title="Code envoyé">✅ envoyé'+(p.codeSent.wa?' 📱':'')+(p.codeSent.mail?' 📧':'')+'</span>':''}
           ${p.ddn?'&nbsp;&bull;&nbsp;Né le: '+p.ddn:''}
         </div>
       </div>
@@ -5882,6 +5883,8 @@ function renderPlayers(){
 
       <!-- Actions -->
       <div class="player-actions" style="flex-shrink:0;">
+        <button class="btn btn-green btn-sm" title="Envoyer le code par WhatsApp" onclick="sendWhatsAppCode('${p.code}')">📱</button>
+        <button class="btn btn-accent btn-sm" title="Envoyer le code par e-mail" onclick="sendEmailCode('${p.code}')">📧</button>
         <button class="btn btn-outline btn-sm" title="Voir le lien" onclick="openPlayerLink('${p.code}')">🔗</button>
         <button class="btn btn-accent btn-sm" title="Modifier" onclick="openEditPlayer('${p.code}')">✏️</button>
         <button class="btn btn-danger btn-sm" title="Supprimer" onclick="deletePlayer('${p.code}')">🗑</button>
@@ -5912,32 +5915,51 @@ function openPlayerLink(code){
 
 function copyCode(){ navigator.clipboard.writeText(document.getElementById('pl-code').textContent); toast('Code copié !','success'); }
 function copyLink(){ navigator.clipboard.writeText(document.getElementById('pl-link').textContent); toast('Lien copié !','success'); }
-function sendWhatsApp(){
-  const btn=document.getElementById('pl-wa-btn');
-  let phone=btn.dataset.phone.replace(/[^0-9]/g,'').replace(/^00/,'');
-  if(phone.length===9 && phone[0]==='6') phone='224'+phone; // numéro guinéen sans indicatif
-  const link=btn.dataset.link;
-  const name=btn.dataset.name;
-  const msg=encodeURIComponent(`Bonjour ${name} ! 🏆\nTon inscription à l'*Olympiade des Cerveaux Guinée* est validée.\n🔑 Ton code joueur : *${_linkCode}*\nAccède à ton espace ici :\n${link}\nBonne chance ! ⚡`);
-  const url=phone?`https://wa.me/${phone}?text=${msg}`:`https://wa.me/?text=${msg}`;
-  window.open(url,'_blank');
+// ── Envoi du code au joueur (WhatsApp / e-mail) ──
+function _playerSendData(code){
+  const d=getData();
+  const p=d.players.find(pl=>pl.code===code);
+  if(!p) return null;
+  const base=d.settings.baseUrl||location.href.split('?')[0];
+  return { d, p, link:`${base}?joueur=${code}` };
 }
-
-function sendEmail(){
-  const btn=document.getElementById('pl-email-btn');
-  const email=btn.dataset.email||'';
-  const link=btn.dataset.link;
-  const name=btn.dataset.name;
-  const subject=encodeURIComponent('🏆 Ton lien Olympiade des Cerveaux Guinée');
+function _normPhone(raw){
+  let phone=String(raw||'').replace(/[^0-9]/g,'').replace(/^00/,'');
+  if(phone.length===9 && phone[0]==='6') phone='224'+phone; // numéro guinéen sans indicatif
+  return phone;
+}
+function _markCodeSent(d,p,via){
+  p.codeSent=Object.assign({}, p.codeSent||{}, {[via]:Date.now()});
+  saveData(d);
+  renderPlayers();
+}
+function sendWhatsAppCode(code){
+  const x=_playerSendData(code); if(!x) return;
+  const phone=_normPhone(x.p.phone);
+  if(!phone) toast('Aucun numéro enregistré : choisis le contact dans WhatsApp','error');
+  const msg=encodeURIComponent(`Bonjour ${x.p.name} ! 🏆\nTon inscription à l'*Olympiade des Cerveaux Guinée* est validée.\n🔑 Ton code joueur : *${code}*\nAccède à ton espace ici :\n${x.link}\nBonne chance ! ⚡`);
+  window.open(phone?`https://wa.me/${phone}?text=${msg}`:`https://wa.me/?text=${msg}`,'_blank');
+  _markCodeSent(x.d,x.p,'wa');
+}
+function sendEmailCode(code){
+  const x=_playerSendData(code); if(!x) return;
+  const email=(x.p.email||'').trim();
+  if(!email) toast('Aucun e-mail enregistré : saisis l\'adresse dans ton application de messagerie','error');
+  const subject=encodeURIComponent('🏆 Ton code Olympiade des Cerveaux Guinée');
   const body=encodeURIComponent(
-    `Bonjour ${name} !\n\n`+
-    `Tu es invité(e) à participer à la compétition éducative Olympiade des Cerveaux Guinée.\n\n`+
-    `👉 Accède à ton interface personnelle ici :\n${link}\n\n`+
-    `Ce lien t'est réservé. Bonne chance et montre ce que tu vaux ! ⚡\n\n`+
+    `Bonjour ${x.p.name} !\n\n`+
+    `Ton inscription à la compétition éducative Olympiade des Cerveaux Guinée est validée.\n\n`+
+    `🔑 Ton code joueur : ${code}\n\n`+
+    `👉 Accède à ton interface personnelle ici :\n${x.link}\n\n`+
+    `Ce code t'est réservé, ne le partage pas. Bonne chance ! ⚡\n\n`+
     `— Collection BHDS / Boubacar Diallo Édition 2026`
   );
-  window.open(`mailto:${email}?subject=${subject}&body=${body}`,'_blank');
+  window.open(`mailto:${encodeURIComponent(email)}?subject=${subject}&body=${body}`,'_blank');
+  _markCodeSent(x.d,x.p,'mail');
 }
+// boutons de la fenêtre « Lien du joueur »
+function sendWhatsApp(){ sendWhatsAppCode(_linkCode); }
+function sendEmail(){ sendEmailCode(_linkCode); }
 
 function openEditPlayer(code){
   const d=getData();

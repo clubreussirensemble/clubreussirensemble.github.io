@@ -210,6 +210,7 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
       <button data-tab="equipe">Équipe</button>
       <button data-tab="ressources">Ressources</button>
       <button data-tab="inscriptions">Inscriptions</button>
+      <button data-tab="msgcontact" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">✉️ Messages reçus</button>
       <button data-tab="galerie">Galerie</button>
       <button data-tab="temoignages">Témoignages</button>
       <button data-tab="lieux">Lieux</button>
@@ -748,6 +749,22 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
       </table>
     </div>
 
+    <div id="tab-msgcontact" class="panel" style="display:none">
+      <h2>Messages reçus (formulaire de contact)</h2>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+        <select id="mcFiltre" style="padding:8px 10px;border:1.5px solid var(--line);border-radius:7px;font:inherit;font-size:13px">
+          <option value="">Tous</option><option value="nouveau">Non lus</option><option value="lu">Lus</option>
+        </select>
+        <span id="mcCount" style="font-size:12.5px;color:var(--ink2)"></span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Date</th><th>Nom</th><th>Contact</th><th>Message</th><th>Statut</th><th></th></tr></thead>
+          <tbody id="mcBody"><tr><td colspan="6">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <div id="tab-galerie" class="panel" style="display:none">
       <h2>Ajouter une photo</h2>
       <form id="galerieForm" class="row-form">
@@ -984,7 +1001,7 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
 (function(){var s=document.getElementById("adminLogo");if(!s)return;var L=s.src;var l=document.getElementById("loginLogo");if(l)l.src=L;var f=document.querySelector('link[rel="icon"]');if(f)f.href=L;var a=document.querySelector('link[rel="apple-touch-icon"]');if(a)a.href=L;})();</script>
 <script type="module">
 import { fbAuth, fbDB, C_MATIERES, C_PAIEMENTS, C_ELEVES, C_EVENEMENTS, C_EVALUATIONS,
-         C_RESULTATS, C_OBJECTIFS, C_CONFIG, C_VIDEOS, C_EQUIPE, C_RESSOURCES, C_INSC, C_GAL,
+         C_RESULTATS, C_OBJECTIFS, C_CONFIG, C_VIDEOS, C_EQUIPE, C_RESSOURCES, C_INSC, C_GAL, C_CONTACTS,
          C_TEMOIGNAGES, C_RES_EXAMENS, C_PALMARES, C_QUIZ_QUEST, C_RES_MENS, C_RES_ELEVES,
          collection, doc, getDoc, setDoc, addDoc,
          updateDoc, deleteDoc, orderBy, query, where, onSnapshot, signInWithEmailAndPassword, signOut,
@@ -1668,6 +1685,49 @@ function startListeners(){
       b.onclick = ()=> { if(confirm('Supprimer cette fiche ?')) deleteDoc(doc(fbDB, C_INSC, b.dataset.delinsc)); };
     });
   });
+
+  // ── Messages du formulaire de contact (collection Firestore C_CONTACTS, écrite par contact.html) ──
+  const MC_COLL = C_CONTACTS;
+  let mcRows = [];
+  const mcEsc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function mcRender(){
+    const f = document.getElementById('mcFiltre').value;
+    const rows = f ? mcRows.filter(m => (f==='lu') === !!m.lu) : mcRows;
+    const nouveaux = mcRows.filter(m => !m.lu).length;
+    document.querySelector('[data-tab="msgcontact"]').textContent = '✉️ Messages reçus' + (nouveaux ? ' ('+nouveaux+')' : '');
+    document.getElementById('mcCount').textContent = mcRows.length + ' message(s) · ' + nouveaux + ' non lu(s)';
+    document.getElementById('mcBody').innerHTML = rows.length ? rows.map(m=>{
+      const c = String(m.contact||'').trim();
+      const isMail = c.includes('@');
+      const digits = c.replace(/[^0-9]/g,'');
+      let wa = digits; if(wa.startsWith('00')) wa = wa.slice(2); if(wa && !wa.startsWith('224')){ if(wa.startsWith('0')) wa = wa.slice(1); wa = '224'+wa; }
+      const lien = isMail ? `<a class="small-btn" style="background:var(--navy);display:inline-block;margin-bottom:4px" href="mailto:${mcEsc(c)}">Répondre</a>`
+                 : (digits ? `<a class="small-btn" style="background:#25D366;display:inline-block;margin-bottom:4px" href="https://wa.me/${wa}" target="_blank" rel="noopener">WhatsApp</a>` : '');
+      const d = m.createdAt ? (m.createdAt.toDate ? m.createdAt.toDate() : new Date(m.createdAt)).toLocaleString('fr-FR') : '—';
+      const lu = !!m.lu;
+      return `<tr>
+        <td style="white-space:nowrap">${mcEsc(d)}</td>
+        <td>${mcEsc(m.nom||'—')}</td>
+        <td>${mcEsc(c||'—')}</td>
+        <td style="max-width:280px;white-space:pre-wrap">${mcEsc(m.message||'')}</td>
+        <td><span class="pill ${lu?'ok':'attente'}">${lu?'Lu':'Nouveau'}</span></td>
+        <td>${lien}<br>
+          <button class="small-btn" data-mclu="${m.id}" data-v="${lu?'0':'1'}">${lu?'Marquer non lu':'Marquer lu'}</button><br>
+          <button class="small-btn" data-mcdel="${m.id}" style="background:var(--red);margin-top:4px">Supprimer</button></td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="6">Aucun message pour le moment.</td></tr>';
+    document.querySelectorAll('[data-mclu]').forEach(b=>{
+      b.onclick = ()=> updateDoc(doc(fbDB, MC_COLL, b.dataset.mclu), { lu: b.dataset.v === '1' });
+    });
+    document.querySelectorAll('[data-mcdel]').forEach(b=>{
+      b.onclick = ()=> { if(confirm('Supprimer ce message ?')) deleteDoc(doc(fbDB, MC_COLL, b.dataset.mcdel)); };
+    });
+  }
+  document.getElementById('mcFiltre').onchange = mcRender;
+  onSnapshot(query(collection(fbDB, MC_COLL), orderBy('createdAt','desc')), snap=>{
+    mcRows = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    mcRender();
+  }, ()=>{ document.getElementById('mcBody').innerHTML = '<tr><td colspan="6">Lecture impossible : vérifie les règles Firestore (lecture admin sur la collection des messages de contact).</td></tr>'; });
 
   onSnapshot(query(collection(fbDB, C_GAL), orderBy('ordre','asc')), snap=>{
     const rows = snap.docs.map(d=>({id:d.id, ...d.data()}));

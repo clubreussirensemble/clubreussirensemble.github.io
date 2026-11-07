@@ -300,6 +300,7 @@ fieldset.f{border:none;padding:0;margin:0}
       <div class="fgrid">
         <div class="f"><label for="resp">Nom du parent ou tuteur</label><input id="resp" name="resp" type="text" maxlength="80" required autocomplete="name"></div>
         <div class="f"><label for="tel">Téléphone (WhatsApp de préférence)</label><input id="tel" name="tel" type="tel" maxlength="20" inputmode="tel" required autocomplete="tel" placeholder="Ex. 622 00 00 00"></div>
+        <div class="f"><label for="email">E-mail (facultatif)</label><input id="email" name="email" type="email" maxlength="120" inputmode="email" autocomplete="email" placeholder="exemple@email.com"></div>
       </div>
 
       <label class="chk consent" for="consent">
@@ -436,6 +437,7 @@ form.addEventListener('submit',async e=>{
     if(!v(n)){form.elements[n].focus();return showErr('Renseignez '+l+'.');}
   }
   if(!/^[+0-9 ().-]{8,20}$/.test(v('tel'))){form.elements.tel.focus();return showErr('Le numéro de téléphone semble incorrect.');}
+  if(v('email') && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v('email'))){form.elements.email.focus();return showErr('L\'adresse e-mail semble incorrecte.');}
   if(!disc.length) return showErr('Choisissez au moins une discipline.');
   if(!form.elements.consent.checked){form.elements.consent.focus();return showErr('Cochez la case d\'accord pour envoyer l\'inscription.');}
   if(document.getElementById('site').value){ return; } // anti-robot
@@ -443,9 +445,9 @@ form.addEventListener('submit',async e=>{
   try{
     await addDoc(collection(fbDB,'site_olympiades_inscriptions'),{
       prenom:v('prenom'),nom:v('nom'),niveau:v('niveau'),classe:v('classe'),etablissement:v('etab'),ville:v('ville'),
-      disciplines:disc,responsable:v('resp'),telephone:v('tel'),consentement:true,statut:'soumis',createdAt:Date.now()
+      disciplines:disc,responsable:v('resp'),telephone:v('tel'),email:v('email').toLowerCase(),consentement:true,statut:'soumis',createdAt:Date.now()
     });
-    document.getElementById('formCard').innerHTML=`<div class="ok-box"><div class="big" aria-hidden="true">🎉</div><h2>Inscription envoyée</h2><p>Merci ${v('prenom').replace(/[<>&"]/g,'')} ! Le club va vérifier votre inscription. Si elle est validée, le code d'accès personnel sera envoyé au numéro indiqué.</p><a class="btn btn-blue" href="olympiades.html" style="margin-top:12px">Retour aux Olympiades</a></div>`;
+    document.getElementById('formCard').innerHTML=`<div class="ok-box"><div class="big" aria-hidden="true">🎉</div><h2>Inscription envoyée</h2><p>Merci ${v('prenom').replace(/[<>&"]/g,'')} ! Le club va vérifier votre inscription. Si elle est validée, le code d'accès personnel vous sera envoyé par WhatsApp (ou par e-mail si vous en avez indiqué un).</p><a class="btn btn-blue" href="olympiades.html" style="margin-top:12px">Retour aux Olympiades</a></div>`;
     window.scrollTo({top:0,behavior:'smooth'});
   }catch(ex){
     btn.disabled=false; btn.textContent='Envoyer mon inscription';
