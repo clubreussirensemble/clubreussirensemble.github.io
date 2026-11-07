@@ -274,6 +274,15 @@ a{text-decoration:none;color:inherit}
 .contact-home-btns .btn{font-size:clamp(15px,3.2vw,18px);padding:14px 26px}
 .main-nav a.nav-contact{color:var(--gold);font-weight:800}
 </style>
+<style id="saviora-top-css">
+.saviora-top{background:linear-gradient(120deg,#FAB202,#F5820A);color:var(--navy-deep);text-align:center;padding:30px 0 34px;border-bottom:5px solid var(--navy-deep)}
+.saviora-top .st-tag{display:inline-block;background:var(--navy-deep);color:#fff;font-weight:800;font-size:clamp(12px,3vw,15px);letter-spacing:.08em;padding:6px 16px;border-radius:999px;margin-bottom:12px}
+.saviora-top h2{font-family:'Poppins',sans-serif;font-size:clamp(44px,12vw,96px);font-weight:900;letter-spacing:.05em;line-height:1.05;color:var(--navy-deep);margin:0}
+.saviora-top p{font-size:clamp(17px,3.8vw,26px);font-weight:600;margin:12px auto 20px;max-width:760px;color:var(--navy-deep)}
+.saviora-top .st-btns{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.saviora-top .btn{font-size:clamp(16px,3.4vw,20px);padding:15px 30px;background:var(--navy-deep);color:#fff;box-shadow:0 8px 20px rgba(7,26,56,.35)}
+.saviora-top .btn-alt{background:#fff;color:var(--navy-deep)}
+</style>
 </head>
 <body>
 
@@ -309,6 +318,17 @@ a{text-decoration:none;color:inherit}
   </div>
 </header>
 
+<section class="saviora-top" id="savioraTop">
+  <div class="wrap">
+    <span class="st-tag">⭐ NOUVEAU</span>
+    <h2>🎓 SAVIORA</h2>
+    <p>Cours en PDF, exercices, QCM corrigés et défis de logique : tout pour apprendre et réussir, du collège à la terminale.</p>
+    <div class="st-btns">
+      <a class="btn" href="saviora.html">Entrer dans Saviora →</a>
+    </div>
+  </div>
+</section>
+
 <section class="hero">
   <div class="hero-bg"></div>
   <div class="hero-overlay"></div>
@@ -321,28 +341,6 @@ a{text-decoration:none;color:inherit}
     <h1>Club Réussir Ensemble<br><span class="hero-pill">de Mamou</span></h1>
     <p class="hero-lead">Votre plateforme éducative pour apprendre, progresser et réussir.</p>
     <p class="hero-all"><b>Un club ouvert à tout le monde.</b> Élèves, étudiants, parents, enseignants, travailleurs, entrepreneurs : quel que soit votre besoin, vous y trouvez votre place. Les rubriques ne sont qu'un début, participez, posez vos questions et avancez avec nous.</p>
-    <div class="quick-links">
-      <a class="pill-ghost" href="cours.html">🎓 Cours en ligne</a>
-      <a class="pill-ghost" href="ressources.html">📖 Ressources</a>
-      <a class="pill-ghost" href="bibliotheque.html">📚 Bibliothèque</a>
-      <a class="pill-ghost" href="bibliotheque_islamique.html">☪️ Biblio islamique</a>
-      <a class="pill-ghost" href="videos.html">▶️ Vidéos</a>
-      <a class="pill-ghost" href="videos_agregateur.html">🎬 Vidéos éducatives</a>
-      <a class="pill-ghost" href="podcasts_agregateur.html">🎧 Podcasts</a>
-      <a class="pill-ghost" href="evenements.html">📅 Événements</a>
-      <a class="pill-ghost" href="blog.html">📰 Blog</a>
-      <a class="pill-ghost" href="reseau.html">💬 Réseau</a>
-      <a class="pill-ghost" href="olympiades.html">🏆 Olympiades</a>
-      <a class="pill-ghost" href="galerie.html">🖼️ Galerie</a>
-      <a class="pill-ghost" href="lieux.html">🗺️ Lieux</a>
-      <a class="pill-ghost" href="meteo.html">🌦️ Météo</a>
-      <a class="pill-ghost" href="sport.html">⚽ Sport</a>
-      <a class="pill-ghost" href="cultures-africaines.html">🌍 Cultures africaines</a>
-      <a class="pill-ghost" href="tv-gratuite.html">📺 TV gratuite</a>
-      <a class="pill-ghost" href="radio.html">📻 Radios</a>
-      <a class="pill-ghost" href="actus-education.html">📢 Actus éducation</a>
-      <a class="pill-ghost" href="apropos.html">👥 À propos</a>
-    </div>
     <div class="hero-ctas">
       <a class="btn btn-blue" href="inscription.html">Commencer maintenant →</a>
       <a class="btn btn-outline-white" href="apropos.html">Découvrir le club</a>
@@ -529,17 +527,6 @@ a{text-decoration:none;color:inherit}
   </div>
 </section>
 
-<section class="wrap" id="testNiveau" style="margin-top:28px">
-  <div class="panel" style="margin-bottom:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px">
-    <div>
-      <h2>🧠 Teste ton niveau</h2>
-      <p>QCM gratuits par classe et par matière, avec correction détaillée : du Collège à la Terminale, y compris l'anglais SM et SE.</p>
-    </div>
-    <a class="btn btn-blue" href="qcm.html">Ouvrir les QCM →</a>
-  </div>
-</section>
-
-
 <section class="wrap home-blog" id="blogHome">
   <div class="panel">
     <div class="panel-head">
@@ -682,7 +669,6 @@ a{text-decoration:none;color:inherit}
         <a href="olympiades.html">Olympiades</a>
         <a href="galerie.html">Galerie</a>
         <a href="apropos.html">À propos</a>
-        <a href="quiz.html">Test de niveau</a>
       </div>
     </div>
     <div>
@@ -720,6 +706,7 @@ window.SEARCH_INDEX = [
   {title:'Résultats des évaluations mensuelles', url:'resultats-evaluations.html', kw:'resultats evaluations mensuelles valides moyenne classement'},
   {title:'Cours en ligne', url:'cours.html', kw:'cours matieres lecons'},
   {title:'Ressources pédagogiques', url:'ressources.html', kw:'ressources fiches exercices annales pdf'},
+  {title:'Saviora (cours, exercices, QCM, défis)', url:'saviora.html', kw:'saviora cours pdf exercices qcm corriges defis logique entrainement college lycee terminale'},
   {title:'Bibliothèque (livres gratuits)', url:'bibliotheque.html', kw:'bibliotheque livres roman romans policier policiers bd bande dessinee maths physique chimie sciences telecharger lire ebook pdf epub'},
   {title:'Bibliothèque islamique (livres et hadiths)', url:'bibliotheque_islamique.html', kw:'bibliotheque islamique islam livres hadith hadiths coran boukhari mouslim tafsir fiqh sira'},
   {title:'Outils et simulations gratuits', url:'outils.html', kw:'outils simulations phet geogebra desmos scratch calculatrice tableau periodique circuit electronique logiciels gratuits'},
@@ -1300,7 +1287,6 @@ body.rb-on #ai-fab{display:none}
     stats:{obj:'graph',t:"Quelques chiffres sur le club."},
     cours:{obj:'livre',t:"Ici, les cours : choisis ta matière et commence à réviser."},
     resultats:{obj:'diplome',t:"Nos résultats : la réussite de nos élèves."},
-    niveau:{obj:'ampoule',t:"Teste ton niveau avec un petit quiz."},
     blog:{obj:'journal',t:"Les derniers articles du blog du club."},
     footer:{obj:'enveloppe',t:"Une question ou un besoin ? Contacte le club, ou demande-moi : le club est là pour tout le monde !"}
   };
@@ -1421,7 +1407,6 @@ body.rb-on #ai-fab{display:none}
     {k:'stats',el:document.querySelector('.stats-strip')},
     {k:'cours',el:document.querySelector('.main-grid')},
     {k:'resultats',el:document.getElementById('resHome')},
-    {k:'niveau',el:(Array.from(document.querySelectorAll('section h2')).find(h=>/niveau/i.test(h.textContent))||{closest:()=>null}).closest('section')},
     {k:'blog',el:document.getElementById('blogHome')},
     {k:'footer',el:document.querySelector('.site-footer')}
   ].filter(s=>s.el);
