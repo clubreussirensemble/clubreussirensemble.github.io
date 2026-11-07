@@ -4886,6 +4886,8 @@ ARENA_REF.onSnapshot(
     const remote = snap.exists ? snap.data() : null;
     if (!remote) {
       _cache = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      var _isAdm = !!(window.firebase && firebase.auth && firebase.auth().currentUser);
+      if(!_isAdm || snap.metadata.fromCache){ /* jamais de création depuis un joueur ou un cache vide */ } else
       ARENA_REF.set(_fsPayload(_cache)).catch(e=>{ console.error('Création du document impossible', e); setFbStatus('error','⚠️ '+(e && e.code || 'écriture refusée')); }); // Écrire toutes les questions sur Firebase dès le premier lancement
     } else {
       _cache = remote;
@@ -5024,17 +5026,29 @@ function saveData(d) {
   if (txt) txt.innerHTML = 'Sync… <span class="sync-spin"></span>';
 
   // Sauvegarder sur Firebase — update() est plus sûr que set() en cas d'écritures concurrentes (fix bug #9)
-  Promise.resolve().then(() => ARENA_REF.set(_fsPayload(d)))
+  return ARENA_REF.get({source:'server'}).then(snap=>{
+      if(snap.exists){
+        let sp = snap.data().players || [];
+        if(!Array.isArray(sp)) sp = Object.values(sp);
+        const have = new Set(d.players.map(p=>p.code));
+        sp.forEach(p=>{ if(p && p.code && !have.has(p.code) && !_deletedCodes.has(p.code)){ d.players.push(p); have.add(p.code); } });
+      }
+    }).catch(()=>{})
+    .then(() => ARENA_REF.set(_fsPayload(d)))
     .then(() => {
       setFbStatus('connected', '🔥 Firebase sync');
+      return true;
     })
     .catch((err) => {
+      window._lastSaveFailed = true;
       // Retry automatique une fois avec set (fallback)
       _reportSaveError(err);
       console.error('saveData error:', err);
       toast('⚠️ Sauvegarde refusée : ' + (err && (err.code || err.message) || 'erreur'), 'error');
+      return false;
     });
 }
+const _deletedCodes = new Set();
 
 // LEVELS CONFIG
 const LEVELS = [
@@ -5765,14 +5779,24 @@ function addPlayer(){
     code, score:0, completedLevels:[],
     createdAt:new Date().toISOString()
   });
-  saveData(d);
+  const _sv = saveData(d);
   if(_apInscId && db){
     db.collection('site_olympiades_inscriptions').doc(_apInscId).update({ joueurCode:code, codeGenereAt:Date.now() }).catch(()=>{});
     _apInscId=''; const si=document.getElementById('ap-insc'); if(si) si.value='';
   }
   closeModal('modal-add-player');
   renderPlayers(); renderDashboard();
-  toast('Joueur "'+name+'" ajouté !','success');
+  toast('Joueur "'+name+'" ajouté — vérification en ligne…','info');
+  Promise.race([Promise.resolve(_sv), new Promise(r=>setTimeout(()=>r('timeout'),10000))]).then(ok=>{
+    if(ok===true && ARENA_REF){
+      return ARENA_REF.get({source:'server'}).then(sn=>{
+        let pl = (sn.exists && sn.data().players) || []; if(!Array.isArray(pl)) pl = Object.values(pl);
+        if(pl.some(p=>p.code===code)) toast('✅ Code '+code+' enregistré en ligne','success');
+        else alert('⚠️ Le code '+code+' n\'est PAS enregistré en ligne. Reconnecte-toi en admin et réessaie.');
+      });
+    }
+    alert('⚠️ Le code '+code+' n\'est PAS synchronisé (hors ligne ou refus). Reconnecte-toi en admin puis modifie ce joueur pour renvoyer.');
+  }).catch(()=>{});
   ['ap-nom','ap-prenom','ap-ddn','ap-phone','ap-email','ap-school','ap-class','ap-ville','ap-matricule'].forEach(i=>{
     const el=document.getElementById(i); if(el) el.value='';
   });
@@ -6037,6 +6061,7 @@ function deletePlayer(code){
   if(!confirm('Supprimer ce joueur ?')) return;
   const d=getData();
   d.players=d.players.filter(p=>p.code!==code);
+  _deletedCodes.add(code);
   saveData(d);
   renderPlayers(); renderDashboard();
   toast('Joueur supprimé','info');
