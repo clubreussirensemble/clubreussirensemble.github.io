@@ -511,7 +511,7 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
     <div id="tab-paiements" class="panel" style="display:none">
       <h2>Paiements reçus</h2>
       <table>
-        <thead><tr><th>Élève</th><th>Matière</th><th>Montant</th><th>Date</th><th>Statut</th><th></th></tr></thead>
+        <thead><tr><th>Apprenant</th><th>Matière</th><th>Montant</th><th>Date</th><th>Statut</th><th></th></tr></thead>
         <tbody id="paiementsBody"><tr><td colspan="6">Chargement…</td></tr></tbody>
       </table>
     </div>
@@ -1067,7 +1067,7 @@ function genChatToken(){ return 'el_' + Date.now().toString(36) + Math.random().
 /* ===== Salle de classe : accès automatique après paiement validé ===== */
 async function classroomAjouter(p){
   const e = eleves.find(x=>x.uid===p.uid) || {};
-  const nom = `${e.prenom||''} ${e.nom||''}`.trim() || e.email || 'Élève';
+  const nom = p.nom || `${e.prenom||''} ${e.nom||''}`.trim() || e.email || p.email || 'Apprenant';
   const me = fbAuth.currentUser;
   let k = (window.__classes||[]).find(c=>c.matiereId===p.matiereId);
   if(!k){
@@ -1793,7 +1793,7 @@ function renderResultats(){
 function renderPaiements(){
   const rows = window.__paiements || [];
   document.getElementById('paiementsBody').innerHTML = rows.length ? rows.map(p=>
-    `<tr><td>${nomEleve(p.uid||'')}</td><td>${p.matiereNom||p.matiereId||'—'}</td><td>${Number(p.montant||0).toLocaleString('fr-FR')} GNF</td>
+    `<tr><td>${p.nom ? bqEsc(p.nom) : nomEleve(p.uid||'')}${p.telephone ? '<br><small>'+bqEsc(p.telephone)+'</small>' : ''}</td><td>${p.matiereNom||p.matiereId||'—'}</td><td>${Number(p.montant||0).toLocaleString('fr-FR')} GNF</td>
      <td>${p.createdAt?new Date(p.createdAt).toLocaleDateString('fr-FR'):'—'}</td>
      <td><span class="pill ${p.statut==='valide'?'ok':'attente'}">${p.statut==='valide'?'Validé':'En attente'}</span></td>
      <td>${p.statut!=='valide' ? `<button class="small-btn" data-valide="${p.id}">Valider</button>` : ''}
@@ -1804,8 +1804,6 @@ function renderPaiements(){
     b.onclick = async ()=>{
       const p = (window.__paiements||[]).find(x=>x.id===b.dataset.valide);
       if(!p) return;
-      const el = eleves.find(x=>x.uid===p.uid);
-      if(el && el.statut!=='valide' && !confirm("Le compte de cet élève n'est pas encore validé. Valider quand même le paiement ?")) return;
       b.disabled = true; b.textContent = 'Validation…';
       try{
         await updateDoc(doc(fbDB, C_PAIEMENTS, p.id), { statut: 'valide' });
