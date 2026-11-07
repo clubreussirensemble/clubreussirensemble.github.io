@@ -5935,16 +5935,27 @@ function _markCodeSent(d,p,via){
 }
 function sendWhatsAppCode(code){
   const x=_playerSendData(code); if(!x) return;
-  const phone=_normPhone(x.p.phone);
-  if(!phone) toast('Aucun numéro enregistré : choisis le contact dans WhatsApp','error');
+  let phone=_normPhone(x.p.phone);
+  if(!phone){
+    // pas de numéro enregistré : on le demande et on le garde sur la fiche du joueur
+    const ans=prompt('Aucun numéro WhatsApp enregistré pour '+x.p.name+'.\nSaisis-le (ex. 622 00 00 00) :','');
+    phone=_normPhone(ans);
+    if(phone.length<11){ toast('Numéro invalide : envoi annulé','error'); return; }
+    x.p.phone=String(ans).trim();
+  }
   const msg=encodeURIComponent(`Bonjour ${x.p.name} ! 🏆\nTon inscription à l'*Olympiade des Cerveaux Guinée* est validée.\n🔑 Ton code joueur : *${code}*\nAccède à ton espace ici :\n${x.link}\nBonne chance ! ⚡`);
   window.open(phone?`https://wa.me/${phone}?text=${msg}`:`https://wa.me/?text=${msg}`,'_blank');
   _markCodeSent(x.d,x.p,'wa');
 }
 function sendEmailCode(code){
   const x=_playerSendData(code); if(!x) return;
-  const email=(x.p.email||'').trim();
-  if(!email) toast('Aucun e-mail enregistré : saisis l\'adresse dans ton application de messagerie','error');
+  let email=(x.p.email||'').trim();
+  if(!email){
+    const ans=prompt('Aucun e-mail enregistré pour '+x.p.name+'.\nSaisis-le :','');
+    email=String(ans||'').trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ toast('E-mail invalide : envoi annulé','error'); return; }
+    x.p.email=email;
+  }
   const subject=encodeURIComponent('🏆 Ton code Olympiade des Cerveaux Guinée');
   const body=encodeURIComponent(
     `Bonjour ${x.p.name} !\n\n`+
