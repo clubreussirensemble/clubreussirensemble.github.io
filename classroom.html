@@ -204,8 +204,8 @@ document.getElementById('y').textContent=new Date().getFullYear();
 import { fbAuth as auth, fbDB as db, C_ELEVES, C_PAIEMENTS, C_MATIERES, collection, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "./firebase.js";
 
 /* Même projet Firebase que tout le site (./firebase.js). Aucune configuration à remplir ici. */
-/* Accès élève : compte validé (site_eleves.statut = "valide") ET paiement validé pour la matière du cours. */
-const REQUIRE_VALIDATION = true;
+/* Accès apprenant : paiement validé pour la matière du cours (membre de la classe). Aucun compte espace élève / Chat requis. */
+const REQUIRE_VALIDATION = false;
 const getDocs = q => new Promise((ok, ko) => { const un = onSnapshot(q, s => { un(); ok(s); }, ko); });
 
 const $ = s => document.querySelector(s), app = $('#app'), dlg = $('#dlg');
@@ -377,7 +377,7 @@ async function listView() {
     ${S.classes.length ? `<div class="grid">${S.classes.map(k => `
       <button class="cours" data-act="open" data-id="${k.id}">
         <div class="top" style="background:${k.couleur}"><h3>${esc(k.nom)}</h3><small>${esc(k.matiere)} · ${esc(k.niveau)}</small></div>
-        <div class="bas">${esc(k.profNom)} · ${(k.membres||[]).length - 1} élève(s)</div></button>`).join('')}</div>`
+        <div class="bas">${esc(k.profNom)}${S.prof ? ' · ' + ((k.membres||[]).length - 1) + ' élève(s)' : ''}</div></button>`).join('')}</div>`
       : `<div class="vide">${S.prof ? "Aucun cours pour l'instant. Un cours est créé automatiquement dès que vous validez le premier paiement d'une matière." : "Vous n'avez accès à aucune salle de classe pour le moment.<br>Inscrivez-vous à un cours payant : dès que le club valide votre paiement, la salle de classe s'ouvre ici."}</div>`}`;
 }
 
