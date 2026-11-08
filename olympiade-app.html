@@ -9468,6 +9468,7 @@ let _specTimerHandle = null; // setInterval du chrono spectateur
 // l'admin l'écoute pendant le match et rejoue l'action comme s'il avait cliqué lui-même.
 // ════════════════════════════════════════
 let _remSubs = {}, _remKey = '', _remSeen = {};
+function _codeTag(c){ let h = 5381; String(c||'').split('').forEach(ch=>{ h = ((h<<5)+h+ch.charCodeAt(0))>>>0; }); return h.toString(36); }   // empreinte non secrète du code joueur
 let _remPollT = null;
 function _remStop(){ Object.keys(_remSubs).forEach(k=>{ try{ _remSubs[k](); }catch(e){} }); _remSubs = {}; _remKey = ''; _remSeen = {}; clearInterval(_remPollT); _remPollT = null; }
 function _remSync(list){
@@ -9533,8 +9534,8 @@ function _lmPublish(extra){
     level: _lmLevel,
     qIndex: _lmQIndex,
     qTotal: _lmQuestions.length,
-    p1: { name: _lmP1 ? _lmP1.name : '', school: _lmP1 ? ((_lmP1.classe||'')+(_lmP1.school?' · '+_lmP1.school:'')) : '', photo: _lmP1 ? (_lmP1.photo||null) : null, score: _lmP1Score, correct: _lmP1Correct, streak: _lmP1Streak },
-    p2: { name: _lmP2 ? _lmP2.name : '', school: _lmP2 ? ((_lmP2.classe||'')+(_lmP2.school?' · '+_lmP2.school:'')) : '', photo: _lmP2 ? (_lmP2.photo||null) : null, score: _lmP2Score, correct: _lmP2Correct, streak: _lmP2Streak },
+    p1: { tag: _lmP1 ? _codeTag(_lmP1.code) : '', name: _lmP1 ? _lmP1.name : '', school: _lmP1 ? ((_lmP1.classe||'')+(_lmP1.school?' · '+_lmP1.school:'')) : '', photo: _lmP1 ? (_lmP1.photo||null) : null, score: _lmP1Score, correct: _lmP1Correct, streak: _lmP1Streak },
+    p2: { tag: _lmP2 ? _codeTag(_lmP2.code) : '', name: _lmP2 ? _lmP2.name : '', school: _lmP2 ? ((_lmP2.classe||'')+(_lmP2.school?' · '+_lmP2.school:'')) : '', photo: _lmP2 ? (_lmP2.photo||null) : null, score: _lmP2Score, correct: _lmP2Correct, streak: _lmP2Streak },
     question: q ? { text: q.text, matiere: q.matiere||'—', options: q.options, correct: -1 } : null,
     p1Answered: _lmP1Answered,
     p2Answered: _lmP2Answered,
@@ -9745,10 +9746,11 @@ function _plClose(){
 }
 function _plMe(data){
   if(!currentPlayer || !data || data.matches) return null;
-  const nm = currentPlayer.name;
-  if(data.duel && data.players){ const i = data.players.findIndex(p=>p && p.name === nm); return i < 0 ? null : { i, duel:true }; }
-  if(data.p1 && data.p1.name === nm) return { i:1 };
-  if(data.p2 && data.p2.name === nm) return { i:2 };
+  const nm = currentPlayer.name, tg = _codeTag(currentPlayer.code);
+  const same = p => !!p && (p.tag ? p.tag === tg : p.name === nm);   // par code ; par nom seulement si l'ancien format
+  if(data.duel && data.players){ const i = data.players.findIndex(same); return i < 0 ? null : { i, duel:true }; }
+  if(same(data.p1)) return { i:1 };
+  if(same(data.p2)) return { i:2 };
   return null;
 }
 function _plApply(data){
@@ -10370,7 +10372,7 @@ function duelPublish(){
   ref.set({
     active:true, duel:true, rapid: D.rapid, phase: D.barrage ? '⚡ BARRAGE' : '🥊 DUEL', level: D.level,
     qIndex: D.qi, qTotal: D.barrage ? 1 : D.qs.length, barrage: D.barrage, buzz: D.buzz,
-    players: D.players.map((p,i)=>({name:p.name,school:p.school,photo:p.photo||null,score:p.score,correct:p.correct,streak:p.streak||0,
+    players: D.players.map((p,i)=>({tag:_codeTag(p.code),name:p.name,school:p.school,photo:p.photo||null,score:p.score,correct:p.correct,streak:p.streak||0,
       answered: D.ans[i]>=0, answer: D.resolved ? D.ans[i] : -1, locked: !!(D.rapid && D.ans[i]>=0 && D.ans[i]!==D.qs[D.qi].correct), first: D.first===i,
       out: D.barrage && !D.tied.includes(i)})),
     question: (!D.finished && q) ? {text:q.text, matiere:q.matiere||'—', options:q.options} : null,
