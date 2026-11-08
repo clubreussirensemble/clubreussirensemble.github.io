@@ -2665,6 +2665,33 @@
   .spec-dot-item.p2-ok   { border-color:#00B0FF; background:#00B0FF; }
   .spec-dot-item.both-ok { border-color:var(--gold); background:var(--gold); }
   .spec-dot-item.miss    { border-color:var(--red); background:rgba(255,23,68,0.4); }
+  /* ── ARBRE DU TOURNOI (écran public) ── */
+  #spec-idle.has-bracket .spec-idle-icon, #spec-idle.has-bracket .spec-idle-sub { display:none; }
+  #spec-idle.has-bracket { margin-bottom:6px; }
+  #spec-bracket { width:100%; margin-top:8px; }
+  #spec-bracket .br-title { text-align:center; font-family:'Orbitron',sans-serif; font-weight:900; letter-spacing:2px; color:var(--gold); font-size:clamp(1rem,2.2vw,1.7rem); margin-bottom:8px; }
+  #spec-bracket .br-next { width:fit-content; max-width:100%; margin:0 auto 12px; padding:8px 18px; border-radius:12px; border:1px solid rgba(255,215,0,.5); background:rgba(255,215,0,.08); color:#FFE082; text-align:center; font-weight:600; }
+  #spec-bracket .br-champ { font-family:'Orbitron',sans-serif; font-weight:900; color:var(--gold); border-color:var(--gold); box-shadow:0 0 24px rgba(255,215,0,.45); }
+  #spec-bracket .br-scroll { overflow-x:auto; padding-bottom:6px; }
+  #spec-bracket .br-fit { position:relative; }
+  #spec-bracket .br-tree { position:relative; display:flex; gap:44px; align-items:stretch; width:max-content; transform-origin:0 0; }
+  #spec-bracket .br-svg { position:absolute; left:0; top:0; pointer-events:none; overflow:visible; }
+  #spec-bracket .br-col { width:176px; display:flex; flex-direction:column; }
+  #spec-bracket .br-h { text-align:center; font-size:.74rem; letter-spacing:1px; color:var(--silver); margin-bottom:8px; font-weight:700; }
+  #spec-bracket .br-ms { flex:1; display:flex; flex-direction:column; justify-content:space-around; gap:8px; }
+  #spec-bracket .br-m { position:relative; border:1px solid var(--border); border-radius:10px; background:var(--card-bg); overflow:hidden; }
+  #spec-bracket .br-m.next { border-color:var(--gold); animation:brPulse 1.6s ease-in-out infinite; }
+  #spec-bracket .br-p { display:flex; align-items:center; justify-content:space-between; gap:6px; padding:5px 8px; min-height:27px; font-size:.78rem; }
+  #spec-bracket .br-p + .br-p { border-top:1px solid rgba(255,255,255,.08); }
+  #spec-bracket .br-p.win { background:rgba(0,230,118,.14); color:var(--green); font-weight:800; }
+  #spec-bracket .br-p.lose { opacity:.4; }
+  #spec-bracket .br-p.tbd, #spec-bracket .br-p.bye { color:var(--silver); font-style:italic; opacity:.6; }
+  #spec-bracket .br-n { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #spec-bracket .br-sc { flex:none; font-family:'Orbitron',sans-serif; font-size:.7rem; }
+  #spec-bracket .br-adv { animation:brAdv 1.6s ease-out; }
+  @keyframes brPulse { 50% { box-shadow:0 0 16px rgba(255,215,0,.6); } }
+  @keyframes brAdv { 0% { transform:scale(.7); background:rgba(255,215,0,.7); } 45% { transform:scale(1.08); } 100% { transform:none; } }
+  @media (prefers-reduced-motion:reduce){ #spec-bracket .br-m.next, #spec-bracket .br-adv { animation:none; } }
 </style>
 
 <div id="screen-spectator" class="screen">
@@ -2686,6 +2713,7 @@
       <div class="spec-idle-sub">L'écran se mettra à jour automatiquement dès qu'un match démarre<span class="spec-dot"></span></div>
       <div id="spec-giant-board"></div>
     </div>
+    <div id="spec-bracket" style="display:none;"></div>
 
     <!-- Match en cours -->
     <div id="spec-match" style="display:none;">
@@ -7824,6 +7852,7 @@ function resetAllScores(){
   if(!confirm('Remettre tous les scores à 0 ?')) return;
   const d=getData();
   d.players.forEach(p=>{ p.score=0; p.completedLevels=[]; p.exits=0; delete p.progress; });
+  delete d.bracketSeed; delete d.bracketResults; window._pubBracket = null;
   d.rankHist=[];
   saveData(d);
   if(db && !_useLocalOnly) d.players.forEach(p=>{ if(p && p.code) db.collection(PROG_COL).doc(p.code).delete().catch(()=>{}); });
@@ -7864,7 +7893,15 @@ function genCompetition(){
   const phases = [];
 
   // Phase 1 : sélection des 16 (ou moins) meilleurs pour les 16e
-  const top16 = sorted.slice(0, Math.min(32, total));   // 32 premiers → 16es de finale
+  // Tableau figé dès le 1er match joué : les paires ne changent plus quand les scores bougent
+  let top16 = sorted.slice(0, Math.min(32, total));   // 32 premiers → 16es de finale
+  if(Array.isArray(d.bracketSeed) && d.bracketSeed.length >= 2){
+    const _byCode = new Map(d.players.map(p=>[p.code,p]));
+    const _frozen = d.bracketSeed.map(c=>_byCode.get(c)).filter(Boolean);
+    if(_frozen.length >= 2) top16 = _frozen;
+  }
+  window._compSeedCodes = top16.map(p=>p.code);
+  const _topSet = new Set(window._compSeedCodes);
   // Paire les joueurs : 1vs16, 2vs15, etc.
   const buildMatches = (players, phaseSlots) => {
     const matches = [];
@@ -7881,8 +7918,11 @@ function genCompetition(){
 
   // Qualifiés de chaque phase = le joueur avec le score le plus haut dans chaque match
   // En cas d'égalité : départage par completedLevels count, puis barrage mort subite
-  const getWinner = (p1, p2) => {
+  const getWinner = (p1, p2, phId) => {
     if(!p2) return p1; // bye
+    const rec = (d.bracketResults||{})[_brKey(phId, p1.code, p2.code)];   // résultat réel du match joué
+    if(rec && rec.w === p1.code) return p1;
+    if(rec && rec.w === p2.code) return p2;
     const s1 = p1.score||0, s2 = p2.score||0;
     if(s1 !== s2) return s1 > s2 ? p1 : p2;
     // égalité : nombre de niveaux complétés
@@ -7900,7 +7940,7 @@ function genCompetition(){
     if(current.length < 2) break;
     const matches = buildMatches(current, ph.slots);
     const winners = matches.map(m => {
-      const w = getWinner(m.p1, m.p2);
+      const w = getWinner(m.p1, m.p2, ph.id);
       if(w === null) return { ...m.p1, _barrage: true, _barrageP2: m.p2 }; // marquer égalité
       return w;
     });
@@ -7930,7 +7970,7 @@ function genCompetition(){
   qualifDiv.style.marginBottom = '18px';
 
   const qualifRows = sorted.map((p, i) => {
-    const isQualif = i < top16.length;
+    const isQualif = _topSet.has(p.code);
     const rank = i + 1;
     const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
     return `
@@ -7994,7 +8034,7 @@ function genCompetition(){
       : '';
 
     let matchesHTML = matches.map((m, mi) => {
-      const w = getWinner(m.p1, m.p2);
+      const w = getWinner(m.p1, m.p2, phase.id);
       const isBarrage = w === null;
       const renderPlayer = (p, isWinner) => {
         if(!p) return `<div class="comp-player tbd"><span>— (exemption)</span><span class="comp-player-score">—</span></div>`;
@@ -8061,6 +8101,7 @@ function genCompetition(){
   }
 
   window._compPhasesData = phasesData;
+  _publishBracket(phasesData, d);
   _renderNotifyCard(container);
   toast('Tableau de compétition généré !','success');
   // Horodatage dernière mise à jour automatique
@@ -8266,6 +8307,7 @@ function toggleGiantScreen(force){
   const scr = document.getElementById('screen-spectator'); if(!scr) return;
   const on = typeof force==='boolean' ? force : !scr.classList.contains('giant');
   scr.classList.toggle('giant', on);
+  setTimeout(function(){ try{ _brRefit(); }catch(e){} }, 250);
   const b = document.getElementById('btn-giant'); if(b) b.textContent = on ? '✖ Quitter écran géant' : '📺 Écran géant';
   clearInterval(_giantTimer);
   if(on){
@@ -8436,7 +8478,10 @@ function _renderClimber(){
 }
 
 function resetCompetition(){
-  if(!confirm('Réinitialiser le tableau de compétition ?')) return;
+  if(!confirm('Réinitialiser le tableau de compétition ?\n\nLes résultats des matchs déjà joués et l\'arbre du tournoi seront effacés (les scores généraux ne changent pas).')) return;
+  const _d = getData(); delete _d.bracketSeed; delete _d.bracketResults; saveData(_d);
+  window._pubBracket = null; window._compPhasesData = [];
+  { const _r = _lmGetLiveRef(); if(_r) _r.set({ active:false, bracket:null, ts:Date.now() }).catch(()=>{}); }
   document.getElementById('comp-phases').innerHTML = '';
   document.getElementById('comp-info').textContent = '';
   toast('Tableau réinitialisé','info');
@@ -8872,6 +8917,7 @@ let _lmLevel = 1;       // niveau du match
 let _lmPhaseLabel = ''; // label affiché
 let _lmQuestions = [];  // questions du match
 let _lmQIndex = 0;      // index question courante
+let _lmP1Streak = 0, _lmP2Streak = 0;   // séries de bonnes réponses
 let _lmP1Score = 0;     // score match joueur 1
 let _lmP2Score = 0;     // score match joueur 2
 let _lmP1Correct = 0;   // bonnes réponses J1
@@ -8904,7 +8950,7 @@ function openLiveMatch(code1, code2, phaseLabel, level){
   _lmFirst = 0;
   _lmLevel = level || 1;
   _lmPhaseLabel = phaseLabel || 'Match';
-  _lmP1Score = 0; _lmP2Score = 0;
+  _lmP1Score = 0; _lmP2Score = 0; _lmP1Streak = 0; _lmP2Streak = 0;
   _lmP1Correct = 0; _lmP2Correct = 0;
   _lmQIndex = 0; _lmAnswered = false;
   _lmDotHistory = []; // reset historique dots (fix bug #1)
@@ -9175,6 +9221,7 @@ function _lmResolveQuestion(q){
   let p2Ok = _lmP2Answer===q.correct;
   if(_lmRapid){ p1Ok = (_lmFirst===1 && p1Ok); p2Ok = (_lmFirst===2 && p2Ok); }
 
+  _lmP1Streak = p1Ok ? _lmP1Streak+1 : 0; _lmP2Streak = p2Ok ? _lmP2Streak+1 : 0;
   if(p1Ok){ _lmP1Score += pts; _lmP1Correct++; }
   if(p2Ok){ _lmP2Score += pts; _lmP2Correct++; }
 
@@ -9270,6 +9317,66 @@ function _lmEndMatch(){
   document.getElementById('lm-result-overlay').classList.add('show');
 }
 
+// ════════════════════════════════════════
+// ARBRE DU TOURNOI : construit depuis les vrais résultats, publié sur l'écran public
+// (aucun code joueur n'est publié : uniquement nom et école)
+// ════════════════════════════════════════
+function _brKey(phId, c1, c2){ return phId + '~' + [c1, c2].sort().join('~'); }
+function _buildPublicBracket(pds, d){
+  if(!pds || !pds.length) return null;
+  const R = pds.length, res = d.bracketResults || {};
+  const pub = p => p ? { n: p.name || '', s: [p.classe, p.school].filter(Boolean).join(' · ') } : null;
+  // parents d'un match = matchs de la phase précédente dont le vainqueur arrive ici (même appariement que buildMatches)
+  const feeders = (r, j) => { if(r === 0) return []; const n = pds[r-1].matches.length, h = Math.floor(n/2); return j < h ? [j, n-1-j] : [h]; };
+  const winnerOf = {}, info = pds.map(() => []);
+  for(let r = 0; r < R; r++){
+    pds[r].matches.forEach((m, j) => {
+      const f = feeders(r, j);
+      const pa = r === 0 ? m.p1 : (winnerOf[(r-1)+':'+f[0]] || null);
+      const pb = r === 0 ? m.p2 : (f.length > 1 ? (winnerOf[(r-1)+':'+f[1]] || null) : null);
+      const bye = r === 0 ? !m.p2 : f.length < 2;
+      let w = null, sa = null, sb = null;
+      if(bye){ if(pa) w = pa; }
+      else if(pa && pb){
+        const rec = res[_brKey(pds[r].phase.id, pa.code, pb.code)];
+        if(rec){
+          w = rec.w === pa.code ? pa : (rec.w === pb.code ? pb : null);
+          const sw = rec.c1 === pa.code;
+          sa = sw ? rec.s1 : rec.s2; sb = sw ? rec.s2 : rec.s1;
+          if(sa === undefined) sa = null; if(sb === undefined) sb = null;
+        }
+      }
+      winnerOf[r+':'+j] = w;
+      info[r][j] = { a: pub(pa), b: pub(pb), w: w ? (w === pa ? 'a' : 'b') : null, sa, sb, bye, f };
+    });
+  }
+  // ordre d'affichage : chaque match est placé en face de ses deux parents
+  const order = []; order[R-1] = info[R-1].map((_, j) => j);
+  for(let r = R-1; r > 0; r--){
+    order[r-1] = []; order[r].forEach(j => info[r][j].f.forEach(x => order[r-1].push(x)));
+    if(order[r-1].length !== info[r-1].length) order[r-1] = info[r-1].map((_, j) => j);
+  }
+  const pos = order.map(o => { const p = {}; o.forEach((j, k) => { p[j] = k; }); return p; });
+  const LB = ['Finale','Demi-finales','Quarts de finale','8es de finale','16es de finale'], IC = ['🏆','⭐','🔥','🥊','⚔️'];
+  const rounds = info.map((arr, r) => ({
+    label: LB[R-1-r] || ('Phase '+(r+1)), icon: IC[R-1-r] || '⚔️',
+    matches: order[r].map(j => { const m = arr[j]; return { a: m.a, b: m.b, w: m.w, sa: m.sa, sb: m.sb, bye: m.bye, f: m.f.map(x => pos[r-1][x]) }; })
+  }));
+  let next = null;
+  rounds.some((rd, r) => rd.matches.some((m, i) => {
+    if(m.a && m.b && !m.w && !m.bye){ next = { r, i, a: m.a.n, b: m.b.n, label: rd.label }; return true; }
+    return false;
+  }));
+  const fm = rounds[R-1].matches[0];
+  return { rounds, next, champ: (fm && fm.w) ? fm[fm.w] : null };
+}
+function _publishBracket(pds, d){
+  const b = _buildPublicBracket(pds, d);
+  window._pubBracket = b;
+  const ref = _lmGetLiveRef(); if(!ref) return;
+  ref.set({ bracket: b }, { merge: true }).catch(()=>{});
+}
+
 function publishQualified(phIdx){
   const pds = window._compPhasesData || [];
   const pd = pds[phIdx]; if(!pd) return;
@@ -9277,7 +9384,7 @@ function publishQualified(phIdx){
   const next = COMP_PHASES[idx+1]; if(!next) return;
   const ref = _lmGetLiveRef(); if(!ref){ toast('Écran public indisponible','error'); return; }
   const players = pd.winners.map(w=>({name:w.name||'', school:w.school||'', classe:w.classe||''}));
-  ref.set({ active:false, qualified:{ label:next.label, from:pd.phase.label, players }, ts:Date.now() })
+  ref.set({ active:false, qualified:{ label:next.label, from:pd.phase.label, players }, bracket: window._pubBracket || null, ts:Date.now() })
     .then(()=>toast('📺 Qualifiés affichés sur l\'écran public','success')).catch(()=>{});
 }
 // Fin de phase : quand tous les matchs d'une phase sont joués, afficher les qualifiés sur l'écran public
@@ -9294,8 +9401,20 @@ function lmSaveAndClose(){
   const _phLab = String(_lmPhaseLabel||'').replace(/^⚡ BARRAGE — /,'');
   const _pd0 = (window._compPhasesData||[]).find(x=>x.phase.label===_phLab);
   const _need = _pd0 ? _pd0.matches.filter(m=>m.p1&&m.p2).length : 0;
-  // Ajouter les points de match aux scores généraux
   const d = getData();
+  // Mémoriser le vrai vainqueur (avant l'ajout des points) : c'est lui qui avance dans l'arbre
+  if(_pd0){
+    let w = null;
+    if(_lmP1Score > _lmP2Score) w = _lmP1.code;
+    else if(_lmP2Score > _lmP1Score) w = _lmP2.code;
+    else if(_lmQuestions.length !== 1) w = (_lmP1.score||0) >= (_lmP2.score||0) ? _lmP1.code : _lmP2.code;
+    if(w){
+      if(!Array.isArray(d.bracketSeed) || d.bracketSeed.length < 2) d.bracketSeed = (window._compSeedCodes || []).slice();
+      d.bracketResults = d.bracketResults || {};
+      d.bracketResults[_brKey(_pd0.phase.id, _lmP1.code, _lmP2.code)] = { w, c1:_lmP1.code, c2:_lmP2.code, s1:_lmP1Score, s2:_lmP2Score };
+    }
+  }
+  // Ajouter les points de match aux scores généraux
   const idx1 = d.players.findIndex(p=>p.code===_lmP1.code);
   const idx2 = d.players.findIndex(p=>p.code===_lmP2.code);
   if(idx1>=0){ d.players[idx1].score = (d.players[idx1].score||0) + _lmP1Score; }
@@ -9361,8 +9480,8 @@ function _lmPublish(extra){
     level: _lmLevel,
     qIndex: _lmQIndex,
     qTotal: _lmQuestions.length,
-    p1: { name: _lmP1 ? _lmP1.name : '', school: _lmP1 ? ((_lmP1.classe||'')+(_lmP1.school?' · '+_lmP1.school:'')) : '', photo: _lmP1 ? (_lmP1.photo||null) : null, score: _lmP1Score, correct: _lmP1Correct },
-    p2: { name: _lmP2 ? _lmP2.name : '', school: _lmP2 ? ((_lmP2.classe||'')+(_lmP2.school?' · '+_lmP2.school:'')) : '', photo: _lmP2 ? (_lmP2.photo||null) : null, score: _lmP2Score, correct: _lmP2Correct },
+    p1: { name: _lmP1 ? _lmP1.name : '', school: _lmP1 ? ((_lmP1.classe||'')+(_lmP1.school?' · '+_lmP1.school:'')) : '', photo: _lmP1 ? (_lmP1.photo||null) : null, score: _lmP1Score, correct: _lmP1Correct, streak: _lmP1Streak },
+    p2: { name: _lmP2 ? _lmP2.name : '', school: _lmP2 ? ((_lmP2.classe||'')+(_lmP2.school?' · '+_lmP2.school:'')) : '', photo: _lmP2 ? (_lmP2.photo||null) : null, score: _lmP2Score, correct: _lmP2Correct, streak: _lmP2Streak },
     question: q ? { text: q.text, matiere: q.matiere||'—', options: q.options, correct: -1 } : null,
     p1Answered: _lmP1Answered,
     p2Answered: _lmP2Answered,
@@ -9398,6 +9517,8 @@ function _lmPublishResolved(q, dotStates){
     p2Score: _lmP2Score,
     'p1.score': _lmP1Score,
     'p2.score': _lmP2Score,
+    'p1.streak': _lmP1Streak,
+    'p2.streak': _lmP2Streak,
     dots: dotStates,
     ts: Date.now()
   }).catch(()=>{});
@@ -9420,7 +9541,7 @@ function _lmPublishEnd(winnerName, scores){
 function _lmPublishClear(){
   const ref = _lmGetLiveRef();
   if(!ref) return;
-  ref.set({ active: false, ts: Date.now() }).catch(()=>{});
+  ref.set({ active: false, bracket: window._pubBracket || null, ts: Date.now() }).catch(()=>{});
 }
 
 // ── SPECTATEUR ────────────────────────────────────────────────
@@ -9449,6 +9570,150 @@ function _specStartListening(){
 // Intervalles chrono par match (tableau)
 let _specTimerHandles = [];
 
+let _specVsKey = '';
+// Jauge de score en direct (1v1 et duels 2-4 joueurs) avec séries 🔥
+function _specGauge(list){
+  const host = document.getElementById('spec-match'); if(!host) return;
+  let g = document.getElementById('spec-gauge');
+  if(!list || list.length<2){ if(g) g.style.display='none'; return; }
+  if(!g || g.dataset.n!==String(list.length)){
+    if(g) g.remove();
+    g = document.createElement('div'); g.id = 'spec-gauge'; g.dataset.n = String(list.length);
+    g.style.cssText = 'display:flex;gap:4px;margin:0 0 16px;';
+    const cols = ['#00E5FF','#FF4081','#00E676','#FFD740'];
+    g.innerHTML = list.map((_,i)=>'<div class="sg-seg" style="flex:1 1 0;min-width:0;transition:flex-grow .7s ease;">'
+      +'<div style="display:flex;justify-content:space-between;gap:6px;font-weight:800;font-size:clamp(.75rem,1.4vw,1.4rem);margin-bottom:4px;"><span class="sg-n" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span><span class="sg-s" style="white-space:nowrap;"></span></div>'
+      +'<div style="height:clamp(14px,2vw,28px);border-radius:'+(i===0?'14px 0 0 14px':(i===list.length-1?'0 14px 14px 0':'0'))+';background:'+cols[i%4]+';box-shadow:0 0 14px '+cols[i%4]+'88;"></div>'
+      +'<div class="sg-f" style="min-height:1.5em;font-size:clamp(.75rem,1.3vw,1.3rem);font-weight:800;color:#FFB300;margin-top:4px;"></div></div>').join('');
+    host.insertBefore(g, host.firstChild);
+  }
+  g.style.display = 'flex';
+  const segs = g.querySelectorAll('.sg-seg');
+  const mx = Math.max.apply(null, list.map(p=>p.score||0));
+  list.forEach((p,i)=>{
+    const sg = segs[i]; if(!sg) return;
+    sg.style.flexGrow = String((p.score||0)+6);
+    sg.querySelector('.sg-n').textContent = ((mx>0 && (p.score||0)===mx) ? '👑 ' : '') + String(p.name||'').split(' ')[0];
+    sg.querySelector('.sg-s').textContent = (p.score||0)+' pts';
+    const st = p.streak||0;
+    sg.querySelector('.sg-f').textContent = st>=2 ? '🔥'.repeat(Math.min(st,5))+' '+st+' d\'affilée' : '';
+  });
+}
+let _specBuzzKey = '';
+// Effet BUZZ : flash plein écran + nom du joueur en très gros + son
+function _specBuzzFx(name, idx){
+  if(!document.getElementById('spec-buzz-css')){
+    const st = document.createElement('style'); st.id = 'spec-buzz-css';
+    st.textContent = '@keyframes bzIn{0%{opacity:0;transform:scale(.5)}12%{opacity:1;transform:scale(1.12)}22%{transform:scale(1)}78%{opacity:1}100%{opacity:0}}@keyframes bzFlash{0%{opacity:.95}100%{opacity:0}}';
+    document.head.appendChild(st);
+  }
+  const old = document.getElementById('spec-buzz'); if(old) old.remove();
+  const cols = ['#00E5FF','#FF4081','#00E676','#FFD740'];
+  const c = cols[(idx>0 && idx<=4 ? idx-1 : idx)%4] || '#FFD740';
+  const o = document.createElement('div'); o.id = 'spec-buzz';
+  o.style.cssText = 'position:fixed;inset:0;z-index:99980;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:Orbitron,sans-serif;text-align:center;background:rgba(5,6,15,.6);animation:bzIn 1.8s forwards;';
+  o.innerHTML = '<div style="position:absolute;inset:0;background:'+c+';animation:bzFlash .35s forwards;"></div>'
+    +'<div style="position:relative;font-size:clamp(3rem,12vw,11rem);line-height:1;">🔔</div>'
+    +'<div style="position:relative;font-weight:900;color:'+c+';text-shadow:0 0 30px '+c+';font-size:clamp(2rem,9vw,9rem);max-width:94vw;word-break:break-word;">'+_dEsc((name||'').toUpperCase())+'</div>'
+    +'<div style="position:relative;color:#fff;font-size:clamp(1rem,3vw,3rem);letter-spacing:6px;margin-top:1vh;">A BUZZÉ !</div>';
+  document.body.appendChild(o);
+  setTimeout(()=>o.remove(), 1900);
+  try{
+    const AC = window.AudioContext||window.webkitAudioContext; const a = new AC();
+    const osc = a.createOscillator(), g = a.createGain();
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(190, a.currentTime); osc.frequency.linearRampToValueAtTime(90, a.currentTime+.4);
+    g.gain.setValueAtTime(.25, a.currentTime); g.gain.exponentialRampToValueAtTime(.001, a.currentTime+.45);
+    osc.connect(g); g.connect(a.destination); osc.start(); osc.stop(a.currentTime+.5);
+    setTimeout(()=>{ try{ a.close(); }catch(e){} }, 700);
+  }catch(e){}
+}
+// Entrée « VS » animée au début de chaque match / duel (écran public & écran géant)
+function _specVsIntro(list, label){
+  if(!document.getElementById('spec-vs-css')){
+    const st = document.createElement('style'); st.id = 'spec-vs-css';
+    st.textContent = '@keyframes vsL{from{opacity:0;transform:translateX(-40vw)}to{opacity:1;transform:none}}@keyframes vsR{from{opacity:0;transform:translateX(40vw)}to{opacity:1;transform:none}}@keyframes vsPop{0%{opacity:0;transform:scale(0) rotate(-20deg)}60%{opacity:1;transform:scale(1.5) rotate(4deg)}100%{opacity:1;transform:scale(1)}}@keyframes vsOut{to{opacity:0}}';
+    document.head.appendChild(st);
+  }
+  const old = document.getElementById('spec-vs'); if(old) old.remove();
+  const cols = ['#00E5FF','#FF4081','#00E676','#FFD740'];
+  const o = document.createElement('div'); o.id = 'spec-vs';
+  o.style.cssText = 'position:fixed;inset:0;z-index:99990;background:radial-gradient(circle at 50% 30%,#2a1a5e,#05060f 75%);color:#fff;font-family:Orbitron,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4vh;padding:3vh 3vw;cursor:pointer;';
+  const cards = list.map((p,i)=>{
+    const av = p.photo ? '<img src="'+_dEsc(p.photo)+'" style="width:100%;height:100%;object-fit:cover;" alt="">' : _dEsc((p.name||'?').charAt(0).toUpperCase());
+    return (i ? '<div style="font-size:clamp(2rem,8vw,7rem);font-weight:900;color:#FFD740;animation:vsPop .7s .5s both;">VS</div>' : '')
+      +'<div style="text-align:center;min-width:0;animation:'+(i%2?'vsR':'vsL')+' .6s both;">'
+      +'<div style="width:clamp(90px,16vw,260px);height:clamp(90px,16vw,260px);border-radius:50%;margin:0 auto 1.5vh;display:flex;align-items:center;justify-content:center;font-size:clamp(2.5rem,7vw,6rem);font-weight:900;overflow:hidden;border:5px solid '+cols[i%4]+';box-shadow:0 0 40px '+cols[i%4]+';background:rgba(255,255,255,.08);">'+av+'</div>'
+      +'<div style="font-weight:900;font-size:clamp(1.1rem,3vw,3rem);">'+_dEsc(p.name)+'</div>'
+      +'<div style="color:#9fb0d8;font-size:clamp(.8rem,1.6vw,1.6rem);">'+_dEsc(p.school||'')+'</div></div>';
+  }).join('');
+  o.innerHTML = '<div style="color:#FFD740;font-size:clamp(1rem,2.4vw,2.4rem);letter-spacing:4px;font-weight:900;text-align:center;">'+_dEsc(label||'')+'</div>'
+    +'<div style="display:flex;align-items:center;justify-content:center;gap:3vw;flex-wrap:wrap;width:100%;">'+cards+'</div>';
+  o.onclick = ()=>o.remove();
+  document.body.appendChild(o);
+  try{ _sndTimerBeep(); setTimeout(()=>{ try{ _sndTimerBeep(); }catch(e){} }, 400); }catch(e){}
+  setTimeout(()=>{ o.style.animation = 'vsOut .5s forwards'; setTimeout(()=>o.remove(), 500); }, 3500);
+}
+let _brSig = '', _brPrev = {}, _brHad = false;
+function _specBracket(b){
+  const host = document.getElementById('spec-bracket'), idle = document.getElementById('spec-idle');
+  if(!host) return;
+  if(!b || !b.rounds || !b.rounds.length){ host.style.display = 'none'; host.innerHTML = ''; _brSig = ''; if(idle) idle.classList.remove('has-bracket'); return; }
+  host.style.display = ''; if(idle) idle.classList.add('has-bracket');
+  const sig = JSON.stringify(b);
+  if(sig === _brSig){ _brRefit(); return; }
+  _brSig = sig;
+  const names = {};
+  const row = (p, st, sc, key) => {
+    names[key] = p ? p.n : '';
+    if(!p) return '<div class="br-p tbd"><span class="br-n">À déterminer</span></div>';
+    const adv = _brHad && !_brPrev[key] ? ' br-adv' : '';
+    return '<div class="br-p '+st+adv+'" title="'+_dEsc(p.s||'')+'"><span class="br-n">'+_dEsc(p.n)+'</span>'+(sc!=null ? '<span class="br-sc">'+sc+'</span>' : '')+'</div>';
+  };
+  const cols = b.rounds.map((rd, r) => '<div class="br-col"><div class="br-h">'+_dEsc(rd.icon+' '+rd.label)+'</div><div class="br-ms">'
+    + rd.matches.map((m, i) => {
+        const nx = b.next && b.next.r === r && b.next.i === i;
+        return '<div class="br-m'+(nx ? ' next' : '')+'" data-r="'+r+'" data-i="'+i+'">'
+          + row(m.a, m.w==='a' ? 'win' : (m.w==='b' ? 'lose' : ''), m.sa, r+':'+i+':a')
+          + (m.bye ? '<div class="br-p bye"><span class="br-n">Exempt</span></div>' : row(m.b, m.w==='b' ? 'win' : (m.w==='a' ? 'lose' : ''), m.sb, r+':'+i+':b'))
+          + '</div>';
+      }).join('') + '</div></div>').join('');
+  host.innerHTML = '<div class="br-title">ARBRE DU TOURNOI</div>'
+    + (b.champ ? '<div class="br-next br-champ">🏆 Champion : '+_dEsc(b.champ.n)+'</div>'
+       : (b.next ? '<div class="br-next">⚡ Prochain match · '+_dEsc(b.next.label)+' : <b>'+_dEsc(b.next.a)+'</b> contre <b>'+_dEsc(b.next.b)+'</b></div>' : ''))
+    + '<div class="br-scroll"><div class="br-fit"><div class="br-tree" id="br-tree">'+cols+'<svg class="br-svg" id="br-svg"></svg></div></div></div>';
+  _brPrev = names; _brHad = true;
+  _brDraw(b); _brRefit();
+}
+// Traits entre un match et ses deux parents (vert quand le qualifié a avancé)
+function _brDraw(b){
+  const tree = document.getElementById('br-tree'), svg = document.getElementById('br-svg'); if(!tree || !svg) return;
+  svg.setAttribute('width', tree.scrollWidth); svg.setAttribute('height', tree.scrollHeight);
+  const el = (r, i) => tree.querySelector('.br-m[data-r="'+r+'"][data-i="'+i+'"]');
+  let wait = '', done = '';
+  b.rounds.forEach((rd, r) => { if(!r) return; rd.matches.forEach((m, i) => {
+    const to = el(r, i); if(!to) return;
+    (m.f || []).forEach(fi => {
+      const from = el(r-1, fi); if(!from) return;
+      const x1 = from.offsetLeft + from.offsetWidth, y1 = from.offsetTop + from.offsetHeight/2, x2 = to.offsetLeft, y2 = to.offsetTop + to.offsetHeight/2, xm = (x1+x2)/2;
+      const seg = 'M'+x1+' '+y1+'H'+xm+'V'+y2+'H'+x2+' ';
+      if(b.rounds[r-1].matches[fi].w) done += seg; else wait += seg;
+    });
+  }); });
+  svg.innerHTML = '<path d="'+wait+'" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="2"/><path d="'+done+'" fill="none" stroke="#00E676" stroke-width="2.5"/>';
+}
+// Ajuste la taille de l'arbre à l'écran (en écran géant : tient en largeur ET en hauteur)
+function _brRefit(){
+  const tree = document.getElementById('br-tree'); if(!tree) return;
+  const box = tree.closest('.br-scroll'), fit = tree.parentNode, A = box.clientWidth; if(!A) return;
+  tree.style.transform = 'none';
+  const W = tree.scrollWidth, H = tree.scrollHeight;
+  let s = A / W;
+  if(document.querySelector('#screen-spectator.giant')) s = Math.min(s, (window.innerHeight - 300) / H, 1.8);
+  else s = Math.min(1, Math.max(0.5, s));
+  tree.style.transform = 'scale('+s+')';
+  fit.style.width = (W*s)+'px'; fit.style.height = (H*s)+'px'; fit.style.margin = '0 auto';
+}
+window.addEventListener('resize', function(){ try{ _brRefit(); }catch(e){} });
 function _specQualified(q){
   const idle = document.getElementById('spec-idle'); if(!idle) return;
   let el = document.getElementById('spec-qualified');
@@ -9475,13 +9740,41 @@ function _specApply(data){
     _specTimerHandles.forEach(h => clearInterval(h));
     _specTimerHandles = [];
     clearInterval(_specTimerHandle);
+    _specVsKey = ''; _specBuzzKey = ''; _specGauge(null);
     _specQualified(data && data.qualified ? data.qualified : null);
+    _specBracket(data && data.bracket ? data.bracket : null);
     return;
   }
 
   if(idle) idle.style.display = 'none';
   if(matchDiv) matchDiv.style.display = '';
   _specQualified(null);
+  _specBracket(null);
+  { // Entrée « VS » une seule fois, au début de chaque match (question 1)
+    let _vl = null;
+    if(data.duel && data.players) _vl = data.players;
+    else if(!data.matches && data.p1 && data.p2) _vl = [data.p1, data.p2];
+    if(_vl && (data.qIndex||0) === 0){
+      const _k = _vl.map(x=>x && x.name).join('|') + '#' + (data.phase||'');
+      if(_k !== _specVsKey){ _specVsKey = _k; _specVsIntro(_vl, (data.phase||'') + (data.level ? ' · Niveau '+data.level : '')); }
+    }
+  }
+
+  { // Jauge de score en direct
+    let _gl = null;
+    if(data.duel && data.players) _gl = data.players;
+    else if(!data.matches && data.p1 && data.p2) _gl = [data.p1, data.p2];
+    _specGauge(_gl);
+  }
+  { // Effet BUZZ (mode rapidité) : une fois par joueur qui buzze
+    let _bz = -1, _nm = '';
+    if(data.rapid){
+      if(data.duel && data.players && data.buzz>=0){ _bz = data.buzz; _nm = (data.players[_bz]||{}).name; }
+      else if(!data.duel && data.buzz>0){ _bz = data.buzz; _nm = (data['p'+_bz]||{}).name; }
+    }
+    if(_bz<0) _specBuzzKey = '';
+    else { const _k = (data.qIndex||0)+'|'+_bz; if(_k!==_specBuzzKey){ _specBuzzKey = _k; _specBuzzFx(_nm, _bz); } }
+  }
 
   // Phase label
   const phEl = document.getElementById('spec-phase-label');
@@ -9803,6 +10096,7 @@ function duelResolve(){
   const q = D.qs[D.qi];
   const active = D.players.map((p,idx)=>idx).filter(idx=>!D.barrage || D.tied.includes(idx));
   let anyOk = false;
+  active.forEach(i=>{ const _ok = D.ans[i]===q.correct && (!D.rapid || D.first===i); D.players[i].streak = _ok ? (D.players[i].streak||0)+1 : 0; });
   active.forEach(i=>{
     if(D.rapid && D.first!==i) return;   // rapidité : seul le premier à répondre juste marque
     if(D.ans[i]===q.correct){
@@ -9904,7 +10198,7 @@ function duelPublish(){
   ref.set({
     active:true, duel:true, rapid: D.rapid, phase: D.barrage ? '⚡ BARRAGE' : '🥊 DUEL', level: D.level,
     qIndex: D.qi, qTotal: D.barrage ? 1 : D.qs.length, barrage: D.barrage, buzz: D.buzz,
-    players: D.players.map((p,i)=>({name:p.name,school:p.school,photo:p.photo||null,score:p.score,correct:p.correct,
+    players: D.players.map((p,i)=>({name:p.name,school:p.school,photo:p.photo||null,score:p.score,correct:p.correct,streak:p.streak||0,
       answered: D.ans[i]>=0, answer: D.resolved ? D.ans[i] : -1, locked: !!(D.rapid && D.ans[i]>=0 && D.ans[i]!==D.qs[D.qi].correct), first: D.first===i,
       out: D.barrage && !D.tied.includes(i)})),
     question: (!D.finished && q) ? {text:q.text, matiere:q.matiere||'—', options:q.options} : null,
