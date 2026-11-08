@@ -249,9 +249,18 @@ const kt=document.getElementById('katexjs');if(kt)kt.addEventListener('load',()=
 
 function showTab(id){window.scrollTo&&0;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));['bibliotheque','entrainement','qcm','defis'].forEach(x=>$('#'+x).classList.toggle('hidden',x!==id));}
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
-function openData(title,b64,mime){$('#modalTitle').textContent=title;$('#viewer').src='data:'+mime+';base64,'+b64;$('#modal').classList.add('open')}
+let curUrl=null;
+function b64Blob(b64,mime){const bin=atob(b64),n=bin.length,arr=new Uint8Array(n);for(let i=0;i<n;i++)arr[i]=bin.charCodeAt(i);return new Blob([arr],{type:mime})}
+function openData(title,b64,mime){
+  if(curUrl){URL.revokeObjectURL(curUrl);curUrl=null}
+  curUrl=URL.createObjectURL(b64Blob(b64,mime));
+  $('#modalTitle').textContent=title;
+  $('#viewer').src=curUrl;
+  let dl=$('#dlDoc');if(!dl){dl=document.createElement('a');dl.id='dlDoc';dl.target='_blank';dl.rel='noopener';dl.style.cssText='margin-left:auto;margin-right:10px;font-size:13px;font-weight:700;color:inherit;text-decoration:underline';$('#closeModal').before(dl)}
+  dl.textContent='⬇ Ouvrir / télécharger';dl.href=curUrl;dl.download=title.replace(/[^\w\u00C0-\u017F -]+/g,'').trim()+(mime==='application/pdf'?'.pdf':'.html');
+  $('#modal').classList.add('open')}
 function openPdf(c){let b=DATA.pdfs[c.id+'.pdf'];if(!b){alert('Le PDF de ce cours n’est pas présent dans les ressources extraites.');return}openData(fr(c.titre),b,'application/pdf')}
-$('#closeModal').onclick=()=>{$('#modal').classList.remove('open');$('#viewer').src='about:blank'};$('#modal').onclick=e=>{if(e.target.id==='modal')$('#closeModal').click()};
+$('#closeModal').onclick=()=>{$('#modal').classList.remove('open');$('#viewer').src='about:blank';if(curUrl){URL.revokeObjectURL(curUrl);curUrl=null}};$('#modal').onclick=e=>{if(e.target.id==='modal')$('#closeModal').click()};
 
 function renderCours(){let q=$('#searchCours').value.toLowerCase();let mt=($('#sortCours')||{}).value||'all';let f=c=>(fr(c.titre)+' '+fr(c.description)).toLowerCase().includes(q);let card=c=>`<article class="card"><div class="icon">${c.matiere==='Physique'?'⚛️':'📘'}</div><h3>${esc(fr(c.titre))}</h3><p>${esc(fr(c.description))}</p><div class="meta">${c.pages||'—'} pages · Cours PDF</div><button class="action" onclick="openPdfById('${esc(c.id)}')">Ouvrir le cours</button></article>`;let m=DATA.cours.filter(c=>c.matiere!=='Physique'&&f(c)),p=DATA.cours.filter(c=>c.matiere==='Physique'&&f(c));let showM=mt==='all'||mt==='Mathématiques',showP=mt==='all'||mt==='Physique';$('#rubMathT').style.display=$('#coursGrid').style.display=showM?'':'none';$('#rubPhy').style.display=showP?'':'none';$('#coursGrid').innerHTML=m.map(card).join('')||'<div class="empty">Aucun cours trouvé.</div>';$('#coursGridPhy').innerHTML=p.map(card).join('')||'<div class="empty">Aucun cours trouvé.</div>'}window.openPdfById=id=>{let c=DATA.cours.find(x=>x.id===id);if(c)openPdf(c)};
 
