@@ -1998,6 +1998,7 @@
           </span>
           <span id="comp-last-update" style="font-size:0.72rem;color:var(--silver);"></span>
         </div>
+        <div id="comp-qctrl" class="card" style="margin-bottom:18px;padding:18px;"></div>
         <div id="comp-info" style="color:var(--silver);font-size:0.85rem;margin-bottom:16px;"></div>
         <!-- Phases -->
         <div id="comp-phases" style="display:flex;flex-direction:column;gap:24px;"></div>
@@ -5572,7 +5573,9 @@ function renderLevels(){
 // ════════════════════════════════════════
 function startLevel(levelId){
   const d = getData();
-  const qs = d.questions.filter(q=>String(q.level)===String(levelId));
+  let qs = d.questions.filter(q=>String(q.level)===String(levelId));
+  const _disc = _discFor(d, levelId);
+  if(_disc){ const _f = qs.filter(q=>(q.matiere||'Général')===_disc); if(_f.length) qs = _f; }
   if(qs.length===0){ toast('Aucune question pour ce niveau. L\'admin doit en ajouter.','info'); return; }
   currentLevelId = levelId;
   const lv = LEVELS.find(l=>String(l.id)===String(levelId));
@@ -7408,6 +7411,7 @@ function genCompetition(){
     toast('⚠️ Un match est en cours — tableau non rechargé pour éviter une interruption','info');
     return;
   }
+  renderQuestionControls();
   const d = getData();
   const sorted = [...d.players].sort((a,b)=>(b.score||0)-(a.score||0));
   const total = sorted.length;
@@ -8302,6 +8306,105 @@ function loadBgImage(input){
 })();
 
 // ════════════════════════════════════════
+// ADMIN : DISCIPLINE + MÉLANGE DES QUESTIONS PAR PHASE
+// d.settings.disciplines[niveau] = matière imposée ('' = toutes les disciplines)
+// ════════════════════════════════════════
+function _discFor(d, level){
+  return (d && d.settings && d.settings.disciplines && d.settings.disciplines[String(level)]) || '';
+}
+
+function renderQuestionControls(){
+  const el = document.getElementById('comp-qctrl');
+  if(!el) return;
+  if(el.contains(document.activeElement)) return; // ne pas casser une sélection en cours
+  const d = getData();
+  const rows = COMP_PHASES.map(ph => {
+    const qs = d.questions.filter(q => String(q.level) === String(ph.level));
+    const counts = {};
+    qs.forEach(q => { const m = q.matiere || 'Général'; counts[m] = (counts[m]||0) + 1; });
+    const cur = _discFor(d, ph.level);
+    const opts = ['<option value="">Toutes les disciplines ('+qs.length+')</option>']
+      .concat(Object.keys(counts).sort().map(m =>
+        '<option value="'+m.replace(/"/g,'&quot;')+'"'+(m===cur?' selected':'')+'>'+m+' ('+counts[m]+')</option>')).join('');
+    return `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;">
+      <div style="min-width:150px;font-weight:700;font-size:0.85rem;">${ph.icon} ${ph.label} <span style="color:var(--silver);font-weight:400;">· Niv. ${ph.level}</span></div>
+      <select style="flex:1;min-width:180px;width:auto;" onchange="setPhaseDiscipline(${ph.level}, this.value)">${opts}</select>
+      <button class="btn btn-outline btn-sm" onclick="shufflePhaseQuestions(${ph.level})">🔀 Mélanger</button>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div style="font-family:'Orbitron',sans-serif;font-size:0.85rem;letter-spacing:2px;color:var(--gold);">🎯 QUESTIONS PAR PHASE</div>
+    <div style="font-size:0.78rem;color:var(--silver);margin-top:4px;">Choisis la discipline de chaque phase. « Mélanger » retire un nouveau lot de questions pour les joueurs (les matchs en direct sont déjà retirés à chaque lancement).</div>${rows}`;
+}
+
+function setPhaseDiscipline(level, matiere){
+  const d = getData();
+  if(!d.settings) d.settings = {};
+  if(!d.settings.disciplines) d.settings.disciplines = {};
+  if(matiere) d.settings.disciplines[String(level)] = matiere;
+  else delete d.settings.disciplines[String(level)];
+  // Nouveau tirage pour les joueurs sur ce niveau
+  if(d.levelQuestions) delete d.levelQuestions[String(level)];
+  if(_cache && _cache.levelQuestions) delete _cache.levelQuestions[String(level)];
+  saveData(d);
+  renderQuestionControls();
+  toast(matiere ? '🎯 Niveau '+level+' : discipline « '+matiere+' »' : '🎯 Niveau '+level+' : toutes les disciplines', 'success');
+}
+
+function shufflePhaseQuestions(level){
+  if(!confirm('🔀 Tirer un nouveau lot de questions pour le niveau '+level+' ?\n\nLes joueurs qui démarrent ce niveau recevront les nouvelles questions. Un quiz déjà commencé ne sera pas modifié par cette action.')) return;
+  const d = getData();
+  if(d.levelQuestions) delete d.levelQuestions[String(level)];
+  if(_cache && _cache.levelQuestions) delete _cache.levelQuestions[String(level)];
+  saveData(d);
+  toast('✅ Niveau '+level+' : nouveau tirage de questions', 'success');
+}
+
+// ════════════════════════════════════════
+// QUESTIONS FRAÎCHES : jamais les mêmes d'une phase à l'autre
+// d.usedLive[niveau] = ids des questions déjà posées en direct (qualification, phases, barrages)
+// On exclut aussi les 60 questions du quiz joueurs de ce niveau.
+// ════════════════════════════════════════
+function _freshPool(d, level){
+  const k = String(level);
+  const all = d.questions.filter(q => String(q.level) === k);
+  const disc = _discFor(d, level);
+  let pool = all;
+  if(disc){ const f = all.filter(q => (q.matiere||'Général') === disc); if(f.length) pool = f; }
+  const used = new Set((d.usedLive && Array.isArray(d.usedLive[k])) ? d.usedLive[k] : Object.values((d.usedLive && d.usedLive[k]) || {}));
+  let lq = d.levelQuestions && d.levelQuestions[k];
+  if(lq && !Array.isArray(lq)) lq = Object.values(lq);
+  (lq || []).forEach(q => { if(q) used.add(q.id); });
+  return { all, fresh: pool.filter(q => !used.has(q.id)) };
+}
+
+// Tire "count" questions dans le pool frais ; complète avec d'anciennes si le pool est insuffisant
+function _drawFrom(pool, all, count){
+  let picked = shuffle([...pool]).slice(0, count);
+  if(picked.length < count){
+    const ids = new Set(picked.map(q => q.id));
+    picked = picked.concat(shuffle(all.filter(q => !ids.has(q.id))).slice(0, count - picked.length));
+  }
+  return picked;
+}
+
+// Mémorise les questions utilisées (si la banque est épuisée, on repart de zéro pour ce niveau)
+function _markUsedLive(d, level, qs, poolWasShort){
+  if(!d.usedLive) d.usedLive = {};
+  const k = String(level);
+  const set = new Set(poolWasShort ? [] : (Array.isArray(d.usedLive[k]) ? d.usedLive[k] : Object.values(d.usedLive[k] || {})));
+  qs.forEach(q => set.add(q.id));
+  d.usedLive[k] = [...set];
+  saveData(d);
+}
+
+function resetUsedLive(){
+  const d = getData();
+  d.usedLive = {};
+  saveData(d);
+  toast('✅ Historique des questions de phases réinitialisé', 'success');
+}
+
+// ════════════════════════════════════════
 // BARRAGE — MORT SUBITE (1 question décisive)
 // ════════════════════════════════════════
 function openBarrage(code1, code2, phaseLabel, level){
@@ -8316,7 +8419,9 @@ function openBarrage(code1, code2, phaseLabel, level){
   if(!confirm(`⚡ BARRAGE MORT SUBITE\n${p1.name} vs ${p2.name}\n\nUne seule question décisive (Niveau ${level}).\nLancer le barrage ?`)) return;
 
   // Sélectionner 1 question aléatoire
-  const q = shuffle([...allQ])[0];
+  const _fp = _freshPool(d, level);
+  const q = _drawFrom(_fp.fresh, _fp.all, 1)[0];
+  _markUsedLive(d, level, [q], _fp.fresh.length < 1);
   window._barrageQuestion = q; // stocker pour injection dans openLiveMatch
 
   openLiveMatch(code1, code2, `⚡ BARRAGE — ${phaseLabel}`, level);
@@ -8369,7 +8474,9 @@ function openLiveMatch(code1, code2, phaseLabel, level){
     _lmQuestions = [window._barrageQuestion];
     window._barrageQuestion = null; // consommer le flag
   } else {
-    _lmQuestions = shuffle([...allQ]).slice(0, Math.min(allQ.length, _LM_Q_COUNT));
+    const _fp = _freshPool(d, _lmLevel);
+    _lmQuestions = _drawFrom(_fp.fresh, _fp.all, Math.min(allQ.length, _LM_Q_COUNT));
+    _markUsedLive(d, _lmLevel, _lmQuestions, _fp.fresh.length < _LM_Q_COUNT);
   }
 
   // Remplir l'UI
@@ -9125,12 +9232,17 @@ function launchPhaseMatches(btn){
   const allQ = d.questions.filter(q => q.level == level);
   if(allQ.length < 60){ toast('Pas assez de questions pour ce niveau (min 60)', 'error'); return; }
 
+  // Pool frais calculé UNE fois pour la phase : aucune question déjà posée dans une phase précédente
+  const _fp = _freshPool(d, level);
+  const _poolShort = _fp.fresh.length < 60;
+  const _allPicked = [];
   const matchesData = rawMatches.map((m, i) => {
     const p1 = d.players.find(p => p.code === m.c1);
     const p2 = d.players.find(p => p.code === m.c2);
     if(!p1 || !p2) return null;
     // Chaque match a sa propre sélection aléatoire de questions
-    const questions = shuffle([...allQ]).slice(0, Math.min(allQ.length, 60));
+    const questions = _drawFrom(_fp.fresh, _fp.all, Math.min(allQ.length, 60));
+    questions.forEach(q => _allPicked.push(q));
     return {
       matchIndex: i,
       phase: phaseLabel,
@@ -9158,12 +9270,15 @@ function launchPhaseMatches(btn){
   }).filter(Boolean);
 
   if(!matchesData.length){ toast('Aucun match valide pour cette phase', 'error'); return; }
+  if(_poolShort) toast('ℹ️ Banque de ce niveau presque épuisée : certaines questions peuvent revenir. Ajoute-en de nouvelles.', 'info');
 
   // Confirmation anti-clic accidentel (fix amélioration #10)
   if(!confirm(`⚡ Lancer ${matchesData.length} match${matchesData.length>1?'s':''} en direct pour la phase "${phaseLabel}" ?\n\nCette action est visible immédiatement par le public.`)){
     btn.disabled = false;
     return;
   }
+
+  _markUsedLive(d, level, _allPicked, _poolShort);
 
   // Publier sur Firebase
   const ref = _lmGetLiveRef();
