@@ -1281,6 +1281,36 @@
   .photo-picker-info { flex:1; font-size:0.8rem; color:var(--silver); line-height:1.6; }
   .photo-picker-info strong { color:var(--accent); }
   #pv-quiz{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+
+  /* ── 🤖 ROBOT ANIMATEUR (mascotte club-ia) ── */
+  .robot-bar{display:flex;align-items:center;gap:12px;margin:0 0 14px;padding:10px 12px;border:1px solid rgba(0,229,255,0.4);border-radius:18px;background:linear-gradient(135deg,rgba(30,64,175,0.55),rgba(13,27,46,0.9));box-shadow:0 4px 22px rgba(0,229,255,0.15);}
+  .robot-avatar{flex:0 0 auto;width:104px;transition:transform .2s;}
+  .robot-avatar .rb-svg{display:block;width:100%;height:auto;overflow:visible;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.35));}
+  .robot-avatar .rb-eye{transform-box:fill-box;transform-origin:center;animation:rb-blink 4.5s infinite;}
+  @keyframes rb-blink{0%,92%,100%{transform:scaleY(1);}95%{transform:scaleY(0.08);}}
+  .robot-avatar .rb-mouth-open{display:none;transform-box:fill-box;transform-origin:center;}
+  .robot-avatar .rb-waves{opacity:0;}
+  .robot-avatar.speaking{animation:robot-talk .5s ease-in-out infinite alternate;}
+  .robot-avatar.speaking .rb-smile{display:none;}
+  .robot-avatar.speaking .rb-mouth-open{display:block;animation:rb-mouth .2s ease-in-out infinite alternate;}
+  .robot-avatar.speaking .rb-waves{animation:rb-wave .6s ease-in-out infinite alternate;}
+  .robot-avatar.speaking .rb-antenna{animation:rb-ant .5s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center;}
+  @keyframes robot-talk{0%{transform:translateY(0);}100%{transform:translateY(-4px);}}
+  @keyframes rb-mouth{0%{transform:scaleY(0.25);}100%{transform:scaleY(1);}}
+  @keyframes rb-wave{0%{opacity:.15;}100%{opacity:1;}}
+  @keyframes rb-ant{0%{transform:scale(1);}100%{transform:scale(1.25);}}
+  .robot-main{flex:1;min-width:0;}
+  .robot-name{display:flex;align-items:center;gap:8px;font-family:'Orbitron',sans-serif;font-size:0.68rem;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:4px;}
+  .robot-eq{display:none;align-items:flex-end;gap:2px;height:12px;}
+  .robot-avatar.speaking + .robot-main .robot-eq{display:inline-flex;}
+  .robot-eq i{display:block;width:3px;background:var(--green);border-radius:2px;animation:robot-eq .6s ease-in-out infinite alternate;}
+  .robot-eq i:nth-child(1){height:5px;animation-delay:0s;} .robot-eq i:nth-child(2){height:11px;animation-delay:.15s;}
+  .robot-eq i:nth-child(3){height:7px;animation-delay:.3s;} .robot-eq i:nth-child(4){height:12px;animation-delay:.1s;}
+  @keyframes robot-eq{0%{transform:scaleY(.3);}100%{transform:scaleY(1);}}
+  .robot-bubble{font-size:0.86rem;color:#EEF2FF;background:rgba(255,255,255,0.08);border-radius:12px;padding:7px 10px;}
+  .robot-btn{flex:0 0 auto;height:36px;border-radius:10px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:1rem;cursor:pointer;width:auto;padding:0 10px;}
+  .robot-btn:hover{background:rgba(0,229,255,0.12);}
+  @media (max-width:480px){ .robot-avatar{width:78px;} .robot-bar{gap:8px;padding:8px;} .robot-btn{padding:0 8px;} }
 </style>
 <script>if(window.self!==window.top){document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("back-club");if(b)b.style.display="none";var c=document.getElementById("back-club-pl");if(c)c.style.display="none";});}</script>
 </head>
@@ -2711,6 +2741,76 @@
         <span class="q-matiere-badge" id="q-matiere">—</span>
       </div>
 
+      <!-- 🤖 Robot animateur : lit la question à voix haute et félicite -->
+      <div id="robot-bar" class="robot-bar">
+        <div id="robot-avatar" class="robot-avatar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 20 720 830" role="img" aria-label="Robot animateur" class="rb-svg">
+  <defs>
+    <linearGradient id="rb-body" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8fdff"/><stop offset="1" stop-color="#b9d9e8"/></linearGradient>
+    <linearGradient id="rb-blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#20c8ee"/><stop offset="1" stop-color="#1264c7"/></linearGradient>
+    <linearGradient id="rb-card" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#eaf5ff"/></linearGradient>
+    <filter id="rb-shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#173b5c" flood-opacity=".2"/></filter>
+  </defs>
+  <ellipse cx="400" cy="830" rx="230" ry="32" fill="#173b5c" opacity=".12"/>
+  <!-- antenna -->
+  <path d="M400 115V72" stroke="#356a91" stroke-width="15" stroke-linecap="round"/>
+  <circle class="rb-antenna" cx="400" cy="54" r="25" fill="#ffb83f" stroke="#9a6519" stroke-width="7"/>
+  <!-- head -->
+  <g filter="url(#rb-shadow)">
+    <rect x="220" y="115" width="360" height="270" rx="78" fill="url(#rb-body)" stroke="#356a91" stroke-width="12"/>
+    <path d="M220 205Q220 115 310 115H490Q580 115 580 205V230H220Z" fill="#dff4fb" opacity=".8"/>
+    <rect x="260" y="180" width="280" height="130" rx="48" fill="#15395b"/>
+    <ellipse class="rb-eye" cx="330" cy="240" rx="23" ry="31" fill="#66edff"/>
+    <ellipse class="rb-eye" cx="470" cy="240" rx="23" ry="31" fill="#66edff"/>
+    <circle class="rb-eye" cx="337" cy="231" r="7" fill="#fff"/><circle class="rb-eye" cx="477" cy="231" r="7" fill="#fff"/>
+    <path class="rb-smile" d="M365 278Q400 302 435 278" fill="none" stroke="#65e9ff" stroke-width="9" stroke-linecap="round"/>
+    <ellipse class="rb-mouth-open" cx="400" cy="285" rx="26" ry="15" fill="#65e9ff"/>
+    <rect x="182" y="210" width="38" height="95" rx="18" fill="#20b9e5" stroke="#356a91" stroke-width="8"/>
+    <rect x="580" y="210" width="38" height="95" rx="18" fill="#20b9e5" stroke="#356a91" stroke-width="8"/>
+    <circle cx="201" cy="258" r="8" fill="#e9fbff"/><circle cx="599" cy="258" r="8" fill="#e9fbff"/>
+  </g>
+  <!-- neck and body -->
+  <rect x="365" y="380" width="70" height="50" rx="18" fill="#5d8eac"/>
+  <g filter="url(#rb-shadow)">
+    <path d="M260 445Q260 410 305 410H495Q540 410 540 455L565 735Q570 780 525 780H275Q230 780 235 735Z" fill="url(#rb-body)" stroke="#356a91" stroke-width="12"/>
+    <path d="M285 465Q400 420 515 465" fill="none" stroke="#fff" stroke-width="12" opacity=".8"/>
+    <rect x="325" y="480" width="150" height="112" rx="25" fill="#15395b"/>
+    <text x="400" y="525" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="700" fill="#72edff">QUIZ</text>
+    <path d="M360 550H440" stroke="#72edff" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="400" cy="635" r="18" fill="#ffbd45" stroke="#a76a1a" stroke-width="6"/>
+  </g>
+  <!-- left arm -->
+  <path d="M255 475Q210 490 185 555L165 620" fill="none" stroke="#5d8eac" stroke-width="34" stroke-linecap="round"/>
+  <circle cx="160" cy="632" r="28" fill="#20b9e5" stroke="#356a91" stroke-width="8"/>
+  <!-- question sheet in hand -->
+  <g transform="rotate(-7 170 505)" filter="url(#rb-shadow)">
+    <rect x="48" y="390" width="190" height="245" rx="16" fill="url(#rb-card)" stroke="#2672b7" stroke-width="8"/>
+    <rect x="48" y="390" width="190" height="48" rx="13" fill="url(#rb-blue)"/>
+    <text x="143" y="422" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#fff">QUESTION</text>
+    <text id="rb-qnum" x="72" y="478" font-family="Arial,sans-serif" font-size="30" font-weight="700" fill="#1465a8">1.</text>
+    <path d="M112 470H211M72 505H211M72 535H198" stroke="#7b9bb4" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="86" cy="578" r="10" fill="#20b9e5"/><path d="M108 578H205" stroke="#7b9bb4" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  <!-- right arm holding pointer/microphone -->
+  <path d="M545 480Q600 500 620 560L650 610" fill="none" stroke="#5d8eac" stroke-width="34" stroke-linecap="round"/>
+  <circle cx="660" cy="625" r="28" fill="#20b9e5" stroke="#356a91" stroke-width="8"/>
+  <g transform="rotate(-25 676 530)">
+    <rect x="660" y="450" width="30" height="125" rx="15" fill="#ffbd45" stroke="#9a6519" stroke-width="7"/>
+    <rect x="651" y="435" width="48" height="45" rx="20" fill="#eaf8ff" stroke="#356a91" stroke-width="7"/>
+    <path d="M666 448H684M666 461H684" stroke="#356a91" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <!-- feet -->
+  <path d="M300 770V805Q300 830 270 830H235Q215 830 215 810V790" fill="#2466a2" stroke="#356a91" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M500 770V805Q500 830 530 830H565Q585 830 585 810V790" fill="#2466a2" stroke="#356a91" stroke-width="10" stroke-linejoin="round"/>
+  <!-- speech lines -->
+  <path class="rb-waves" d="M625 180q28-22 56 0M638 210q18-14 36 0" fill="none" stroke="#ffb83f" stroke-width="9" stroke-linecap="round"/>
+</svg></div>
+        <div class="robot-main">
+          <div class="robot-name">🎙️ Robot club-ia <span class="robot-eq"><i></i><i></i><i></i><i></i></span></div>
+          <div id="robot-bubble" class="robot-bubble">Prêt ! Je lis la question à voix haute.</div>
+        </div>
+        <button id="robot-replay" class="robot-btn" title="Relire la question" onclick="robotReplay()">🔁</button>
+        <button id="robot-mute" class="robot-btn" title="Couper / activer la voix" onclick="robotToggleMute()">🔊</button>
+      </div>
       <div class="quiz-question-text" id="q-text"></div>
       <div class="options-grid" id="q-options"></div>
       <div id="q-feedback" style="display:none;padding:14px 18px;margin-bottom:16px;font-weight:600;"></div>
@@ -5569,6 +5669,109 @@ function renderLevels(){
 }
 
 // ════════════════════════════════════════
+// 🤖 ROBOT ANIMATEUR (voix du navigateur, en français)
+// Lit la question + les choix, félicite ou encourage selon la réponse.
+// ════════════════════════════════════════
+const _ROBOT_OK = ('speechSynthesis' in window) && ('SpeechSynthesisUtterance' in window);
+let _robotMuted = false;
+try{ _robotMuted = localStorage.getItem('olympiade_robot_muted') === '1'; }catch(e){}
+let _robotVoice = null;
+
+const _ROBOT_BRAVO = ['Bravo','Excellent','Félicitations','Magnifique','Très bien joué','Superbe','Bien vu','Quel talent'];
+const _ROBOT_RATE  = ['Courage, tu feras mieux à la prochaine','Dommage, ne lâche rien','Pas grave, continue','Ce n\'est pas fini, accroche-toi'];
+
+function _robotPickVoice(){
+  if(!_ROBOT_OK) return;
+  const vs = window.speechSynthesis.getVoices() || [];
+  _robotVoice = vs.find(v=>/^fr[-_]FR/i.test(v.lang)) || vs.find(v=>/^fr/i.test(v.lang)) || null;
+}
+if(_ROBOT_OK){
+  _robotPickVoice();
+  window.speechSynthesis.onvoiceschanged = _robotPickVoice;
+}
+
+function _robotClean(html){
+  const t = document.createElement('div');
+  t.innerHTML = String(html||'');
+  return (t.textContent || '').replace(/\s+/g,' ').trim();
+}
+
+function _robotUI(){
+  const bar = document.getElementById('robot-bar');
+  const mute = document.getElementById('robot-mute');
+  const rep = document.getElementById('robot-replay');
+  if(mute) mute.textContent = _robotMuted ? '🔇' : '🔊';
+  if(!_ROBOT_OK){ if(mute) mute.style.display='none'; if(rep) rep.style.display='none'; }
+  return bar;
+}
+
+function _robotSay(text, bubble){
+  const bub = document.getElementById('robot-bubble');
+  const av = document.getElementById('robot-avatar');
+  if(bub) bub.textContent = bubble || text;
+  if(!_ROBOT_OK || _robotMuted) return;
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'fr-FR';
+    if(_robotVoice) u.voice = _robotVoice;
+    u.rate = 1; u.pitch = 1.05;
+    u.onstart = ()=>{ if(av) av.classList.add('speaking'); };
+    u.onend = u.onerror = ()=>{ if(av) av.classList.remove('speaking'); };
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+function robotStop(){
+  if(_ROBOT_OK){ try{ window.speechSynthesis.cancel(); }catch(e){} }
+  const av = document.getElementById('robot-avatar');
+  if(av) av.classList.remove('speaking');
+}
+
+function robotReadQuestion(q){
+  _robotUI();
+  if(!q) return;
+  const _qn=document.getElementById('rb-qnum');
+  if(_qn){ _qn.textContent=(quizIndex+1)+'.'; _qn.setAttribute('font-size',(quizIndex+1)>=10?'22':'30'); }
+  const letters = ['A','B','C','D'];
+  const opts = (q.options||[]).map((o,i)=> letters[i]+' : '+_robotClean(o)).join('. ');
+  const txt = 'Question '+(quizIndex+1)+'. '+_robotClean(q.text)+'. '+opts;
+  _robotSay(txt, '🎙️ Question '+(quizIndex+1)+' : j\'écoute avec toi !');
+}
+
+function robotReplay(){
+  const q = quizQuestions && quizQuestions[quizIndex];
+  if(!q) return;
+  if(_robotMuted){ _robotMuted=false; try{localStorage.setItem('olympiade_robot_muted','0');}catch(e){} _robotUI(); }
+  robotReadQuestion(q);
+}
+
+function robotToggleMute(){
+  _robotMuted = !_robotMuted;
+  try{ localStorage.setItem('olympiade_robot_muted', _robotMuted?'1':'0'); }catch(e){}
+  if(_robotMuted) robotStop();
+  _robotUI();
+}
+
+function robotReact(correct, q, idx){
+  const name = (currentPlayer && currentPlayer.name ? String(currentPlayer.name).split(' ')[0] : '');
+  if(correct){
+    const msg = _pick(_ROBOT_BRAVO)+(name?' '+name:'')+' ! Bonne réponse !';
+    _robotSay(msg, '🎉 '+msg);
+  } else {
+    const L = ['A','B','C','D'][q.correct];
+    const msg = _pick(_ROBOT_RATE)+(name?' '+name:'')+'. La bonne réponse était '+L+'.';
+    _robotSay(msg, '💪 '+msg);
+  }
+}
+
+function robotTimeout(q){
+  const L = ['A','B','C','D'][q.correct];
+  const msg = 'Temps écoulé ! La bonne réponse était '+L+'.';
+  _robotSay(msg, '⏰ '+msg);
+}
+
+// ════════════════════════════════════════
 // QUIZ ENGINE
 // ════════════════════════════════════════
 function startLevel(levelId){
@@ -5678,6 +5881,7 @@ function loadQuestion(){
   `).join('');
 
   startTimer(timer, q);
+  robotReadQuestion(q);
 }
 
 // Périmètre du cercle r=22 → 2π*22 ≈ 138.2
@@ -5725,6 +5929,7 @@ function autoExpire(q){
   answered=true;
   quizAnswers.push(false);
   _sndTimerExpire();
+  robotTimeout(q);
   showFeedback(false, 'Temps écoulé ! ⏰ ' + _pick(_ENCOUR_TIMEOUT), q.correct);
   document.getElementById('q-next-btn').style.display='block';
   // Envoyer au tableau de bord admin (temps écoulé)
@@ -5749,6 +5954,7 @@ function selectOption(idx){
     else if(i===idx && !correct) b.classList.add('wrong');
   });
   if(correct){ _sndCorrect(); } else { _sndWrong(); }
+  robotReact(correct, q, idx);
   showFeedback(correct, (correct?'✅ Bonne réponse ! ':' ❌ Mauvaise réponse. ')+ _pick(correct?_ENCOUR_CORRECT:_ENCOUR_WRONG), q.correct);
   document.getElementById('q-next-btn').style.display='block';
   // Envoyer la réponse au tableau de bord admin
@@ -5929,6 +6135,7 @@ window.addEventListener('focus', _acBack);
 let quizAnswers = [];
 
 function endLevel(){
+  robotStop();
   clearInterval(timerInterval);
   _acFlag(false);
   _progClear();
@@ -5985,7 +6192,7 @@ function endLevel(){
   quizAnswers = [];
 }
 
-function backToLevels(){ clearInterval(timerInterval); _acFlag(false); showLevels(); }
+function backToLevels(){ robotStop(); clearInterval(timerInterval); _acFlag(false); showLevels(); }
 function goNextLevel(){ startLevel(String(Number(currentLevelId)+1)); }
 
 function awardPlayerPoints(pts){
