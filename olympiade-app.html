@@ -1871,6 +1871,7 @@
       <div class="sidebar-item" onclick="showAdminSection('s-questions')">❓ Questions</div>
       <div class="sidebar-item" onclick="showAdminSection('s-classement')">🏆 Classement</div>
       <div class="sidebar-item" onclick="showAdminSection('s-competition')">⚔️ Compétition</div>
+      <div class="sidebar-item" onclick="showAdminSection('s-duel')">🥊 Duels libres</div>
       <div class="sidebar-item" onclick="showAdminSection('s-settings')">⚙️ Paramètres</div>
       <div class="sidebar-item" style="margin-top:auto;color:var(--red);" onclick="adminLogout()">🚪 Déconnexion</div>
     </div>
@@ -2028,10 +2029,52 @@
           </span>
           <span id="comp-last-update" style="font-size:0.72rem;color:var(--silver);"></span>
         </div>
+        <label class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:18px;padding:14px 18px;cursor:pointer;font-size:0.9rem;">
+          <input type="checkbox" id="comp-rapid" onchange="try{localStorage.setItem('olympiade_rapid',this.checked?'1':'0')}catch(e){}">
+          <span>⚡ <b>Mode Rapidité</b> — le premier joueur qui répond juste emporte les points (matchs en direct des phases)</span>
+        </label>
         <div id="comp-qctrl" class="card" style="margin-bottom:18px;padding:18px;"></div>
         <div id="comp-info" style="color:var(--silver);font-size:0.85rem;margin-bottom:16px;"></div>
         <!-- Phases -->
         <div id="comp-phases" style="display:flex;flex-direction:column;gap:24px;"></div>
+      </div>
+
+
+      <!-- DUELS LIBRES (2 à 4 joueurs, hors phases) -->
+      <div id="s-duel" class="admin-section">
+        <div class="section-title">🥊 DUELS LIBRES — 2, 3 OU 4 JOUEURS</div>
+        <div style="color:var(--silver);font-size:0.85rem;margin-bottom:16px;">Lancez un duel à tout moment, sans passer par les 16es / 8es / quarts / demis / finale. Choisissez 2 à 4 joueurs, le niveau et le nombre de questions.</div>
+        <div class="card" style="padding:18px;margin-bottom:18px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:16px;">
+            <label style="font-size:0.8rem;color:var(--silver);">Niveau<br>
+              <select id="duel-level" class="form-input" style="width:100%;" onchange="renderDuelSetup()">
+                <option value="1">Niveau 1 (10 pts)</option><option value="2">Niveau 2 (20 pts)</option><option value="3">Niveau 3 (30 pts)</option><option value="4">Niveau 4 (50 pts)</option><option value="5">Niveau 5 (100 pts)</option>
+              </select></label>
+            <label style="font-size:0.8rem;color:var(--silver);">Discipline<br>
+              <select id="duel-disc" class="form-input" style="width:100%;"><option value="">Toutes</option></select></label>
+            <label style="font-size:0.8rem;color:var(--silver);">Nombre de questions<br>
+              <input id="duel-qcount" class="form-input" type="number" min="1" max="30" value="5" style="width:100%;"></label>
+            <label style="font-size:0.8rem;color:var(--silver);">Temps / question (s)<br>
+              <input id="duel-time" class="form-input" type="number" min="5" max="300" value="30" style="width:100%;"></label>
+          </div>
+          <label style="font-size:0.8rem;color:var(--silver);display:block;margin-bottom:14px;">Mode de jeu<br>
+            <select id="duel-mode" class="form-input" style="width:100%;max-width:520px;">
+              <option value="rapid">⚡ Rapidité — le premier qui répond juste emporte les points</option>
+              <option value="classic">📝 Classique — chaque joueur qui répond juste marque les points</option>
+            </select></label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;color:var(--silver);margin-bottom:14px;cursor:pointer;">
+            <input type="checkbox" id="duel-addscore"> Ajouter les points du duel au score général des joueurs
+          </label>
+          <input id="duel-search" class="form-input" placeholder="🔎 Rechercher un joueur (nom, école, code)…" oninput="renderDuelSetup()" style="width:100%;margin-bottom:10px;">
+          <div id="duel-selected" style="margin-bottom:10px;font-size:0.85rem;color:var(--gold);min-height:20px;"></div>
+          <div id="duel-players" style="max-height:300px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;"></div>
+          <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-gold" onclick="startDuel()">🥊 Lancer le duel</button>
+            <button class="btn btn-outline" onclick="duelClearSel()">Vider la sélection</button>
+          </div>
+        </div>
+        <div class="section-title" style="font-size:1rem;">HISTORIQUE DES DUELS</div>
+        <div id="duel-history" class="card" style="padding:14px;font-size:0.85rem;"></div>
       </div>
 
       <!-- PARAMÈTRES -->
@@ -2378,6 +2421,58 @@
 </div>
 
 
+
+<style>
+  #modal-duel { display:none; position:fixed; inset:0; z-index:9000; background:var(--dark); overflow:auto; padding:18px; flex-direction:column; align-items:center; }
+  #modal-duel.open { display:flex; }
+  .dl-header { width:100%; max-width:1000px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  .dl-title { font-weight:900; letter-spacing:1px; color:var(--gold); font-size:1.1rem; }
+  .dl-board { width:100%; max-width:1000px; display:grid; gap:12px; margin-bottom:14px; }
+  .dl-card { background:var(--card,rgba(255,255,255,0.05)); border:2px solid rgba(255,255,255,0.12); border-radius:16px; padding:12px; text-align:center; }
+  .dl-card.ok { border-color:var(--green); } .dl-card.ko { border-color:var(--red); } .dl-card.lead { box-shadow:0 0 0 2px rgba(255,215,0,.5); }
+  .dl-av { width:44px;height:44px;border-radius:12px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.2rem;color:#fff;overflow:hidden; }
+  .dl-name { font-weight:800; font-size:0.95rem; } .dl-school { font-size:0.7rem;color:var(--silver);min-height:14px; }
+  .dl-score { font-size:2rem;font-weight:900;color:var(--accent); }
+  .dl-chips { display:flex; gap:5px; justify-content:center; margin-top:6px; flex-wrap:wrap; }
+  .dl-chip { min-width:34px; padding:6px 8px; border-radius:8px; border:1px solid rgba(255,255,255,0.25); background:transparent; color:#fff; font-weight:800; cursor:pointer; }
+  .dl-chip.sel { background:var(--accent); color:#000; } .dl-chip:disabled { opacity:.5; cursor:not-allowed; }
+  .dl-chip.good { background:var(--green); color:#000; } .dl-chip.bad { background:var(--red); color:#fff; }
+  .dl-q { width:100%; max-width:1000px; background:rgba(255,255,255,0.04); border-radius:16px; padding:18px; }
+  .dl-qmeta { display:flex; justify-content:space-between; color:var(--silver); font-size:0.8rem; margin-bottom:8px; }
+  .dl-timer { font-weight:900; font-size:1.6rem; color:var(--accent); }
+  .dl-qtext { font-size:1.2rem; font-weight:700; margin-bottom:12px; }
+  .dl-opts { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:8px; }
+  .dl-opt { padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); font-size:0.95rem; }
+  .dl-opt.correct { background:rgba(0,230,118,0.2); border-color:var(--green); }
+  .dl-result { width:100%; max-width:1000px; text-align:center; padding:26px; display:none; }
+  .dl-result.show { display:block; }
+</style>
+<div id="modal-duel">
+  <div class="dl-header">
+    <div class="dl-title" id="dl-title">🥊 DUEL</div>
+    <button class="btn btn-outline btn-sm" onclick="closeDuel(true)">✕ Fermer</button>
+  </div>
+  <div class="dl-board" id="dl-board"></div>
+  <div class="dl-q" id="dl-q">
+    <div class="dl-qmeta"><span id="dl-qmeta">—</span><span class="dl-timer" id="dl-timer">—</span></div>
+    <div class="dl-qtext" id="dl-qtext">—</div>
+    <div class="dl-opts" id="dl-opts"></div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px;flex-wrap:wrap;">
+      <button class="btn btn-outline" id="dl-resolve" onclick="duelResolve()">✔ Valider les réponses</button>
+      <button class="btn btn-accent" id="dl-next" onclick="duelNext()" style="display:none;">Question suivante →</button>
+    </div>
+  </div>
+  <div class="dl-result" id="dl-result">
+    <div style="font-size:3rem;">🏆</div>
+    <div style="font-size:1.6rem;font-weight:900;color:var(--gold);margin:6px 0;" id="dl-winner">—</div>
+    <div id="dl-final" style="color:var(--silver);margin-bottom:16px;"></div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn btn-gold" onclick="duelSaveClose()">💾 Enregistrer & Fermer</button>
+      <button class="btn btn-outline" onclick="closeDuel(true)">Fermer sans enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════ SPECTATEUR EN DIRECT ══════════ -->
 <style>
   #screen-spectator { padding:0; align-items:stretch; background:var(--dark); }
@@ -2417,6 +2512,15 @@
   #spec-giant-board .gb-title { font-family:'Orbitron',sans-serif; color:var(--gold); font-size:1.6rem; margin-bottom:12px; }
   #spec-giant-board .gb-row { display:flex; justify-content:space-between; font-size:1.7rem; padding:6px 0; color:#E0E8FF; }
   #spec-giant-board .gb-row b { color:var(--gold); }
+  /* Duels libres (2-4 joueurs) en écran géant */
+  #screen-spectator.giant #spec-duel .sd-name{ font-size:2rem !important; }
+  #screen-spectator.giant #spec-duel .sd-school{ font-size:1.1rem !important; }
+  #screen-spectator.giant #spec-duel .sd-score{ font-size:5.5rem !important; line-height:1.1; }
+  #screen-spectator.giant #spec-duel .sd-status{ font-size:1.6rem !important; margin-top:8px; }
+  #screen-spectator.giant #spec-duel .sd-meta{ font-size:1.3rem !important; }
+  #screen-spectator.giant #spec-duel-timer{ font-size:5rem !important; }
+  #screen-spectator.giant #spec-duel .sd-q{ font-size:2.4rem !important; line-height:1.4; }
+  #screen-spectator.giant #spec-duel .sd-opt{ font-size:1.8rem !important; padding:18px 22px !important; }
   .spec-header {
     background:linear-gradient(135deg,rgba(11,22,40,0.98),rgba(5,10,20,0.98));
     border-bottom:1px solid var(--border);
@@ -2568,7 +2672,7 @@
     <div class="spec-title">⚡ MATCH EN DIRECT</div>
     <div style="display:flex;gap:10px;align-items:center;">
       <span class="spec-phase-badge" id="spec-phase-label">—</span>
-      <button class="btn btn-outline btn-sm keep" onclick="showQualifWall(16)">🧱 Mur</button>
+      <button class="btn btn-outline btn-sm keep" onclick="showQualifWall(32)">🧱 Mur</button>
       <button class="btn btn-outline btn-sm keep" id="btn-giant" onclick="toggleGiantScreen()">📺 Écran géant</button>
       <button class="btn btn-outline btn-sm" onclick="exitSpectator()">✕ Quitter</button>
     </div>
@@ -5538,6 +5642,7 @@ function showAdminSection(id){
   if(id==='s-dashboard') renderDashboard();
   if(id==='s-classement') renderClassement();
   if(id==='s-competition') genCompetition();
+  if(id==='s-duel') renderDuelSetup();
 }
 
 // ════════════════════════════════════════
@@ -7730,10 +7835,10 @@ function resetAllScores(){
 // COMPÉTITION PAR PHASES (16e→8e→QF→SF→F)
 // ════════════════════════════════════════
 const COMP_PHASES = [
-  { id:'r16',  label:'16èmes de finale', icon:'⚔️',  slots:16, winners:8,  level:1 },
-  { id:'r8',   label:'8èmes de finale',  icon:'🥊',  slots:8,  winners:4,  level:2 },
-  { id:'qf',   label:'Quarts de finale', icon:'🔥',  slots:4,  winners:2,  level:3 },
-  { id:'sf',   label:'Demi-finales',     icon:'⭐',  slots:2,  winners:1,  level:4 },
+  { id:'r16',  label:'16èmes de finale', icon:'⚔️',  slots:32, winners:16, level:1 },
+  { id:'r8',   label:'8èmes de finale',  icon:'🥊',  slots:16, winners:8,  level:2 },
+  { id:'qf',   label:'Quarts de finale', icon:'🔥',  slots:8,  winners:4,  level:3 },
+  { id:'sf',   label:'Demi-finales',     icon:'⭐',  slots:4,  winners:2,  level:4 },
   { id:'f',    label:'Finale',           icon:'🏆',  slots:2,  winners:1,  level:5 },
 ];
 
@@ -7759,7 +7864,7 @@ function genCompetition(){
   const phases = [];
 
   // Phase 1 : sélection des 16 (ou moins) meilleurs pour les 16e
-  const top16 = sorted.slice(0, Math.min(16, total));
+  const top16 = sorted.slice(0, Math.min(32, total));   // 32 premiers → 16es de finale
   // Paire les joueurs : 1vs16, 2vs15, etc.
   const buildMatches = (players, phaseSlots) => {
     const matches = [];
@@ -7934,6 +8039,7 @@ function genCompetition(){
       <div class="comp-matches">${matchesHTML}</div>
       ${phIdx < phasesData.length-1 ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:0.8rem;color:var(--accent);">
         ➜ Qualifiés pour <strong>${COMP_PHASES[phIdx+1]?.label||'la prochaine phase'}</strong> : ${winners.map(p=>`<strong>${p.name}</strong>`).join(', ')}
+        <div><button class="btn btn-gold btn-sm" style="margin-top:8px;" onclick="publishQualified(${phIdx})">📺 Afficher les qualifiés à l'écran</button></div>
       </div>` : ''}
     `;
     container.appendChild(phaseDiv);
@@ -8234,11 +8340,11 @@ function announceWinner(name, sub, autoCloseMs){
 function closeQualifWall(){ const o=document.getElementById('qwall'); if(o) o.remove(); document.removeEventListener('keydown',_qwKey); }
 function _qwKey(e){ if(e.key==='Escape') closeQualifWall(); }
 function showQualifWall(n){
-  n = [2,4,8,16].includes(n) ? n : (n<=2?2:n<=4?4:n<=8?8:16);
+  n = [2,4,8,16,32].includes(n) ? n : (n<=2?2:n<=4?4:n<=8?8:n<=16?16:32);
   closeQualifWall();
   const list = [...getData().players].sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,n);
-  const label = {16:'16èmes de finale',8:'8èmes de finale',4:'Quarts de finale',2:'Finale'};
-  const cols = n<=2 ? 2 : n<=4 ? 4 : n<=8 ? 4 : 8;
+  const label = {32:'16èmes de finale',16:'8èmes de finale',8:'Quarts de finale',4:'Demi-finales',2:'Finale'};
+  const cols = n<=2 ? 2 : n<=4 ? 4 : n<=8 ? 4 : n<=16 ? 8 : 8;
   const o = document.createElement('div');
   o.id = 'qwall';
   o.style.cssText = 'position:fixed;inset:0;z-index:99998;background:radial-gradient(circle at 50% 0%,#2a1a5e,#05060f 75%);color:#fff;font-family:Orbitron,sans-serif;display:flex;flex-direction:column;padding:2vh 3vw;overflow:auto;';
@@ -8252,7 +8358,7 @@ function showQualifWall(n){
   t.textContent = '🎉 QUALIFIÉS · ' + label[n];
   head.appendChild(t);
   const bar = document.createElement('div'); bar.style.cssText = 'display:flex;gap:8px;align-items:center;';
-  [16,8,4,2].forEach(k=>{
+  [32,16,8,4,2].forEach(k=>{
     const b = document.createElement('button'); b.textContent = k;
     b.style.cssText = 'font:inherit;font-weight:700;padding:6px 16px;border-radius:20px;cursor:pointer;border:1px solid #FFD740;'+(k===n?'background:#FFD740;color:#000;':'background:transparent;color:#FFD740;');
     b.onclick = ()=>showQualifWall(k); bar.appendChild(b);
@@ -8781,6 +8887,10 @@ let _lmDotHistory = []; // historique des états de dots (fix bug #1)
 const _LM_Q_COUNT = 60;  // nombre de questions par match
 
 let _lmActive = false; // anti-double-clic (fix bug #2 & #6)
+let _lmRapid = false;  // mode rapidité : le premier à répondre juste marque
+let _lmFirst = 0;      // joueur (1/2) qui a marqué en mode rapidité
+let _lmBuzz = 0;       // joueur (1/2) qui a buzzé et a la main (mode rapidité)
+(function(){ try{ const e=document.getElementById('comp-rapid'); if(e) e.checked = localStorage.getItem('olympiade_rapid')!=='0'; }catch(x){} })();
 
 function openLiveMatch(code1, code2, phaseLabel, level){
   if(_lmActive){ toast('Un match est déjà en cours','error'); return; }
@@ -8790,6 +8900,8 @@ function openLiveMatch(code1, code2, phaseLabel, level){
   if(!_lmP1 || !_lmP2){ toast('Joueur introuvable','error'); return; }
 
   _lmActive = true;
+  { const _cr = document.getElementById('comp-rapid'); _lmRapid = !!(_cr && _cr.checked); }
+  _lmFirst = 0;
   _lmLevel = level || 1;
   _lmPhaseLabel = phaseLabel || 'Match';
   _lmP1Score = 0; _lmP2Score = 0;
@@ -8812,7 +8924,7 @@ function openLiveMatch(code1, code2, phaseLabel, level){
   }
 
   // Remplir l'UI
-  document.getElementById('lm-phase-label').textContent = `${phaseLabel} · Niveau ${_lmLevel}`;
+  document.getElementById('lm-phase-label').textContent = `${phaseLabel} · Niveau ${_lmLevel}` + (_lmRapid ? ' · ⚡ Rapidité' : '');
 
   // Avatar + infos J1
   const av1 = document.getElementById('lm-p1-avatar');
@@ -8870,7 +8982,7 @@ function _lmBuildProgressDots(){
 function _lmLoadQuestion(){
   if(_lmQIndex >= _lmQuestions.length){ _lmEndMatch(); return; }
 
-  _lmAnswered = false;
+  _lmAnswered = false; _lmFirst = 0; _lmBuzz = 0;
   _lmP1Answered = false;
   _lmP2Answered = false;
   _lmP1Answer = -1;
@@ -8925,6 +9037,17 @@ function _lmLoadQuestion(){
       `).join('')}
     </div>
   `;
+  if(_lmRapid){
+    [1,2].forEach(n=>{
+      const col = document.getElementById('lm-opt-p'+n+'-0').parentNode;
+      const b = document.createElement('button');
+      b.id = 'lm-buzz-p'+n; b.className = 'btn btn-accent';
+      b.style.cssText = 'width:100%;margin-bottom:8px;font-weight:800;letter-spacing:1px;';
+      b.onclick = ()=>lmBuzz(n);
+      col.insertBefore(b, col.children[1]);
+    });
+    _lmBuzzUI();
+  }
 
   // Progress dots
   _lmBuildProgressDots();
@@ -8958,8 +9081,27 @@ function _lmStartTimer(sec, q){
   },1000);
 }
 
+function lmBuzz(n){
+  if(!_lmRapid || _lmAnswered || _lmBuzz) return;
+  if(n===1 ? _lmP1Answered : _lmP2Answered) return;
+  _lmBuzz = n;
+  try{ _sndTimerBeep(); }catch(e){}
+  _lmSetAnsChip('lm-ans-p'+n, 'waiting', '🔔 '+(n===1?_lmP1:_lmP2).name.split(' ')[0]+' répond…');
+  _lmBuzzUI();
+  _lmPublish();
+}
+function _lmBuzzUI(){
+  [1,2].forEach(n=>{
+    const done = n===1 ? _lmP1Answered : _lmP2Answered;
+    const holds = _lmBuzz===n;
+    const b = document.getElementById('lm-buzz-p'+n);
+    if(b){ b.disabled = _lmAnswered || done || _lmBuzz!==0; b.textContent = holds ? '🔔 À TOI !' : (done ? '✗ Éliminé' : '🔔 BUZZ'); }
+    for(let i=0;i<4;i++){ const o=document.getElementById('lm-opt-p'+n+'-'+i); if(o) o.disabled = !holds || done || _lmAnswered; }
+  });
+}
 function lmSelectAnswer(playerNum, idx){
   if(_lmAnswered) return;
+  if(_lmRapid && _lmBuzz!==playerNum) return;   // rapidité : il faut avoir buzzé d'abord
   const q = _lmQuestions[_lmQIndex];
 
   if(playerNum===1){
@@ -8988,6 +9130,21 @@ function lmSelectAnswer(playerNum, idx){
     document.getElementById('lm-p2-card').className = 'lm-player-card ' + (ok ? 'p2-answered' : '');
   }
 
+  // Mode rapidité : le premier à répondre juste prend les points et la question s'arrête
+  if(_lmRapid){
+    const _ok = idx===q.correct;
+    if(_ok){
+      _lmFirst = playerNum;
+      const other = playerNum===1 ? 2 : 1;
+      if(!(other===1 ? _lmP1Answered : _lmP2Answered)){
+        _lmSetAnsChip('lm-ans-p'+other, 'waiting', '— trop tard');
+      }
+      _lmResolveQuestion(q);
+      return;
+    }
+    _lmBuzz = 0; _lmBuzzUI();   // mauvaise réponse : le buzzer est rendu à l'autre joueur
+    if(!(_lmP1Answered && _lmP2Answered)) _lmPublish();
+  }
   // Si les deux ont répondu, résoudre
   if(_lmP1Answered && _lmP2Answered) _lmResolveQuestion(q);
 }
@@ -9014,8 +9171,9 @@ function _lmResolveQuestion(q){
   const lv = LEVELS.find(l=>String(l.id)===String(_lmLevel));
   const pts = lv ? lv.pts : 10;
 
-  const p1Ok = _lmP1Answer===q.correct;
-  const p2Ok = _lmP2Answer===q.correct;
+  let p1Ok = _lmP1Answer===q.correct;
+  let p2Ok = _lmP2Answer===q.correct;
+  if(_lmRapid){ p1Ok = (_lmFirst===1 && p1Ok); p2Ok = (_lmFirst===2 && p2Ok); }
 
   if(p1Ok){ _lmP1Score += pts; _lmP1Correct++; }
   if(p2Ok){ _lmP2Score += pts; _lmP2Correct++; }
@@ -9112,7 +9270,30 @@ function _lmEndMatch(){
   document.getElementById('lm-result-overlay').classList.add('show');
 }
 
+function publishQualified(phIdx){
+  const pds = window._compPhasesData || [];
+  const pd = pds[phIdx]; if(!pd) return;
+  const idx = COMP_PHASES.findIndex(x=>x.label===pd.phase.label);
+  const next = COMP_PHASES[idx+1]; if(!next) return;
+  const ref = _lmGetLiveRef(); if(!ref){ toast('Écran public indisponible','error'); return; }
+  const players = pd.winners.map(w=>({name:w.name||'', school:w.school||'', classe:w.classe||''}));
+  ref.set({ active:false, qualified:{ label:next.label, from:pd.phase.label, players }, ts:Date.now() })
+    .then(()=>toast('📺 Qualifiés affichés sur l\'écran public','success')).catch(()=>{});
+}
+// Fin de phase : quand tous les matchs d'une phase sont joués, afficher les qualifiés sur l'écran public
+function _compPhaseTrack(label, need){
+  window._compDone = window._compDone || {};
+  const c = (window._compDone[label]||0) + 1;
+  window._compDone[label] = c;
+  if(!need || c < need) return;
+  window._compDone[label] = 0;
+  const phIdx = (window._compPhasesData||[]).findIndex(x=>x.phase.label===label);
+  if(phIdx>=0) setTimeout(()=>publishQualified(phIdx), 800);
+}
 function lmSaveAndClose(){
+  const _phLab = String(_lmPhaseLabel||'').replace(/^⚡ BARRAGE — /,'');
+  const _pd0 = (window._compPhasesData||[]).find(x=>x.phase.label===_phLab);
+  const _need = _pd0 ? _pd0.matches.filter(m=>m.p1&&m.p2).length : 0;
   // Ajouter les points de match aux scores généraux
   const d = getData();
   const idx1 = d.players.findIndex(p=>p.code===_lmP1.code);
@@ -9126,6 +9307,7 @@ function lmSaveAndClose(){
   genCompetition();
   renderDashboard();
   renderClassement();
+  _compPhaseTrack(_phLab, _need);
 }
 
 function _lmSetAnsChip(id, state, text){
@@ -9174,6 +9356,7 @@ function _lmPublish(extra){
   const q = _lmQuestions[_lmQIndex] || null;
   const state = {
     active: true,
+    rapid: _lmRapid,
     phase: _lmPhaseLabel,
     level: _lmLevel,
     qIndex: _lmQIndex,
@@ -9185,6 +9368,9 @@ function _lmPublish(extra){
     p2Answered: _lmP2Answered,
     p1Answer: _lmP1Answer,
     p2Answer: _lmP2Answer,
+    buzz: _lmBuzz,
+    p1Locked: !!(_lmRapid && q && _lmP1Answered && _lmP1Answer!==q.correct),
+    p2Locked: !!(_lmRapid && q && _lmP2Answered && _lmP2Answer!==q.correct),
     correctAnswer: -1,       // révélé seulement après résolution
     resolved: false,
     timerStart: Date.now(),
@@ -9263,6 +9449,22 @@ function _specStartListening(){
 // Intervalles chrono par match (tableau)
 let _specTimerHandles = [];
 
+function _specQualified(q){
+  const idle = document.getElementById('spec-idle'); if(!idle) return;
+  let el = document.getElementById('spec-qualified');
+  if(!el){ el = document.createElement('div'); el.id='spec-qualified'; idle.parentNode.insertBefore(el, idle.nextSibling); }
+  if(!q || !q.players || !q.players.length){ el.style.display='none'; el.innerHTML=''; return; }
+  idle.style.display = 'none'; el.style.display = '';
+  const grads = ['linear-gradient(135deg,var(--accent2),var(--accent))','linear-gradient(135deg,#FF4081,#FF6D00)','linear-gradient(135deg,#00E676,#00B8D4)','linear-gradient(135deg,#FFD740,#FF9100)'];
+  el.innerHTML = '<div style="text-align:center;font-family:Orbitron,sans-serif;color:#FFD740;font-size:clamp(1.3rem,3.2vw,3rem);font-weight:900;letter-spacing:2px;margin:14px 0 4px;">🎉 QUALIFIÉS</div>'
+    +'<div style="text-align:center;color:var(--silver);font-size:clamp(0.9rem,1.6vw,1.6rem);margin-bottom:16px;">pour les '+_dEsc(q.label||'')+' · '+q.players.length+' joueur'+(q.players.length>1?'s':'')+'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(200px,22vw,340px),1fr));gap:12px;">'
+    +q.players.map((p,i)=>'<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:16px;border:1px solid rgba(255,215,0,.45);background:rgba(255,215,0,.08);">'
+      +'<div style="flex:none;width:clamp(40px,4vw,64px);height:clamp(40px,4vw,64px);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;background:'+grads[i%4]+';">'+_dEsc((p.name||'?').charAt(0).toUpperCase())+'</div>'
+      +'<div style="min-width:0;"><div style="font-weight:800;font-size:clamp(1rem,1.9vw,2rem);">'+_dEsc(p.name)+'</div>'
+      +'<div style="color:var(--silver);font-size:clamp(0.75rem,1.2vw,1.2rem);">'+_dEsc([p.classe,p.school].filter(Boolean).join(' · '))+'</div></div></div>').join('')
+    +'</div>';
+}
 function _specApply(data){
   const idle     = document.getElementById('spec-idle');
   const matchDiv = document.getElementById('spec-match');
@@ -9273,11 +9475,13 @@ function _specApply(data){
     _specTimerHandles.forEach(h => clearInterval(h));
     _specTimerHandles = [];
     clearInterval(_specTimerHandle);
+    _specQualified(data && data.qualified ? data.qualified : null);
     return;
   }
 
   if(idle) idle.style.display = 'none';
   if(matchDiv) matchDiv.style.display = '';
+  _specQualified(null);
 
   // Phase label
   const phEl = document.getElementById('spec-phase-label');
@@ -9287,6 +9491,13 @@ function _specApply(data){
   _specTimerHandles.forEach(h => clearInterval(h));
   _specTimerHandles = [];
   clearInterval(_specTimerHandle);
+
+  // ── Cas : duel libre 2-4 joueurs ──
+  if(data.duel){
+    _specRenderDuel(data, matchDiv);
+    return;
+  }
+  _specToggleDuel(false);
 
   // ── Cas : plusieurs matchs simultanés (launchPhaseMatches) ──
   if(data.matches && Array.isArray(data.matches)){
@@ -9422,7 +9633,340 @@ function _specRenderMultiMatch(matches, container){
   });
 }
 
+
+// ════════════════════════════════════════
+// DUELS LIBRES (2 à 4 joueurs, hors phases)
+// ════════════════════════════════════════
+const DUEL_PTS = {1:10,2:20,3:30,4:50,5:100};
+let _duel = null;        // état du duel en cours
+let _duelSel = [];       // codes sélectionnés
+let _duelTimer = null;
+
+function renderDuelSetup(){
+  const d = getData();
+  const lvEl = document.getElementById('duel-level'); if(!lvEl) return;
+  const lv = lvEl.value;
+  // disciplines du niveau
+  const dEl = document.getElementById('duel-disc');
+  const cur = dEl.value;
+  const counts = {};
+  d.questions.filter(q=>String(q.level)===String(lv)).forEach(q=>{ const m=q.matiere||'Général'; counts[m]=(counts[m]||0)+1; });
+  const tot = Object.values(counts).reduce((a,b)=>a+b,0);
+  dEl.innerHTML = '<option value="">Toutes ('+tot+')</option>' + Object.keys(counts).sort().map(m=>'<option value="'+_dEsc(m)+'"'+(m===cur?' selected':'')+'>'+_dEsc(m)+' ('+counts[m]+')</option>').join('');
+  // joueurs
+  const qs = (document.getElementById('duel-search').value||'').toLowerCase().trim();
+  const list = (d.players||[]).filter(p=>!qs || ((p.name||'')+' '+(p.school||'')+' '+(p.code||'')).toLowerCase().includes(qs));
+  document.getElementById('duel-players').innerHTML = list.map(p=>{
+    const on = _duelSel.includes(p.code);
+    return '<div onclick="duelToggle(\''+_dEsc(p.code)+'\')" style="cursor:pointer;padding:8px 10px;border-radius:10px;border:2px solid '+(on?'var(--gold)':'rgba(255,255,255,0.12)')+';background:'+(on?'rgba(255,215,0,0.1)':'transparent')+';">'
+      +'<div style="font-weight:700;font-size:0.85rem;">'+(on?'✅ ':'')+_dEsc(p.name||'?')+'</div>'
+      +'<div style="font-size:0.7rem;color:var(--silver);">'+_dEsc((p.classe||'')+(p.school?' · '+p.school:''))+' · '+(p.score||0)+' pts</div></div>';
+  }).join('') || '<div style="color:var(--silver);">Aucun joueur.</div>';
+  const names = _duelSel.map(c=>{ const p=(d.players||[]).find(x=>x.code===c); return p?p.name:c; });
+  document.getElementById('duel-selected').textContent = _duelSel.length ? ('Sélection ('+_duelSel.length+'/4) : '+names.join('  ⚔️  ')) : 'Choisissez 2 à 4 joueurs.';
+  // historique
+  const h = (d.duels||[]).slice().reverse();
+  document.getElementById('duel-history').innerHTML = h.length ? h.map(x=>'<div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);">🥊 <b>'+_dEsc(x.winner||'—')+'</b> · '+_dEsc(x.summary||'')+' <span style="color:var(--silver);font-size:0.72rem;">'+_dEsc(x.date||'')+'</span></div>').join('') : '<span style="color:var(--silver);">Aucun duel pour l\'instant.</span>';
+}
+function _dEsc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function duelToggle(code){
+  const i = _duelSel.indexOf(code);
+  if(i>=0) _duelSel.splice(i,1);
+  else { if(_duelSel.length>=4){ toast('Maximum 4 joueurs','error'); return; } _duelSel.push(code); }
+  renderDuelSetup();
+}
+function duelClearSel(){ _duelSel=[]; renderDuelSetup(); }
+
+function _duelDraw(d, level, disc, count, excludeIds){
+  const k = String(level);
+  const all = d.questions.filter(q=>String(q.level)===k && !(excludeIds||[]).includes(q.id));
+  let pool = all;
+  if(disc){ const f = all.filter(q=>(q.matiere||'Général')===disc); if(f.length) pool = f; }
+  const used = new Set((d.usedLive && Array.isArray(d.usedLive[k])) ? d.usedLive[k] : Object.values((d.usedLive&&d.usedLive[k])||{}));
+  const fresh = pool.filter(q=>!used.has(q.id));
+  const picked = _drawFrom(fresh, pool, count);
+  return { picked, short: fresh.length < count };
+}
+
+function startDuel(){
+  if(_lmActive || _duel){ toast('Un match est déjà en cours','error'); return; }
+  if(_duelSel.length<2 || _duelSel.length>4){ toast('Choisissez entre 2 et 4 joueurs','error'); return; }
+  const d = getData();
+  const level = parseInt(document.getElementById('duel-level').value)||1;
+  const disc = document.getElementById('duel-disc').value||'';
+  const n = Math.max(1, Math.min(30, parseInt(document.getElementById('duel-qcount').value)||5));
+  const time = Math.max(5, Math.min(300, parseInt(document.getElementById('duel-time').value)||30));
+  const players = _duelSel.map(c=>(d.players||[]).find(p=>p.code===c)).filter(Boolean);
+  if(players.length<2){ toast('Joueurs introuvables','error'); return; }
+  const r = _duelDraw(d, level, disc, n, []);
+  if(!r.picked.length){ toast('Pas de questions pour ce niveau / cette discipline','error'); return; }
+  _markUsedLive(d, level, r.picked, r.short);
+  _lmActive = true;
+  _duel = {
+    level, disc, time, rapid: document.getElementById('duel-mode').value==='rapid', first: -1, pts: DUEL_PTS[level]||10, addScore: document.getElementById('duel-addscore').checked,
+    players: players.map(p=>({code:p.code,name:p.name,school:(p.classe||'')+(p.school?' · '+p.school:''),photo:p.photo||null,score:0,correct:0,bonus:0})),
+    qs: r.picked, qi: 0, ans: [], resolved: false, timeLeft: time, timerStart: Date.now(),
+    barrage: false, tied: [], finished: false, winners: [], saved: false
+  };
+  document.getElementById('dl-result').classList.remove('show');
+  document.getElementById('dl-q').style.display = '';
+  document.getElementById('modal-duel').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  duelLoad();
+}
+
+function duelLoad(){
+  const D = _duel; if(!D) return;
+  const q = D.qs[D.qi];
+  D.ans = D.players.map(()=>-1); D.first = -1; D.buzz = -1;
+  D.resolved = false; D.timeLeft = D.time; D.timerStart = Date.now();
+  document.getElementById('dl-title').textContent = (D.barrage ? '⚡ BARRAGE — MORT SUBITE' : '🥊 DUEL '+D.players.length+' JOUEURS'+(D.rapid?' · RAPIDITÉ':''))+' · Niveau '+D.level;
+  document.getElementById('dl-qmeta').textContent = (q.matiere||'—')+' · '+(D.barrage ? 'Question décisive' : 'Question '+(D.qi+1)+' / '+D.qs.length);
+  document.getElementById('dl-qtext').textContent = q.text;
+  document.getElementById('dl-opts').innerHTML = (q.options||[]).map((o,i)=>'<div class="dl-opt" id="dl-opt-'+i+'"><b>'+'ABCD'[i]+'.</b> '+_dEsc(o)+'</div>').join('');
+  document.getElementById('dl-resolve').style.display = '';
+  document.getElementById('dl-next').style.display = 'none';
+  duelRenderBoard();
+  clearInterval(_duelTimer);
+  _duelTimer = setInterval(()=>{
+    if(!_duel || _duel.resolved){ clearInterval(_duelTimer); return; }
+    _duel.timeLeft--;
+    document.getElementById('dl-timer').textContent = Math.max(0,_duel.timeLeft);
+    if(_duel.timeLeft<=5 && _duel.timeLeft>0 && typeof _sndTimerBeep==='function') try{_sndTimerBeep();}catch(e){}
+    if(_duel.timeLeft<=0){ if(typeof _sndTimerExpire==='function') try{_sndTimerExpire();}catch(e){} duelResolve(); }
+  },1000);
+  document.getElementById('dl-timer').textContent = D.timeLeft;
+  duelPublish();
+}
+
+function duelRenderBoard(){
+  const D=_duel; if(!D) return;
+  const q = D.qs[D.qi];
+  const maxS = Math.max.apply(null, D.players.map(p=>p.score));
+  const cols = D.players.length;
+  const board = document.getElementById('dl-board');
+  board.style.gridTemplateColumns = 'repeat('+(cols>2?2:cols)+',1fr)';
+  if(window.innerWidth>700) board.style.gridTemplateColumns = 'repeat('+cols+',1fr)';
+  const grads = ['linear-gradient(135deg,var(--accent2),var(--accent))','linear-gradient(135deg,#FF4081,#FF6D00)','linear-gradient(135deg,#00E676,#00B8D4)','linear-gradient(135deg,#FFD740,#FF9100)'];
+  board.innerHTML = D.players.map((p,i)=>{
+    const tiedOut = D.barrage && !D.tied.includes(i);
+    let cls = 'dl-card';
+    if(D.rapid){ if(D.first===i) cls += ' ok'; else if(D.ans[i]>=0) cls += ' ko'; }
+    else if(D.resolved && !tiedOut){ cls += (D.ans[i]===q.correct) ? ' ok' : ' ko'; }
+    if(maxS>0 && p.score===maxS && !D.barrage) cls += ' lead';
+    const chips = tiedOut ? '<div style="font-size:0.7rem;color:var(--silver);margin-top:6px;">hors barrage</div>' :
+      (D.rapid && !D.resolved && D.ans[i]<0 ? '<button class="btn btn-accent btn-sm" style="width:100%;margin:6px 0;font-weight:800;" '+(D.buzz>=0?'disabled':'')+' onclick="duelBuzz('+i+')">'+(D.buzz===i?'🔔 À TOI !':'🔔 BUZZ')+'</button>' : '')+'<div class="dl-chips">'+(q.options||[]).map((o,k)=>{
+        let c='dl-chip'; if(D.ans[i]===k) c+=' sel';
+        if(D.resolved){ if(k===q.correct) c+=' good'; else if(D.ans[i]===k) c+=' bad'; }
+        if(D.rapid && !D.resolved && D.ans[i]>=0) c+=' bad';
+        return '<button class="'+c+'" '+((D.resolved||(D.rapid&&(D.ans[i]>=0||D.buzz!==i)))?'disabled':'')+' onclick="duelAnswer('+i+','+k+')">'+'ABCD'[k]+'</button>';
+      }).join('')+'</div>';
+    const av = p.photo ? '<img src="'+_dEsc(p.photo)+'" style="width:100%;height:100%;object-fit:cover;" alt="">' : _dEsc((p.name||'?').charAt(0).toUpperCase());
+    return '<div class="'+cls+'" style="'+(tiedOut?'opacity:.45;':'')+'"><div class="dl-av" style="background:'+grads[i%4]+'">'+av+'</div>'
+      +'<div class="dl-name">'+_dEsc(p.name)+'</div><div class="dl-school">'+_dEsc(p.school)+'</div>'
+      +'<div class="dl-score">'+p.score+'</div><div style="font-size:0.65rem;color:var(--silver);">pts · '+p.correct+' ✓</div>'+chips+'</div>';
+  }).join('');
+}
+
+function duelBuzz(i){
+  const D=_duel; if(!D || D.resolved || !D.rapid || D.buzz>=0 || D.ans[i]>=0) return;
+  if(D.barrage && !D.tied.includes(i)) return;
+  D.buzz = i;
+  try{ if(typeof _sndTimerBeep==='function') _sndTimerBeep(); }catch(e){}
+  duelRenderBoard(); duelPublish();
+}
+function duelAnswer(i, k){
+  const D=_duel; if(!D || D.resolved) return;
+  if(D.rapid){
+    if(D.buzz!==i) return;                 // rapidité : il faut avoir buzzé d'abord
+    if(D.ans[i]>=0) return;                // déjà tenté : éliminé pour cette question
+    if(D.barrage && !D.tied.includes(i)) return;
+    D.ans[i] = k;
+    if(k===D.qs[D.qi].correct){ D.first = i; return duelResolve(); }   // premier à répondre juste
+    try{ _sndWrong(); }catch(e){}
+    D.buzz = -1;                           // mauvaise réponse : les autres peuvent buzzer
+    const act = D.players.map((p,idx)=>idx).filter(idx=>!D.barrage || D.tied.includes(idx));
+    duelRenderBoard(); duelPublish();
+    if(act.every(idx=>D.ans[idx]>=0)) setTimeout(()=>{ if(_duel && !_duel.resolved) duelResolve(); }, 500);
+    return;
+  }
+  D.ans[i] = (D.ans[i]===k) ? -1 : k;
+  duelRenderBoard();
+  duelPublish();
+  const active = D.players.map((p,idx)=>idx).filter(idx=>!D.barrage || D.tied.includes(idx));
+  if(active.every(idx=>D.ans[idx]>=0)) setTimeout(()=>{ if(_duel && !_duel.resolved) duelResolve(); }, 500);
+}
+
+function duelResolve(){
+  const D=_duel; if(!D || D.resolved) return;
+  D.resolved = true; clearInterval(_duelTimer);
+  const q = D.qs[D.qi];
+  const active = D.players.map((p,idx)=>idx).filter(idx=>!D.barrage || D.tied.includes(idx));
+  let anyOk = false;
+  active.forEach(i=>{
+    if(D.rapid && D.first!==i) return;   // rapidité : seul le premier à répondre juste marque
+    if(D.ans[i]===q.correct){
+      anyOk = true;
+      D.players[i].correct++;
+      if(D.barrage) D.players[i].bonus++; else D.players[i].score += D.pts;
+    }
+  });
+  if(typeof (anyOk ? _sndCorrect : _sndWrong)==='function') try{ (anyOk?_sndCorrect:_sndWrong)(); }catch(e){}
+  document.querySelectorAll('#dl-opts .dl-opt').forEach((el,i)=>{ if(i===q.correct) el.classList.add('correct'); });
+  document.getElementById('dl-resolve').style.display = 'none';
+  const nb = document.getElementById('dl-next');
+  nb.style.display = '';
+  nb.textContent = (D.barrage || D.qi>=D.qs.length-1) ? '🏁 Voir le résultat' : 'Question suivante →';
+  duelRenderBoard();
+  duelPublish();
+}
+
+function duelNext(){
+  const D=_duel; if(!D || !D.resolved) return;
+  if(D.barrage){
+    // un seul gagnant parmi les ex-aequo ?
+    const hits = D.tied.filter(i=>D.ans[i]===D.qs[D.qi].correct);
+    if(hits.length===1){ D.winners=[hits[0]]; return duelEnd(); }
+    if(hits.length>1) D.tied = hits;     // seuls les bons répondeurs continuent
+    return duelStartBarrage();           // sinon : nouvelle question pour les mêmes
+  }
+  if(D.qi < D.qs.length-1){ D.qi++; return duelLoad(); }
+  // fin des questions : ex-aequo en tête ?
+  const max = Math.max.apply(null, D.players.map(p=>p.score));
+  const top = D.players.map((p,i)=>i).filter(i=>D.players[i].score===max);
+  if(top.length>1 && max>0){ D.tied = top; return duelStartBarrage(); }
+  D.winners = max>0 ? top : [];
+  duelEnd();
+}
+
+function duelStartBarrage(){
+  const D=_duel; if(!D) return;
+  const d = getData();
+  const r = _duelDraw(d, D.level, D.disc, 1, D.qs.map(q=>q.id));
+  if(!r.picked.length){ D.winners = D.tied.slice(); return duelEnd(); }
+  _markUsedLive(d, D.level, r.picked, false);
+  D.barrage = true;
+  D.qs.push(r.picked[0]);
+  D.qi = D.qs.length-1;
+  toast('⚡ Égalité ! Barrage mort subite','info');
+  duelLoad();
+}
+
+function duelEnd(){
+  const D=_duel; if(!D) return;
+  D.finished = true; clearInterval(_duelTimer);
+  const names = D.winners.map(i=>D.players[i].name);
+  const winner = names.length ? names.join(' & ') : 'Aucun vainqueur';
+  document.getElementById('dl-q').style.display = 'none';
+  document.getElementById('dl-winner').textContent = names.length ? ('🏆 '+winner) : winner;
+  document.getElementById('dl-final').textContent = D.players.map(p=>p.name+' : '+p.score+' pts').join('  ·  ');
+  document.getElementById('dl-result').classList.add('show');
+  duelRenderBoard();
+  if(typeof _sndVictory==='function') try{_sndVictory();}catch(e){}
+  duelPublish();
+  try{ if(names.length && typeof announceWinner==='function') announceWinner(winner, D.players.map(p=>p.name+' '+p.score).join(' · '), 9000); }catch(e){}
+}
+
+function duelSaveClose(){
+  const D=_duel; if(!D) return closeDuel(true);
+  const d = getData();
+  if(D.addScore){
+    D.players.forEach(p=>{ const i=d.players.findIndex(x=>x.code===p.code); if(i>=0) d.players[i].score=(d.players[i].score||0)+p.score; });
+  }
+  if(!d.duels) d.duels = [];
+  d.duels.push({
+    date: new Date().toLocaleString('fr-FR'),
+    winner: D.winners.length ? D.winners.map(i=>D.players[i].name).join(' & ') : '—',
+    summary: D.players.map(p=>p.name+' '+p.score).join(' · ')+' (N'+D.level+')'
+  });
+  if(d.duels.length>50) d.duels = d.duels.slice(-50);
+  saveData(d);
+  logActivity('Duel libre : '+D.players.map(p=>p.name+' '+p.score).join(' / '));
+  toast('Duel enregistré !','success');
+  closeDuel(false);
+  renderDuelSetup();
+  try{ renderDashboard(); renderClassement(); }catch(e){}
+}
+
+function closeDuel(confirmIt){
+  if(confirmIt && _duel && !_duel.finished && !confirm('Quitter le duel en cours ? Rien ne sera enregistré.')) return;
+  clearInterval(_duelTimer);
+  _duel = null; _lmActive = false;
+  _lmPublishClear();
+  document.getElementById('modal-duel').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function duelPublish(){
+  const D=_duel; if(!D) return;
+  const ref = _lmGetLiveRef(); if(!ref) return;
+  const q = D.qs[D.qi];
+  ref.set({
+    active:true, duel:true, rapid: D.rapid, phase: D.barrage ? '⚡ BARRAGE' : '🥊 DUEL', level: D.level,
+    qIndex: D.qi, qTotal: D.barrage ? 1 : D.qs.length, barrage: D.barrage, buzz: D.buzz,
+    players: D.players.map((p,i)=>({name:p.name,school:p.school,photo:p.photo||null,score:p.score,correct:p.correct,
+      answered: D.ans[i]>=0, answer: D.resolved ? D.ans[i] : -1, locked: !!(D.rapid && D.ans[i]>=0 && D.ans[i]!==D.qs[D.qi].correct), first: D.first===i,
+      out: D.barrage && !D.tied.includes(i)})),
+    question: (!D.finished && q) ? {text:q.text, matiere:q.matiere||'—', options:q.options} : null,
+    resolved: D.resolved, correctAnswer: D.resolved ? q.correct : -1,
+    timerStart: D.timerStart, timerDuration: D.time,
+    finished: D.finished, winners: D.winners.map(i=>D.players[i].name),
+    ts: Date.now()
+  }).catch(()=>{});
+}
+
+// ── Spectateur : vue duel ──
+function _specToggleDuel(on){
+  const el = document.getElementById('spec-duel');
+  if(el){ el.style.display = on ? '' : 'none'; if(!on) el.innerHTML=''; }
+}
+function _specRenderDuel(data, container){
+  ['spec-scoreboard','spec-dots','spec-ans-row','spec-question-box','spec-result-box'].forEach(id=>{ const e=document.getElementById(id); if(e) e.style.display='none'; });
+  const multi = document.getElementById('spec-multi-matches'); if(multi) multi.innerHTML='';
+  let el = document.getElementById('spec-duel');
+  if(!el){ el = document.createElement('div'); el.id='spec-duel'; container.appendChild(el); }
+  el.style.display = '';
+  const ps = data.players||[]; const q = data.question;
+  const grads = ['linear-gradient(135deg,var(--accent2),var(--accent))','linear-gradient(135deg,#FF4081,#FF6D00)','linear-gradient(135deg,#00E676,#00B8D4)','linear-gradient(135deg,#FFD740,#FF9100)'];
+  const maxS = Math.max.apply(null, ps.map(p=>p.score||0).concat([0]));
+  let h = '<div style="display:grid;grid-template-columns:repeat('+Math.max(1,Math.min(4,ps.length))+',minmax(0,1fr));gap:12px;margin-bottom:16px;">';
+  ps.forEach((p,i)=>{
+    let st = '⏳';
+    if(data.rapid){ st = p.first ? '⚡ Premier ! ✅' : (p.locked ? '❌ Faux' : (data.resolved ? '⏳' : (data.buzz===i ? '🔔 A BUZZÉ — il répond !' : (data.buzz>=0 ? '⏳ en attente' : '🔔 prêt à buzzer')))); }
+    else if(data.resolved && !p.out){ st = (p.answer===data.correctAnswer) ? '✅' : '❌'; }
+    else if(p.answered) st = '✋ a répondu';
+    const av = p.photo ? '<img src="'+_dEsc(p.photo)+'" style="width:100%;height:100%;object-fit:cover;" alt="">' : _dEsc((p.name||'?').charAt(0).toUpperCase());
+    const win = data.finished && (data.winners||[]).includes(p.name);
+    h += '<div style="text-align:center;padding:14px;border-radius:16px;border:2px solid '+((win||(data.rapid&&!data.resolved&&data.buzz===i))?'var(--gold)':(maxS>0&&p.score===maxS?'rgba(255,215,0,.5)':'rgba(255,255,255,.12)'))+';background:'+((data.rapid&&!data.resolved&&data.buzz===i)?'rgba(255,215,0,.15)':'rgba(255,255,255,.05)')+';'+(p.out?'opacity:.45;':'')+'">'
+      +'<div id="spec-duel-'+i+'-avatar" style="width:44px;height:44px;border-radius:12px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.2rem;color:#fff;overflow:hidden;background:'+grads[i%4]+'">'+av+'</div>'
+      +'<div class="sd-name" style="font-weight:800;">'+(win?'🏆 ':'')+_dEsc(p.name)+'</div><div class="sd-school" style="font-size:0.72rem;color:var(--silver);">'+_dEsc(p.school||'')+'</div>'
+      +'<div class="sd-score" style="font-size:2.2rem;font-weight:900;color:var(--accent);">'+(p.score||0)+'</div>'
+      +'<div class="sd-status" style="font-size:0.8rem;font-weight:700;">'+(data.finished?'':st)+'</div></div>';
+  });
+  h += '</div>';
+  if(data.finished){
+    const w = (data.winners||[]).join(' & ');
+    h += '<div style="text-align:center;padding:26px;"><div style="font-size:3rem;">🏆</div><div style="font-size:1.8rem;font-weight:900;color:var(--gold);">'+(w?_dEsc(w):'Match nul')+'</div></div>';
+  } else if(q){
+    h += '<div style="background:rgba(255,255,255,.04);border-radius:16px;padding:18px;">'
+      +'<div class="sd-meta" style="display:flex;justify-content:space-between;align-items:center;color:var(--silver);font-size:0.85rem;margin-bottom:8px;"><span>'+_dEsc(q.matiere||'')+' · '+(data.barrage?'⚡ Question décisive':'Question '+((data.qIndex||0)+1)+' / '+(data.qTotal||'?'))+'</span><span id="spec-duel-timer" style="font-weight:900;font-size:1.6rem;color:var(--accent);">—</span></div>'
+      +'<div class="sd-q" style="font-size:1.25rem;font-weight:700;margin-bottom:12px;">'+_dEsc(q.text)+'</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;">'
+      +(q.options||[]).map((o,k)=>'<div class="sd-opt" style="padding:10px 12px;border-radius:10px;border:1px solid '+(data.resolved&&k===data.correctAnswer?'var(--green)':'rgba(255,255,255,.15)')+';background:'+(data.resolved&&k===data.correctAnswer?'rgba(0,230,118,.2)':'transparent')+';"><b>'+'ABCD'[k]+'.</b> '+_dEsc(o)+'</div>').join('')
+      +'</div></div>';
+  }
+  el.innerHTML = h;
+  if(!data.finished && !data.resolved && q){
+    const elapsed = Math.floor((Date.now()-(data.timerStart||Date.now()))/1000);
+    let left = Math.max(0,(data.timerDuration||30)-elapsed);
+    const t = document.getElementById('spec-duel-timer'); if(t) t.textContent = left;
+    const hnd = setInterval(()=>{ left=Math.max(0,left-1); const e2=document.getElementById('spec-duel-timer'); if(e2) e2.textContent=left; if(left<=0) clearInterval(hnd); },1000);
+    _specTimerHandles.push(hnd);
+  }
+}
+
 function _specRenderSingleMatch(data, container){
+  _specToggleDuel(false);
   // Rétablir les éléments du mode single-match si besoin
   ['spec-scoreboard','spec-dots','spec-ans-row','spec-question-box','spec-result-box'].forEach(id => {
     const el = document.getElementById(id);
@@ -9502,10 +10046,19 @@ function _specRenderSingleMatch(data, container){
     const c1 = document.getElementById('spec-p1-card'); if(c1) c1.className = 'spec-player-card' + (ok1?' answered':'');
     const c2 = document.getElementById('spec-p2-card'); if(c2) c2.className = 'spec-player-card' + (ok2?' answered':'');
   } else {
+    if(data.rapid){
+      const _rc = (n, nm, lock) => lock ? ['fail', `❌ ${nm} : faux`] : (data.buzz===n ? ['ok', `🔔 ${nm} A BUZZÉ — il répond !`] : ['waiting', data.buzz ? `⏳ ${nm} en attente` : `🔔 ${nm} prêt à buzzer`]);
+      const r1 = _rc(1, p1name, data.p1Locked), r2 = _rc(2, p2name, data.p2Locked);
+      setChip('spec-ans-p1', r1[0], r1[1]);
+      setChip('spec-ans-p2', r2[0], r2[1]);
+      const c1 = document.getElementById('spec-p1-card'); if(c1) c1.className = 'spec-player-card' + (data.buzz===1?' answered':'');
+      const c2 = document.getElementById('spec-p2-card'); if(c2) c2.className = 'spec-player-card' + (data.buzz===2?' answered':'');
+    } else {
     setChip('spec-ans-p1', data.p1Answered?'ok':'waiting', data.p1Answered?`✅ ${p1name} a répondu`:`⏳ ${p1name}…`);
     setChip('spec-ans-p2', data.p2Answered?'ok':'waiting', data.p2Answered?`✅ ${p2name} a répondu`:`⏳ ${p2name}…`);
     const c1 = document.getElementById('spec-p1-card'); if(c1) c1.className = 'spec-player-card' + (data.p1Answered?' answered':'');
     const c2 = document.getElementById('spec-p2-card'); if(c2) c2.className = 'spec-player-card' + (data.p2Answered?' answered':'');
+    }
   }
 
   // Question
