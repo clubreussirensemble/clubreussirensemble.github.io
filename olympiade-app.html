@@ -1282,7 +1282,7 @@
   .photo-picker-info strong { color:var(--accent); }
   #pv-quiz{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 </style>
-<script>if(window.self!==window.top){document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("back-club");if(b)b.style.display="none";});}</script>
+<script>if(window.self!==window.top){document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("back-club");if(b)b.style.display="none";var c=document.getElementById("back-club-pl");if(c)c.style.display="none";});}</script>
 </head>
 <body>
 <div class="stars"></div>
@@ -2649,7 +2649,10 @@
       ">0</div>
       <div class="score-label" style="font-size:0.6rem;letter-spacing:2px;">POINTS</div>
     </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+      <a id="back-club-pl" class="theme-toggle-btn" href="olympiades.html" title="Retour au site du club" style="text-decoration:none;">🏠</a>
     <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-btn-player" title="Mode clair / sombre">🌙</button>
+    </div>
   </div>
 
   <!-- Niveaux -->
