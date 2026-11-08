@@ -2033,6 +2033,14 @@
           <input type="checkbox" id="comp-rapid" onchange="try{localStorage.setItem('olympiade_rapid',this.checked?'1':'0')}catch(e){}">
           <span>⚡ <b>Mode Rapidité</b> — le premier joueur qui répond juste emporte les points (matchs en direct des phases)</span>
         </label>
+        <label class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:18px;padding:14px 18px;cursor:pointer;font-size:0.9rem;">
+          <input type="checkbox" id="comp-buzz" onchange="try{localStorage.setItem('olympiade_buzz',this.checked?'1':'0')}catch(e){}">
+          <span>🔔 <b>Avec buzz</b> — décoché (par défaut) : pas de buzz, tout le monde répond directement et le premier à répondre juste gagne les points</span>
+        </label>
+        <label class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:18px;padding:14px 18px;cursor:pointer;font-size:0.9rem;">
+          <input type="checkbox" id="comp-autoref" checked onchange="try{localStorage.setItem('olympiade_autoref',this.checked?'1':'0')}catch(e){}">
+          <span>🤖 <b>Arbitre automatique</b> — les questions s'enchaînent et le résultat s'enregistre tout seul, sans clic de l'admin</span>
+        </label>
         <div id="comp-qctrl" class="card" style="margin-bottom:18px;padding:18px;"></div>
         <div id="comp-info" style="color:var(--silver);font-size:0.85rem;margin-bottom:16px;"></div>
         <!-- Phases -->
@@ -7945,7 +7953,16 @@ function genCompetition(){
       if(w === null) return { ...m.p1, _barrage: true, _barrageP2: m.p2 }; // marquer égalité
       return w;
     });
-    phasesData.push({ phase: ph, matches, winners });
+    // Un match est « décidé » s'il a un résultat réel (ou une exemption) ; un match de la phase suivante
+    // n'est « prêt » que si ses deux matchs d'origine sont décidés (évite de jouer avec des qualifiés supposés)
+    const _prevPd = phasesData[pi-1];
+    const decided = matches.map(m => !m.p2 || !!(d.bracketResults||{})[_brKey(ph.id, m.p1.code, m.p2.code)]);
+    const ready = matches.map((m, j) => {
+      if(!_prevPd) return true;
+      const n = _prevPd.matches.length, h = Math.floor(n/2);
+      return (j < h ? [j, n-1-j] : [h]).every(k => _prevPd.decided[k]);
+    });
+    phasesData.push({ phase: ph, matches, winners, decided, ready });
     current = winners;
     if(ph.id === 'f') break;
   }
@@ -8021,12 +8038,12 @@ function genCompetition(){
   container.appendChild(qualifDiv);
 
   phasesData.forEach((pd, phIdx) => {
-    const { phase, matches, winners } = pd;
+    const { phase, matches, winners, ready } = pd;
     const phaseDiv = document.createElement('div');
     phaseDiv.className = 'comp-phase';
 
     // Construire la liste JSON des matchs valides pour ce bouton global
-    const validMatches = matches.filter(m => m.p1 && m.p2);
+    const validMatches = matches.filter((m, mi) => m.p1 && m.p2 && ready[mi]);
     const matchesJsonAttr = validMatches.length
       ? `data-matches='${JSON.stringify(validMatches.map(m=>({c1:m.p1.code,c2:m.p2.code})))}' data-phase='${phase.label}' data-level='${phase.level}'`
       : '';
@@ -8054,7 +8071,9 @@ function genCompetition(){
         </div>`;
       };
       const p1Win = !isBarrage && w === m.p1;
-      const canLaunch = m.p1 && m.p2;
+      const canLaunch = m.p1 && m.p2 && ready[mi];
+      const waitNote = (m.p1 && m.p2 && !ready[mi])
+        ? `<div style="margin-top:8px;text-align:center;font-size:0.75rem;color:var(--silver);opacity:.8;">⏳ En attente des matchs de la phase précédente</div>` : '';
       // Bouton barrage mort subite si égalité parfaite
       const barrageBtn = isBarrage && canLaunch
         ? `<button class="btn btn-gold btn-sm" style="margin-top:8px;width:100%;font-size:0.75rem;letter-spacing:1px;" onclick="openBarrage('${m.p1.code}','${m.p2.code}','${phase.label}',${phase.level})">⚡ Barrage — Mort subite</button>`
@@ -8067,7 +8086,7 @@ function genCompetition(){
         ${renderPlayer(m.p1, p1Win)}
         <div style="text-align:center;color:var(--silver);font-size:0.75rem;padding:2px 0;">VS</div>
         ${m.p2 ? renderPlayer(m.p2, !p1Win && !isBarrage) : renderPlayer(null, false)}
-        ${barrageBtn}${launchBtn}
+        ${barrageBtn}${launchBtn}${waitNote}
       </div>`;
     }).join('');
 
@@ -8481,7 +8500,7 @@ function _renderClimber(){
 function resetCompetition(){
   if(!confirm('Réinitialiser le tableau de compétition ?\n\nLes résultats des matchs déjà joués et l\'arbre du tournoi seront effacés (les scores généraux ne changent pas).')) return;
   const _d = getData(); delete _d.bracketSeed; delete _d.bracketResults; saveData(_d);
-  window._pubBracket = null; window._compPhasesData = [];
+  window._pubBracket = null; window._compPhasesData = []; window._compDone = {};
   { const _r = _lmGetLiveRef(); if(_r) _r.set({ active:false, bracket:null, ts:Date.now() }).catch(()=>{}); }
   document.getElementById('comp-phases').innerHTML = '';
   document.getElementById('comp-info').textContent = '';
@@ -8935,19 +8954,20 @@ const _LM_Q_COUNT = 60;  // nombre de questions par match
 
 let _lmActive = false; // anti-double-clic (fix bug #2 & #6)
 let _lmRapid = false;  // mode rapidité : le premier à répondre juste marque
+let _lmBuzzless = false; // rapidité SANS buzz : tout le monde répond directement, le premier à répondre juste gagne
 let _lmFirst = 0;      // joueur (1/2) qui a marqué en mode rapidité
 let _lmBuzz = 0;       // joueur (1/2) qui a buzzé et a la main (mode rapidité)
-(function(){ try{ const e=document.getElementById('comp-rapid'); if(e) e.checked = localStorage.getItem('olympiade_rapid')!=='0'; }catch(x){} })();
+(function(){ try{ const e=document.getElementById('comp-rapid'); if(e) e.checked = localStorage.getItem('olympiade_rapid')!=='0'; const b=document.getElementById('comp-buzz'); if(b) b.checked = localStorage.getItem('olympiade_buzz')==='1'; }catch(x){} })();
 
 function openLiveMatch(code1, code2, phaseLabel, level){
-  if(_lmActive){ toast('Un match est déjà en cours','error'); return; }
+  if(_lmActive || _mm){ window._barrageQuestion = null; toast('Un match est déjà en cours','error'); return; }
   const d = getData();
   _lmP1 = d.players.find(p=>p.code===code1);
   _lmP2 = d.players.find(p=>p.code===code2);
   if(!_lmP1 || !_lmP2){ toast('Joueur introuvable','error'); return; }
 
   _lmActive = true;
-  { const _cr = document.getElementById('comp-rapid'); _lmRapid = !!(_cr && _cr.checked); }
+  { const _cr = document.getElementById('comp-rapid'); _lmRapid = !!(_cr && _cr.checked); const _cb = document.getElementById('comp-buzz'); _lmBuzzless = _lmRapid && !(_cb && _cb.checked); }
   _lmFirst = 0;
   _lmLevel = level || 1;
   _lmPhaseLabel = phaseLabel || 'Match';
@@ -8958,7 +8978,7 @@ function openLiveMatch(code1, code2, phaseLabel, level){
 
   // Sélectionner les questions
   const allQ = d.questions.filter(q=>q.level==_lmLevel);
-  if(allQ.length < 60 && !window._barrageQuestion){ toast('Pas assez de questions pour ce niveau (min 60)','error'); return; }
+  if(allQ.length < 60 && !window._barrageQuestion){ _lmActive = false; toast('Pas assez de questions pour ce niveau (min 60)','error'); return; }
 
   // Mode barrage : 1 seule question décisive
   if(window._barrageQuestion){
@@ -9004,6 +9024,7 @@ function openLiveMatch(code1, code2, phaseLabel, level){
 }
 
 function closeLiveMatch(){
+  _lmAutoStop();
   clearInterval(_lmTimerInterval);
   _lmActive = false; // libérer le verrou (fix bug #6)
   _lmPublishClear(); // Signaler au public que le match est terminé
@@ -9027,6 +9048,7 @@ function _lmBuildProgressDots(){
 }
 
 function _lmLoadQuestion(){
+  _lmAutoStop();
   if(_lmQIndex >= _lmQuestions.length){ _lmEndMatch(); return; }
 
   _lmAnswered = false; _lmFirst = 0; _lmBuzz = 0;
@@ -9084,7 +9106,7 @@ function _lmLoadQuestion(){
       `).join('')}
     </div>
   `;
-  if(_lmRapid){
+  if(_lmRapid && !_lmBuzzless){
     [1,2].forEach(n=>{
       const col = document.getElementById('lm-opt-p'+n+'-0').parentNode;
       const b = document.createElement('button');
@@ -9143,12 +9165,12 @@ function _lmBuzzUI(){
     const holds = _lmBuzz===n;
     const b = document.getElementById('lm-buzz-p'+n);
     if(b){ b.disabled = _lmAnswered || done || _lmBuzz!==0; b.textContent = holds ? '🔔 À TOI !' : (done ? '✗ Éliminé' : '🔔 BUZZ'); }
-    for(let i=0;i<4;i++){ const o=document.getElementById('lm-opt-p'+n+'-'+i); if(o) o.disabled = !holds || done || _lmAnswered; }
+    for(let i=0;i<4;i++){ const o=document.getElementById('lm-opt-p'+n+'-'+i); if(o) o.disabled = (_lmBuzzless ? false : !holds) || done || _lmAnswered; }
   });
 }
 function lmSelectAnswer(playerNum, idx){
   if(_lmAnswered) return;
-  if(_lmRapid && _lmBuzz!==playerNum) return;   // rapidité : il faut avoir buzzé d'abord
+  if(_lmRapid && !_lmBuzzless && _lmBuzz!==playerNum) return;   // rapidité avec buzz : il faut avoir buzzé d'abord
   const q = _lmQuestions[_lmQIndex];
 
   if(playerNum===1){
@@ -9266,9 +9288,26 @@ function _lmResolveQuestion(q){
     nextBtn.textContent = `Question suivante (${_lmQIndex+2}/${_lmQuestions.length}) →`;
   }
   nextBtn.style.display = 'block';
+  if(_lmIsAuto()) _lmAutoCountdown(nextBtn, nextBtn.textContent, 5, lmNextQuestion);
 }
 
+let _lmAutoT = null, _lmAutoEndT = null;
+function _lmIsAuto(){ const e = document.getElementById('comp-autoref'); return !e || e.checked; }
+(function(){ try{ const e=document.getElementById('comp-autoref'); if(e) e.checked = localStorage.getItem('olympiade_autoref')!=='0'; }catch(x){} })();
+function _lmAutoStop(){ clearInterval(_lmAutoT); clearTimeout(_lmAutoEndT); _lmAutoT = null; _lmAutoEndT = null; }
+function _lmAutoCountdown(btn, base, sec, fn){
+  clearInterval(_lmAutoT);
+  const qi = _lmQIndex; let n = sec;
+  btn.textContent = base + ' · auto ' + n + ' s';
+  _lmAutoT = setInterval(()=>{
+    n--;
+    if(!_lmActive || _lmQIndex !== qi){ clearInterval(_lmAutoT); return; }
+    if(n <= 0){ clearInterval(_lmAutoT); fn(); return; }
+    btn.textContent = base + ' · auto ' + n + ' s';
+  }, 1000);
+}
 function lmNextQuestion(){
+  _lmAutoStop();
   _lmQIndex++;
   if(_lmQIndex >= _lmQuestions.length){
     _lmEndMatch();
@@ -9316,6 +9355,10 @@ function _lmEndMatch(){
 
   _sndVictory();
   document.getElementById('lm-result-overlay').classList.add('show');
+  if(_lmIsAuto() && !(isBarrage && _lmP1Score === _lmP2Score)){
+    clearTimeout(_lmAutoEndT);
+    _lmAutoEndT = setTimeout(()=>{ if(_lmActive && document.getElementById('lm-result-overlay').classList.contains('show')) lmSaveAndClose(); }, 10000);
+  }
 }
 
 // ════════════════════════════════════════
@@ -9389,14 +9432,18 @@ function publishQualified(phIdx){
     .then(()=>toast('📺 Qualifiés affichés sur l\'écran public','success')).catch(()=>{});
 }
 // Fin de phase : quand tous les matchs d'une phase sont joués, afficher les qualifiés sur l'écran public
-function _compPhaseTrack(label, need){
-  window._compDone = window._compDone || {};
-  const c = (window._compDone[label]||0) + 1;
-  window._compDone[label] = c;
-  if(!need || c < need) return;
-  window._compDone[label] = 0;
+function _compPhaseTrack(label){
+  // Calculé sur le tableau fraîchement régénéré : tous les matchs réels de la phase ont un résultat ?
   const phIdx = (window._compPhasesData||[]).findIndex(x=>x.phase.label===label);
-  if(phIdx>=0) setTimeout(()=>publishQualified(phIdx), 800);
+  if(phIdx < 0) return;
+  const pd = window._compPhasesData[phIdx];
+  const real = pd.matches.map((m,i)=>i).filter(i => pd.matches[i].p1 && pd.matches[i].p2);
+  const done = real.filter(i => pd.decided[i]).length;
+  window._compDone = window._compDone || {};
+  const prev = window._compDone[label] || 0;
+  window._compDone[label] = done;
+  if(!real.length || done < real.length || prev >= real.length) return;
+  setTimeout(()=>publishQualified(phIdx), 800);
 }
 function lmSaveAndClose(){
   const _phLab = String(_lmPhaseLabel||'').replace(/^⚡ BARRAGE — /,'');
@@ -9427,7 +9474,7 @@ function lmSaveAndClose(){
   genCompetition();
   renderDashboard();
   renderClassement();
-  _compPhaseTrack(_phLab, _need);
+  _compPhaseTrack(_phLab);
 }
 
 function _lmSetAnsChip(id, state, text){
@@ -9480,7 +9527,7 @@ function _remSync(list){
     let first = true;
     _remSubs[x.code] = db.collection(PROG_COL).doc(x.code).onSnapshot(s=>{
       const lv = s.exists ? (s.data() || {}).lv : null;
-      if(first){ first = false; _remSeen[x.code] = lv ? lv.id : ''; _remDbg('Écoute buzz active : '+x.code); return; }   // ancien événement : ignoré
+      if(first){ first = false; _remSeen[x.code] = lv ? lv.id : ''; if(list.length <= 4) _remDbg('Écoute buzz active : '+x.code); return; }   // ancien événement : ignoré
       if(!lv || lv.id === _remSeen[x.code]) return;
       _remSeen[x.code] = lv.id; _remEvent(x, lv);
     }, err=>{ console.error('écoute buzz', err); try{ toast('⚠️ Écoute du buzz impossible : '+((err&&err.code)||'erreur'),'error'); }catch(e){} });
@@ -9496,10 +9543,11 @@ function _remSync(list){
         _remSeen[x.code] = lv.id; _remEvent(x, lv);
       }).catch(err=>{ if(!window._remPollWarned){ window._remPollWarned = true; _remDbg('Lecture buzz impossible : '+((err&&err.code)||'erreur')); } });
     });
-  }, 1200);
+  }, Math.max(1200, list.length * 100));
 }
 function _remDbg(m){ try{ console.log('[buzz]', m); toast('🔧 '+m,'info'); }catch(e){} }
 function _remEvent(x, lv){
+  if(x.mm !== undefined) return _mmEvent(x, lv);   // matchs simultanés
   _remDbg('Reçu J'+(x.i+(x.duel?1:0))+' · q='+lv.q+' a='+lv.a);
   if(x.duel){
     const D = _duel; if(!D || lv.q !== D.qi){ _remDbg('Ignoré : question différente ('+(D?D.qi:'aucun duel')+')'); return; }
@@ -9509,8 +9557,8 @@ function _remEvent(x, lv){
   } else {
     if(!_lmActive || lv.q !== _lmQIndex){ _remDbg('Ignoré : match '+(_lmActive?'actif':'inactif')+', question hôte='+_lmQIndex+', reçue='+lv.q); return; }
     if(!_lmRapid && lv.a < 0){ _remDbg('Ignoré : mode rapidité désactivé côté hôte'); return; }
-    if(lv.a < 0) return lmBuzz(x.i);
-    if(_lmRapid && _lmBuzz === 0) lmBuzz(x.i);
+    if(lv.a < 0){ if(_lmBuzzless) return; return lmBuzz(x.i); }
+    if(_lmRapid && !_lmBuzzless && _lmBuzz === 0) lmBuzz(x.i);
     lmSelectAnswer(x.i, lv.a);
   }
 }
@@ -9530,6 +9578,7 @@ function _lmPublish(extra){
   const state = {
     active: true,
     rapid: _lmRapid,
+    buzzless: _lmBuzzless,
     phase: _lmPhaseLabel,
     level: _lmLevel,
     qIndex: _lmQIndex,
@@ -9754,6 +9803,12 @@ function _plMe(data){
   return null;
 }
 function _plApply(data){
+  if(data && data.matches && currentPlayer){   // matchs simultanés : on isole le match du joueur
+    const tg = _codeTag(currentPlayer.code);
+    const mi = data.matches.findIndex(m => m && m.p1 && m.p2 && (m.p1.tag === tg || m.p2.tag === tg));
+    data = mi < 0 ? null : Object.assign({}, data.matches[mi], { active: !!data.active, rapid: !!data.rapid, buzzless: true,
+      phase: (data.phase||'') + ' · Match ' + (mi+1), level: data.level, buzz: 0, matches: undefined });
+  }
   clearTimeout(_plHideT);
   const me = _plMe(data), was = _pl.inMatch;
   if(!me || (!was && (!data.active || data.finished))){ _plClose(); return; }
@@ -9781,7 +9836,11 @@ function _plApply(data){
   let status, canBuzz = false, canAns = false;
   if(data.resolved) status = myAns < 0 ? '⏰ Pas de réponse' : (myAns === data.correctAnswer ? '✅ Bonne réponse !' : '❌ Mauvaise réponse');
   else if(duel && mine.out) status = 'Tu ne participes pas à ce barrage';
-  else if(_pl.rapid){
+  else if(_pl.rapid && data.buzzless){
+    if(locked) status = '✗ Éliminé pour cette question';
+    else if(answered || _pl.sel >= 0) status = '✔ Réponse envoyée';
+    else { status = '⚡ Réponds vite !'; canAns = true; }
+  } else if(_pl.rapid){
     if(hold && !answered){ status = '🔔 À TOI ! Réponds vite'; canAns = _pl.sel < 0; }
     else if(anyHold) status = '⏳ ' + _dEsc(holder ? holder.name : '') + ' répond…';
     else if(locked || answered) status = '✗ Éliminé pour cette question';
@@ -9986,7 +10045,7 @@ function _specRenderMultiMatch(matches, container){
     if(!m) return;
     const p1name = (m.p1 && m.p1.name) ? m.p1.name.split(' ')[0] : 'J1';
     const p2name = (m.p2 && m.p2.name) ? m.p2.name.split(' ')[0] : 'J2';
-    const q = m.questions ? m.questions[m.qIndex || 0] : null;
+    const q = m.question || (m.questions ? m.questions[m.qIndex || 0] : null);
 
     // Chips réponses
     let chip1Html, chip2Html;
@@ -10516,7 +10575,7 @@ function _specRenderSingleMatch(data, container){
     const c2 = document.getElementById('spec-p2-card'); if(c2) c2.className = 'spec-player-card' + (ok2?' answered':'');
   } else {
     if(data.rapid){
-      const _rc = (n, nm, lock) => lock ? ['fail', `❌ ${nm} : faux`] : (data.buzz===n ? ['ok', `🔔 ${nm} A BUZZÉ — il répond !`] : ['waiting', data.buzz ? `⏳ ${nm} en attente` : `🔔 ${nm} prêt à buzzer`]);
+      const _rc = (n, nm, lock) => lock ? ['fail', `❌ ${nm} : faux`] : (data.buzz===n ? ['ok', `🔔 ${nm} A BUZZÉ — il répond !`] : ['waiting', data.buzz ? `⏳ ${nm} en attente` : (data.buzzless ? `⚡ ${nm} prêt à répondre` : `🔔 ${nm} prêt à buzzer`)]);
       const r1 = _rc(1, p1name, data.p1Locked), r2 = _rc(2, p2name, data.p2Locked);
       setChip('spec-ans-p1', r1[0], r1[1]);
       setChip('spec-ans-p2', r2[0], r2[1]);
@@ -10576,8 +10635,9 @@ function _specRenderSingleMatch(data, container){
 // ════════════════════════════════════════
 function launchPhaseMatches(btn){
   if(btn.disabled) return;
+  if(_lmActive || _mm){ toast('Un match est déjà en cours', 'error'); return; }
   btn.disabled = true;
-  setTimeout(()=>{ btn.disabled = false; }, 4000); // re-activer après 4s (fix bug #6)
+  setTimeout(()=>{ btn.disabled = false; }, 4000);
   const rawMatches = JSON.parse(btn.getAttribute('data-matches') || '[]');
   const phaseLabel  = btn.getAttribute('data-phase')  || 'Phase';
   const level       = parseInt(btn.getAttribute('data-level'))  || 1;
@@ -10590,64 +10650,174 @@ function launchPhaseMatches(btn){
   const _fp = _freshPool(d, level);
   const _poolShort = _fp.fresh.length < 60;
   const _allPicked = [];
-  const matchesData = rawMatches.map((m, i) => {
+  const rapid = !!(document.getElementById('comp-rapid') || {}).checked;
+  const dur = ({ 0:45, 1:60, 2:45, 3:35, 4:25, 5:20 })[level] || 30;
+  const ms = [];
+  rawMatches.forEach(m => {
     const p1 = d.players.find(p => p.code === m.c1);
     const p2 = d.players.find(p => p.code === m.c2);
-    if(!p1 || !p2) return null;
-    // Chaque match a sa propre sélection aléatoire de questions
-    const questions = _drawFrom(_fp.fresh, _fp.all, Math.min(allQ.length, 60));
-    questions.forEach(q => _allPicked.push(q));
-    return {
-      matchIndex: i,
-      phase: phaseLabel,
-      level: level,
-      p1: { name: p1.name, school: (p1.classe||'') + (p1.school ? ' · ' + p1.school : ''), photo: p1.photo||null, score: 0, correct: 0 },
-      p2: { name: p2.name, school: (p2.classe||'') + (p2.school ? ' · ' + p2.school : ''), photo: p2.photo||null, score: 0, correct: 0 },
-      questions: questions.map(q => ({ text: q.text, matiere: q.matiere||'—', options: q.options, correct: q.correct })),
-      qIndex: 0,
-      qTotal: questions.length,
-      resolved: false,
-      finished: false,
-      p1Answered: false,
-      p2Answered: false,
-      p1Answer: -1,
-      p2Answer: -1,
-      correctAnswer: -1,
-      p1Score: 0,
-      p2Score: 0,
-      dots: [],
-      timerStart: Date.now(),
-      timerDuration: ({ 0:45, 1:60, 2:45, 3:35, 4:25, 5:20 })[level] || 30,
-      active: true,
-      ts: Date.now()
-    };
-  }).filter(Boolean);
-
-  if(!matchesData.length){ toast('Aucun match valide pour cette phase', 'error'); return; }
+    if(!p1 || !p2) return;
+    const qs = _drawFrom(_fp.fresh, _fp.all, Math.min(allQ.length, 60));
+    qs.forEach(q => _allPicked.push(q));
+    ms.push({ i: ms.length, p1, p2, qs, qi:0, s1:0, s2:0, ok1:0, ok2:0, st1:0, st2:0,
+      a1:-1, a2:-1, ans1:false, ans2:false, first:0, resolved:false, finished:false,
+      t0:Date.now(), dur, dots:[], nextAt:0, winnerName:'' });
+  });
+  if(!ms.length){ toast('Aucun match valide pour cette phase', 'error'); return; }
   if(_poolShort) toast('ℹ️ Banque de ce niveau presque épuisée : certaines questions peuvent revenir. Ajoute-en de nouvelles.', 'info');
 
-  // Confirmation anti-clic accidentel (fix amélioration #10)
-  if(!confirm(`⚡ Lancer ${matchesData.length} match${matchesData.length>1?'s':''} en direct pour la phase "${phaseLabel}" ?\n\nCette action est visible immédiatement par le public.`)){
+  if(!confirm(`⚡ Lancer ${ms.length} match${ms.length>1?'s':''} en direct pour la phase "${phaseLabel}" ?\n\n${rapid ? 'Mode Rapidité : le premier qui répond juste gagne les points.' : 'Chaque joueur répond, bonne réponse = points.'}\nLes joueurs répondent depuis leur téléphone. Cette action est visible immédiatement par le public.`)){
     btn.disabled = false;
     return;
   }
-
+  if(!_lmGetLiveRef()){ toast('Firebase non disponible', 'error'); return; }
   _markUsedLive(d, level, _allPicked, _poolShort);
 
-  // Publier sur Firebase
-  const ref = _lmGetLiveRef();
-  if(!ref){ toast('Firebase non disponible', 'error'); return; }
+  _mm = { label: phaseLabel, level, rapid, ms, pubT:null, tick:null, ended:false };
+  _remSync(ms.flatMap(m => [{ code:m.p1.code, i:1, mm:m.i }, { code:m.p2.code, i:2, mm:m.i }]));
+  _mmPublishNow();
+  _mm.tick = setInterval(_mmTick, 500);
+  _mmPanel();
+  toast(`⚡ ${ms.length} match${ms.length>1?'s':''} lancé${ms.length>1?'s':''} en direct !`, 'success');
+}
 
-  ref.set({
-    active: true,
-    phase: phaseLabel,
-    level: level,
-    matchCount: matchesData.length,
-    matches: matchesData,
-    ts: Date.now()
-  }).then(() => {
-    toast(`⚡ ${matchesData.length} match${matchesData.length>1?'s':''} lancé${matchesData.length>1?'s':''} en direct !`, 'success');
-  }).catch(() => toast('Erreur Firebase', 'error'));
+// ── Moteur des matchs simultanés (rapidité : le premier qui répond juste prend les points) ──
+let _mm = null;
+const _MM_NEXT_DELAY = 3500;   // pause entre deux questions (affichage de la bonne réponse)
+
+function _mmPub(m){
+  const q = m.finished ? null : m.qs[m.qi];
+  const pl = (p, sc, ok, st) => ({ tag:_codeTag(p.code), name:p.name, school:(p.classe||'')+(p.school?' · '+p.school:''), score:sc, correct:ok, streak:st });
+  return {
+    matchIndex:m.i, phase:_mm.label, level:_mm.level,
+    p1: pl(m.p1, m.s1, m.ok1, m.st1), p2: pl(m.p2, m.s2, m.ok2, m.st2),
+    question: q ? { text:q.text, matiere:q.matiere||'—', options:q.options, correct:-1 } : null,
+    qIndex:m.qi, qTotal:m.qs.length, resolved:m.resolved, finished:m.finished,
+    p1Answered:m.ans1, p2Answered:m.ans2,
+    p1Answer: m.resolved ? m.a1 : -1, p2Answer: m.resolved ? m.a2 : -1,
+    p1Locked: !!(_mm.rapid && q && m.ans1 && m.a1 !== q.correct),
+    p2Locked: !!(_mm.rapid && q && m.ans2 && m.a2 !== q.correct),
+    correctAnswer: (m.resolved && q) ? q.correct : -1,
+    p1Score:m.s1, p2Score:m.s2, dots:m.dots.map(x=>x||'miss'),
+    timerStart:m.t0, timerDuration:m.dur, buzz:0, winnerName:m.winnerName, ts:Date.now()
+  };
+}
+function _mmPublishNow(){
+  const ref = _lmGetLiveRef(); if(!ref || !_mm) return;
+  ref.set({ active:true, rapid:_mm.rapid, buzzless:true, phase:_mm.label, level:_mm.level,
+    matchCount:_mm.ms.length, matches:_mm.ms.map(_mmPub), ts:Date.now() }).catch(()=>{});
+}
+function _mmPublish(){   // regroupe les écritures (max. ~2 par seconde)
+  if(!_mm || _mm.pubT) return;
+  _mm.pubT = setTimeout(()=>{ if(!_mm) return; _mm.pubT = null; _mmPublishNow(); }, 500);
+}
+function _mmEvent(x, lv){
+  if(!_mm) return;
+  const m = _mm.ms[x.mm];
+  if(!m || m.finished || m.resolved || lv.q !== m.qi || lv.a < 0) return;
+  _mmAnswer(m, x.i, lv.a);
+}
+function _mmAnswer(m, n, idx){
+  if(m.finished || m.resolved) return;
+  if(n === 1 ? m.ans1 : m.ans2) return;
+  if(n === 1){ m.ans1 = true; m.a1 = idx; } else { m.ans2 = true; m.a2 = idx; }
+  const q = m.qs[m.qi];
+  if(_mm.rapid && idx === q.correct){ m.first = n; _mmResolve(m); return; }   // premier à répondre juste
+  if(m.ans1 && m.ans2) _mmResolve(m); else _mmPublish();                       // faux : il est verrouillé
+}
+function _mmResolve(m){
+  if(m.resolved) return;
+  m.resolved = true;
+  const q = m.qs[m.qi];
+  const lv = LEVELS.find(l => String(l.id) === String(_mm.level));
+  const pts = lv ? lv.pts : 10;
+  let o1 = m.a1 === q.correct, o2 = m.a2 === q.correct;
+  if(_mm.rapid){ o1 = o1 && m.first === 1; o2 = o2 && m.first === 2; }
+  m.st1 = o1 ? m.st1+1 : 0; m.st2 = o2 ? m.st2+1 : 0;
+  if(o1){ m.s1 += pts; m.ok1++; }
+  if(o2){ m.s2 += pts; m.ok2++; }
+  m.dots[m.qi] = (o1 && o2) ? 'both-ok' : o1 ? 'p1-ok' : o2 ? 'p2-ok' : 'miss';
+  m.nextAt = Date.now() + _MM_NEXT_DELAY;
+  _mmPublish();
+}
+function _mmTimeout(m){
+  if(!m.ans1){ m.ans1 = true; m.a1 = -1; }
+  if(!m.ans2){ m.ans2 = true; m.a2 = -1; }
+  _mmResolve(m);
+}
+function _mmNext(m){
+  m.qi++;
+  if(m.qi >= m.qs.length){ _mmFinish(m); return; }
+  m.a1 = m.a2 = -1; m.ans1 = m.ans2 = false; m.first = 0; m.resolved = false; m.t0 = Date.now();
+  _mmPublish();
+}
+function _mmFinish(m){
+  m.finished = true;
+  const d = getData();
+  const P1 = d.players.find(p => p.code === m.p1.code) || m.p1, P2 = d.players.find(p => p.code === m.p2.code) || m.p2;
+  let w, note = '';
+  if(m.s1 > m.s2) w = 1; else if(m.s2 > m.s1) w = 2;
+  else { w = (P1.score||0) >= (P2.score||0) ? 1 : 2; note = ' (égalité : meilleur score général)'; }
+  const win = w === 1 ? P1 : P2;
+  m.winnerName = `🏆 ${win.name} remporte le match !${note}`;
+  const _pd0 = (window._compPhasesData||[]).find(x => x.phase.label === _mm.label);
+  if(_pd0){
+    if(!Array.isArray(d.bracketSeed) || d.bracketSeed.length < 2) d.bracketSeed = (window._compSeedCodes || []).slice();
+    d.bracketResults = d.bracketResults || {};
+    d.bracketResults[_brKey(_pd0.phase.id, m.p1.code, m.p2.code)] = { w:win.code, c1:m.p1.code, c2:m.p2.code, s1:m.s1, s2:m.s2 };
+  }
+  const i1 = d.players.findIndex(p => p.code === m.p1.code), i2 = d.players.findIndex(p => p.code === m.p2.code);
+  if(i1 >= 0) d.players[i1].score = (d.players[i1].score||0) + m.s1;
+  if(i2 >= 0) d.players[i2].score = (d.players[i2].score||0) + m.s2;
+  saveData(d);
+  logActivity(`Match ${m.p1.name} vs ${m.p2.name} : ${m.s1}-${m.s2}`);
+  _mmPublish();
+}
+function _mmTick(){
+  if(!_mm || _mm.ended) return;
+  const now = Date.now();
+  _mm.ms.forEach(m => {
+    if(m.finished) return;
+    if(!m.resolved){ if(now - m.t0 >= m.dur * 1000) _mmTimeout(m); }
+    else if(now >= m.nextAt) _mmNext(m);
+  });
+  _mmPanel();
+  if(_mm.ms.every(m => m.finished)) _mmEnd();
+}
+function _mmEnd(){
+  if(!_mm || _mm.ended) return;
+  _mm.ended = true;
+  clearInterval(_mm.tick); clearTimeout(_mm.pubT); _mm.pubT = null;
+  _mmPublishNow();
+  _remStop();
+  const label = _mm.label;
+  toast('🏁 Tous les matchs de la phase sont terminés', 'success');
+  setTimeout(()=>{   // laisse le public voir les résultats, puis qualifiés + tableau
+    _mm = null; _mmPanel();
+    genCompetition(); renderDashboard(); renderClassement();
+    _compPhaseTrack(label);
+  }, 6000);
+}
+function mmCancel(){
+  if(!_mm || _mm.ended) return;
+  if(!confirm('Arrêter les matchs simultanés ?\n\nLes matchs déjà terminés restent enregistrés ; ceux en cours sont abandonnés (aucun point ajouté).')) return;
+  clearInterval(_mm.tick); clearTimeout(_mm.pubT);
+  _mm = null; _remStop(); _lmPublishClear(); _mmPanel();
+  genCompetition();
+  toast('Matchs arrêtés', 'info');
+}
+function _mmPanel(){
+  let el = document.getElementById('mm-panel');
+  if(!_mm){ if(el) el.remove(); return; }
+  if(!el){
+    el = document.createElement('div'); el.id = 'mm-panel';
+    el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:9999;display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:14px;background:rgba(13,27,46,.97);border:1px solid var(--gold);box-shadow:0 6px 30px rgba(0,0,0,.6);font-size:.82rem;max-width:94vw;';
+    document.body.appendChild(el);
+  }
+  const fin = _mm.ms.filter(m => m.finished).length;
+  const qmax = Math.max(...(_mm.ms.map(m => m.qi + 1)));
+  el.innerHTML = '<span>⚡ <b>' + _mm.label + '</b> · ' + fin + '/' + _mm.ms.length + ' matchs terminés · Q ' + Math.min(qmax, _mm.ms[0].qs.length) + '/' + _mm.ms[0].qs.length + (_mm.rapid ? ' · Rapidité' : '') + '</span>'
+    + (_mm.ended ? '' : '<button class="btn btn-danger btn-sm" onclick="mmCancel()">⏹ Arrêter</button>');
 }
 
 
