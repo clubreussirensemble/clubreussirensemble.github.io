@@ -1280,6 +1280,7 @@
   .photo-preview img { width:100%; height:100%; object-fit:cover; }
   .photo-picker-info { flex:1; font-size:0.8rem; color:var(--silver); line-height:1.6; }
   .photo-picker-info strong { color:var(--accent); }
+  #pv-quiz{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 </style>
 <script>if(window.self!==window.top){document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("back-club");if(b)b.style.display="none";});}</script>
 </head>
@@ -1971,9 +1972,12 @@
         <div class="section-title">🏆 CLASSEMENT GÉNÉRAL</div>
         <div style="margin-bottom:16px;display:flex;gap:10px;">
           <button class="btn btn-outline btn-sm" onclick="renderClassement()">🔄 Actualiser</button>
+          <button class="btn btn-gold btn-sm" onclick="_rankSnap(true)">📸 Point de référence</button>
           <button class="btn btn-accent btn-sm" onclick="resetAllScores()">⚠️ Reset scores</button>
         </div>
         <div class="card">
+          <div id="climber-card" style="margin-bottom:18px;"></div>
+          <div id="school-rank" style="margin-bottom:18px;"></div>
           <table class="rank-table">
             <thead><tr><th>#</th><th>Joueur</th><th>Classe/École</th><th>Score</th><th>Niveaux</th></tr></thead>
             <tbody id="classement-body"></tbody>
@@ -2345,6 +2349,42 @@
 <!-- ══════════ SPECTATEUR EN DIRECT ══════════ -->
 <style>
   #screen-spectator { padding:0; align-items:stretch; background:var(--dark); }
+  /* ── MODE ÉCRAN GÉANT (projection) ── */
+  #screen-spectator.giant #spec-content { max-width:1700px; padding:28px 48px; }
+  #screen-spectator.giant .spec-header { padding:20px 48px; }
+  #screen-spectator.giant .spec-title { font-size:2.2rem; }
+  #screen-spectator.giant .spec-phase-badge { font-size:1.4rem; padding:6px 22px; }
+  #screen-spectator.giant .spec-header .btn { display:none; }
+  #screen-spectator.giant .spec-header .btn.keep { display:inline-block; font-size:1rem; padding:8px 18px; }
+  #screen-spectator.giant .spec-player-card { padding:28px 24px; gap:12px; border-radius:24px; }
+  #screen-spectator.giant [id$="-avatar"] { width:150px !important; height:150px !important; border-radius:50% !important; font-size:4rem !important; }
+  #screen-spectator.giant .spec-player-name { font-size:2.2rem; }
+  #screen-spectator.giant .spec-player-school { font-size:1.2rem; }
+  #screen-spectator.giant .spec-match-score { font-size:6.5rem; }
+  #screen-spectator.giant .spec-match-score-label { font-size:1rem; }
+  #screen-spectator.giant .spec-vs-text { font-size:4rem; }
+  #screen-spectator.giant .spec-q-counter { font-size:1.3rem; }
+  #screen-spectator.giant .spec-timer { font-size:6rem; }
+  #screen-spectator.giant .spec-question-box { padding:40px 48px; }
+  #screen-spectator.giant .spec-q-matiere { font-size:1.3rem; padding:6px 20px; }
+  #screen-spectator.giant .spec-q-text { font-size:2.6rem; line-height:1.4; }
+  #screen-spectator.giant .spec-options-grid { gap:18px; }
+  #screen-spectator.giant .spec-opt { font-size:1.9rem; padding:22px 26px; }
+  #screen-spectator.giant .spec-opt-letter { font-size:1.5rem; }
+  #screen-spectator.giant .spec-ans-chip { font-size:1.5rem; padding:12px 24px; }
+  #screen-spectator.giant .spec-result-title { font-size:3.2rem; }
+  #screen-spectator.giant .spec-result-winner { font-size:2.6rem; padding:18px 40px; }
+  #screen-spectator.giant .spec-result-scores { font-size:1.8rem; }
+  #screen-spectator.giant .spec-result-icon { font-size:6rem; }
+  #screen-spectator.giant .spec-idle-msg { font-size:2.4rem; }
+  #screen-spectator.giant .spec-idle-sub { font-size:1.4rem; }
+  #screen-spectator.giant .spec-idle-icon { font-size:7rem; }
+  #spec-giant-board { display:none; margin-top:30px; text-align:left; }
+  #screen-spectator.giant #spec-giant-board { display:grid; grid-template-columns:1fr 1fr; gap:30px; }
+  #spec-giant-board .gb-col { background:var(--card-bg); border:1px solid var(--border); border-radius:20px; padding:22px 28px; }
+  #spec-giant-board .gb-title { font-family:'Orbitron',sans-serif; color:var(--gold); font-size:1.6rem; margin-bottom:12px; }
+  #spec-giant-board .gb-row { display:flex; justify-content:space-between; font-size:1.7rem; padding:6px 0; color:#E0E8FF; }
+  #spec-giant-board .gb-row b { color:var(--gold); }
   .spec-header {
     background:linear-gradient(135deg,rgba(11,22,40,0.98),rgba(5,10,20,0.98));
     border-bottom:1px solid var(--border);
@@ -2496,7 +2536,9 @@
     <div class="spec-title">⚡ MATCH EN DIRECT</div>
     <div style="display:flex;gap:10px;align-items:center;">
       <span class="spec-phase-badge" id="spec-phase-label">—</span>
-      <button class="btn btn-outline btn-sm" onclick="showScreen('screen-landing')">✕ Quitter</button>
+      <button class="btn btn-outline btn-sm keep" onclick="showQualifWall(16)">🧱 Mur</button>
+      <button class="btn btn-outline btn-sm keep" id="btn-giant" onclick="toggleGiantScreen()">📺 Écran géant</button>
+      <button class="btn btn-outline btn-sm" onclick="exitSpectator()">✕ Quitter</button>
     </div>
   </div>
 
@@ -2506,6 +2548,7 @@
       <div class="spec-idle-icon">📡</div>
       <div class="spec-idle-msg">Aucun match en cours pour l'instant</div>
       <div class="spec-idle-sub">L'écran se mettra à jour automatiquement dès qu'un match démarre<span class="spec-dot"></span></div>
+      <div id="spec-giant-board"></div>
     </div>
 
     <!-- Match en cours -->
@@ -2573,8 +2616,8 @@
     <div style="position:absolute;top:0;left:0;right:0;height:2px;
       background:linear-gradient(90deg,var(--accent2),var(--gold),var(--accent));"></div>
     <div style="display:flex;align-items:center;gap:12px;">
-      <!-- Avatar avec ring lumineux -->
-      <div style="position:relative;flex-shrink:0;">
+      <!-- Avatar avec ring lumineux (touche pour changer sa photo) -->
+      <div style="position:relative;flex-shrink:0;cursor:pointer;" title="Changer ma photo" onclick="playerPickPhoto()">
         <div style="position:absolute;inset:-2px;border-radius:14px;
           background:linear-gradient(135deg,var(--accent),var(--gold));
           animation:pulse-trophy 2.5s ease-in-out infinite;opacity:0.6;"></div>
@@ -2585,6 +2628,8 @@
           font-weight:900;font-size:1.1rem;color:#fff;
           overflow:hidden;
         ">?</div>
+        <span style="position:absolute;right:-7px;bottom:-7px;width:18px;height:18px;border-radius:50%;background:var(--gold);color:#0D1B2E;font-size:.62rem;display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 0 0 2px var(--dark);">📷</span>
+        <input type="file" id="pl-photo-input" accept="image/*" style="display:none" onchange="playerSetPhoto(this)">
       </div>
       <div>
         <div class="player-hname" id="ph-name">—</div>
@@ -2687,6 +2732,7 @@
       </div>
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
         <button class="btn btn-gold" onclick="showLevels()">🗺 Retour aux niveaux</button>
+        <button class="btn btn-green" id="btn-share-card" onclick="shareCard()">📤 Partager ma carte</button>
         <button class="btn btn-accent" id="btn-next-level" onclick="goNextLevel()" style="display:none;">Niveau suivant →</button>
       </div>
     </div>
@@ -2713,7 +2759,7 @@
           </div>
           <div class="photo-picker-info">
             Clique sur la photo pour choisir une image.<br>
-            <strong>JPG ou PNG</strong> · max 1 Mo · facultatif
+            <strong>JPG ou PNG</strong> · max 12 Mo · facultatif
           </div>
         </div>
         <input type="file" id="ap-photo-input" accept="image/*" style="display:none" onchange="_loadPhotoPreview(this,'ap-photo-preview','ap-photo-initial','ap-photo-data')">
@@ -2792,7 +2838,8 @@
           </div>
           <div class="photo-picker-info">
             Clique sur la photo pour changer.<br>
-            <strong>JPG ou PNG</strong> · max 1 Mo · facultatif
+            <strong>JPG ou PNG</strong> · max 12 Mo · facultatif<br>
+            <button type="button" class="btn btn-outline btn-sm" style="margin-top:6px;" onclick="removeEditPhoto()">🗑 Retirer la photo</button>
           </div>
         </div>
         <input type="file" id="ep-photo-input" accept="image/*" style="display:none" onchange="_loadPhotoPreview(this,'ep-photo-preview','ep-photo-initial','ep-photo-data')">
@@ -4832,6 +4879,16 @@ let _useLocalOnly = false;
 let db = null;
 let ARENA_REF = null;
 
+// Photos et progression : documents séparés (collections Firestore)
+const PHOTO_COL = 'olympiade_photos';      // un document par joueur : { photo }
+const PROG_COL  = 'olympiade_progress';    // un document par joueur : progression du quiz en cours
+let _photos = {};                          // code -> photo (cache mémoire)
+const _photoStored = new Set();            // codes dont la photo est CONFIRMÉE dans la collection
+const _photoMig = new Set();               // migrations déjà tentées (une seule fois par session)
+let _photosAdminReady = false;
+let _photosUnsub = null;
+let _photoWarned = false;
+
 const LS_KEY = 'bhds_arena_fallback';
 function _lsGet() {
   try { const v = localStorage.getItem(LS_KEY); return v ? JSON.parse(v) : null; } catch { return null; }
@@ -4936,6 +4993,7 @@ ARENA_REF.onSnapshot(
       });
     }
 
+    _photoApply();
     _fbReady = true;
     setFbStatus('connected', '🔥 Firebase sync');
     // Appliquer les thèmes couleur et fond (visible côté joueur et admin)
@@ -5015,8 +5073,102 @@ function getData() {
 // Firestore : joueurs stockés en "map" indexée (mises à jour ciblées sans écraser les autres joueurs)
 function _fsPayload(d){
   const o = JSON.parse(JSON.stringify(d));
-  if(Array.isArray(o.players)){ const m = {}; o.players.forEach((pl,i)=>{ m[i] = pl; }); o.players = m; }
+  if(Array.isArray(o.players)){
+    const m = {};
+    o.players.forEach((pl,i)=>{
+      if(pl){
+        delete pl.progress;                                       // la progression vit dans PROG_COL
+        if(pl.code && _photoStored.has(pl.code)) delete pl.photo; // photo confirmée dans PHOTO_COL
+      }
+      m[i] = pl;
+    });
+    o.players = m;
+  }
   return o;
+}
+
+// ════════════════════════════════════════
+// PHOTOS : documents séparés (olympiade_photos/{code})
+// Si l'écriture est refusée (règles Firebase pas encore ajoutées), la photo reste
+// dans le document principal comme avant : rien n'est perdu.
+// ════════════════════════════════════════
+function _photoWarn(){
+  if(_photoWarned) return;
+  _photoWarned = true;
+  try{ toast('⚠️ Photos : ajoute les règles Firebase des collections olympiade_photos et olympiade_progress. En attendant, elles restent dans la base principale.','error'); }catch(e){}
+}
+
+function _photoWrite(code, b64){
+  _photos[code] = b64;
+  if(!db || _useLocalOnly) return Promise.reject(new Error('hors ligne'));
+  return db.collection(PHOTO_COL).doc(code).set({ photo:b64, ts:Date.now() }).then(()=>{ _photoStored.add(code); });
+}
+
+function _photoDelete(code){
+  delete _photos[code];
+  _photoStored.delete(code);
+  _photoMig.delete(code);
+  if(db && !_useLocalOnly) db.collection(PHOTO_COL).doc(code).delete().catch(()=>{});
+}
+
+// Retire le champ photo du document principal (après copie réussie dans PHOTO_COL)
+function _photoDropFromMain(code){
+  if(!ARENA_REF || !_cache || !Array.isArray(_cache.players)) return;
+  const i = _cache.players.findIndex(x=>x && x.code===code);
+  if(i<0) return;
+  ARENA_REF.update({ ['players.'+i+'.photo']: firebase.firestore.FieldValue.delete() }).catch(()=>{});
+}
+
+function _photoMigrate(code, b64){
+  _photoWrite(code, b64).then(()=>_photoDropFromMain(code)).catch(()=>_photoWarn());
+}
+
+// Recolle les photos sur les joueurs en mémoire ; l'admin migre les photos restées dans le document principal
+function _photoApply(){
+  if(!_cache || !Array.isArray(_cache.players)) return;
+  _cache.players.forEach(p=>{
+    if(!p || !p.code) return;
+    if(_photos[p.code]){ p.photo = _photos[p.code]; }
+    else if(p.photo && _photosAdminReady && !_photoMig.has(p.code)){
+      _photoMig.add(p.code);
+      _photoMigrate(p.code, p.photo);
+    }
+  });
+}
+
+// Admin : écoute de toute la collection des photos
+function _photosStartAdmin(){
+  if(_photosUnsub || !db || _useLocalOnly) return;
+  try{
+    _photosUnsub = db.collection(PHOTO_COL).onSnapshot((snap)=>{
+      snap.docChanges().forEach(ch=>{
+        const id = ch.doc.id;
+        if(ch.type==='removed'){ delete _photos[id]; _photoStored.delete(id); }
+        else { const v = ch.doc.data(); if(v && v.photo){ _photos[id] = v.photo; _photoStored.add(id); } }
+      });
+      _photosAdminReady = true;
+      _photoApply();
+      const sec = document.querySelector('.admin-section.active');
+      if(sec && sec.id==='s-players' && typeof renderPlayers==='function') renderPlayers();
+    }, (err)=>{
+      console.warn('Photos : lecture refusée', err);
+      _photosAdminReady = true;   // pas de collection lisible : on garde le comportement d'avant
+      _photoWarn();
+    });
+  }catch(e){ console.warn(e); }
+}
+
+// Joueur : charge sa propre photo
+function _photoFetchOwn(p){
+  if(!db || _useLocalOnly || !p || !p.code) return;
+  db.collection(PHOTO_COL).doc(p.code).get().then(sn=>{
+    if(sn.exists && sn.data().photo){
+      _photos[p.code] = sn.data().photo;
+      _photoStored.add(p.code);
+      p.photo = _photos[p.code];
+      if(currentPlayer && currentPlayer.code===p.code){ currentPlayer.photo = p.photo; _setHeaderAvatar(p.photo); }
+    }
+  }).catch(()=>{});
 }
 
 let _saveErrShown = false;
@@ -5175,6 +5327,8 @@ function _pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 // NAVIGATION
 // ════════════════════════════════════════
 function showScreen(id){
+  if(id!=='screen-player' && typeof _acFlag==='function') _acFlag(false);
+  if(id==='screen-admin' && typeof _photosStartAdmin==='function') _photosStartAdmin();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
@@ -5315,7 +5469,10 @@ function _doLogin(code, _retried){
     }
   }
   showScreen('screen-player');
+  _acCheckInterrupted();
+  _photoFetchOwn(p);
   showLevels();
+  if(!p.photo){ setTimeout(()=>toast('📷 Touche ta photo en haut pour mettre ton profil : elle sera visible dans les matchs en direct.','info'),1200); }
   logActivity(p.name + ' s est connecte');
 }
 
@@ -5427,11 +5584,31 @@ function startLevel(levelId){
   function _launch(){
     quizQuestions = d.levelQuestions[key];
     quizIndex = 0; quizScore = 0;
+    _acExits = 0; _acAwayAt = 0; _acFlag(true);
+    quizAnswers = [];
+    toast("🛡️ Ne quitte pas l'application pendant le quiz : 1 avertissement, puis question fausse.",'info');
+    const _res = _progResume(currentPlayer && currentPlayer.progress, levelId);
+    if(_res){
+      quizAnswers = _res.answers; quizScore = _res.score; quizIndex = _res.index;
+      _acExits = 1;                      // la coupure compte comme la 1re sortie
+      toast(_res.wasOpen
+        ? '↩️ Quiz repris à la question '+Math.min(quizIndex+1,quizQuestions.length)+'. La question interrompue est comptée fausse.'
+        : '↩️ Quiz repris à la question '+Math.min(quizIndex+1,quizQuestions.length)+'.','info');
+    }
     document.getElementById('pv-levels').style.display='none';
     document.getElementById('pv-quiz').style.display='block';
     document.getElementById('pv-result').style.display='none';
     document.getElementById('ql-level').textContent = `${lv.icon} ${lv.name}`;
     loadQuestion();
+  }
+
+  function _launchWithProgress(){
+    if(_startingLevel) return;
+    _startingLevel = true;
+    _progFetch()
+      .then(pr=>{ if(currentPlayer) currentPlayer.progress = pr; })
+      .catch(()=>{})
+      .then(()=>{ _startingLevel = false; _launch(); });
   }
 
   if(!d.levelQuestions[key] || !Array.isArray(d.levelQuestions[key]) || d.levelQuestions[key].length === 0){
@@ -5447,10 +5624,10 @@ function startLevel(levelId){
     } else {
       try{ const loc=JSON.parse(localStorage.getItem('bhds_arena_fallback')||'{}'); if(!loc.levelQuestions) loc.levelQuestions={}; loc.levelQuestions[key]=_picked; localStorage.setItem('bhds_arena_fallback',JSON.stringify(loc)); }catch(e){}
     }
-    _launch();
+    _launchWithProgress();
   } else {
     // Questions déjà fixées : tous les joueurs reçoivent les mêmes
-    _launch();
+    _launchWithProgress();
   }
 }
 
@@ -5471,6 +5648,7 @@ function loadQuestion(){
   document.getElementById('q-feedback').style.display='none';
   document.getElementById('q-next-btn').style.display='none';
   answered = false;
+  _progSave(true);
 
   // Badge matière
   const matEl = document.getElementById('q-matiere');
@@ -5498,6 +5676,7 @@ function loadQuestion(){
 // Périmètre du cercle r=22 → 2π*22 ≈ 138.2
 const TIMER_CIRC = 138.2;
 let _timerMax = 30;
+let _timerTick = null;
 
 function startTimer(sec, q){
   clearInterval(timerInterval);
@@ -5517,15 +5696,22 @@ function startTimer(sec, q){
   }
   update();
 
-  timerInterval = setInterval(()=>{
-    timeLeft--;
+  // Chrono calé sur l'heure réelle : il continue même si le joueur quitte l'app
+  const _deadline = Date.now() + sec*1000;
+  function tick(){
+    if(answered) return;
+    const left = Math.max(0, Math.ceil((_deadline - Date.now())/1000));
+    if(left === timeLeft && left > 0) return;
+    timeLeft = left;
     update();
     if(timeLeft<=5 && timeLeft>0 && !answered) _sndTimerBeep();
     if(timeLeft<=0){
       clearInterval(timerInterval);
       if(!answered) autoExpire(q);
     }
-  },1000);
+  }
+  _timerTick = tick;
+  timerInterval = setInterval(tick,250);
 }
 
 function autoExpire(q){
@@ -5577,11 +5763,168 @@ function nextQuestion(){
   loadQuestion();
 }
 
+// ════════════════════════════════════════
+// PROGRESSION DU QUIZ (reprise après rechargement / coupure)
+// Enregistrée sur le joueur à chaque question : impossible de recharger la page
+// pour rejouer un niveau déjà commencé. La question en cours au moment de la
+// coupure est comptée fausse, puis le quiz reprend à la suivante.
+// ════════════════════════════════════════
+let _startingLevel = false;
+function _progLocalKey(){ return 'olympiade_prog_'+(currentPlayer?currentPlayer.code:''); }
+function _progWrite(prog){
+  if(!currentPlayer) return;
+  currentPlayer.progress = prog;
+  // copie locale (secours si l'appareil est hors ligne)
+  try{ if(prog) localStorage.setItem(_progLocalKey(), JSON.stringify(prog)); else localStorage.removeItem(_progLocalKey()); }catch(e){}
+  if(!db || _useLocalOnly) return;
+  const ref = db.collection(PROG_COL).doc(currentPlayer.code);
+  (prog ? ref.set(Object.assign({ ts:Date.now() }, prog)) : ref.delete()).catch(()=>{});
+}
+// Lecture au lancement d'un niveau : serveur d'abord, copie locale seulement si le serveur est injoignable
+function _progFetch(){
+  let local = null;
+  try{ local = JSON.parse(localStorage.getItem(_progLocalKey()) || 'null'); }catch(e){}
+  if(!db || _useLocalOnly || !currentPlayer) return Promise.resolve(local);
+  const srv = db.collection(PROG_COL).doc(currentPlayer.code).get().then(sn=> sn.exists ? sn.data() : null);
+  const timeout = new Promise(res=>setTimeout(()=>res(undefined),4000));
+  return Promise.race([srv, timeout]).then(r=> r===undefined ? local : r).catch(()=>local);
+}
+function _progSave(open){
+  _progWrite({ level:String(currentLevelId), idx:quizIndex, open:!!open, answers:quizAnswers.slice(), score:quizScore });
+}
+function _progClear(){ _progWrite(null); }
+function _progResume(pr, levelId){
+  if(!pr || String(pr.level)!==String(levelId)) return null;
+  const idx = Number(pr.idx);
+  if(!(idx>=0)) return null;
+  const ans = Array.isArray(pr.answers) ? pr.answers.slice() : Object.values(pr.answers||{});
+  if(pr.open) ans.push(false);          // question restée ouverte = comptée fausse
+  return { answers:ans, score:Number(pr.score)||0, index:idx+1, wasOpen:!!pr.open };
+}
+
+// ════════════════════════════════════════
+// ANTI-TRICHE : sorties de l'application pendant une question
+//  • 1re sortie du niveau  → avertissement
+//  • sorties suivantes     → question comptée fausse
+//  • chaque sortie est comptée sur le joueur (visible par l'admin)
+// ════════════════════════════════════════
+let _acExits = 0;
+let _acAwayAt = 0;
+
+// Repère « quiz en cours » gardé sur l'appareil : si la page est rechargée ou fermée
+// pendant un quiz, la sortie est enregistrée à la prochaine connexion du même joueur.
+const _AC_KEY = 'olympiade_inquiz';
+function _acFlag(on){
+  try{
+    if(on && currentPlayer) localStorage.setItem(_AC_KEY, JSON.stringify({code:currentPlayer.code, ts:Date.now()}));
+    else localStorage.removeItem(_AC_KEY);
+  }catch(e){}
+}
+function _acCheckInterrupted(){
+  try{
+    const raw = localStorage.getItem(_AC_KEY);
+    if(!raw) return;
+    const f = JSON.parse(raw);
+    if(!currentPlayer || f.code !== currentPlayer.code) return;
+    localStorage.removeItem(_AC_KEY);
+    _acCountExit();
+    toast("⚠️ Tu as quitté l'application pendant un quiz : sortie enregistrée.",'info');
+  }catch(e){}
+}
+
+function _acQuizActive(){
+  const pv = document.getElementById('pv-quiz');
+  return !!currentPlayer && !!pv && pv.style.display==='block' && !answered;
+}
+
+function _acLeave(){
+  if(_acAwayAt) return;
+  if(_acQuizActive()) _acAwayAt = Date.now();
+}
+
+function _acBack(){
+  if(!_acAwayAt) return;
+  const away = Date.now() - _acAwayAt;
+  _acAwayAt = 0;
+  if(_timerTick) _timerTick();          // le temps a continué pendant l'absence
+  if(away < 1500) return;               // micro-absence (ex. barre de notifications) : ignorée
+  _acRegisterExit(_acQuizActive());
+}
+
+function _acCountExit(){
+  // Compteur cumulé sur le joueur (visible dans la liste des joueurs de l'admin)
+  if(!currentPlayer) return;
+  const d = getData();
+  const idx = d.players.findIndex(p=>p.code===currentPlayer.code);
+  if(idx>=0){
+    const total = (d.players[idx].exits||0) + 1;
+    d.players[idx].exits = total;
+    currentPlayer.exits = total;
+    if(ARENA_REF){
+      ARENA_REF.update({['players.'+idx+'.exits']: total}).catch(()=>{});
+      _cache = d;
+      _lsSet(d);
+    } else {
+      saveData(d);
+    }
+  }
+}
+
+function _acRegisterExit(stillOpen){
+  _acCountExit();
+  if(!stillOpen) return;                // la question était déjà terminée (temps écoulé) : rien d'autre
+  _acExits++;
+  if(_acExits === 1){ _acWarn(); }
+  else { _acPenalize(); }
+}
+
+function _acWarn(){
+  const old = document.getElementById('ac-warn');
+  if(old) old.remove();
+  const o = document.createElement('div');
+  o.id = 'ac-warn';
+  o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(5,10,20,.88);display:flex;align-items:center;justify-content:center;padding:24px;';
+  o.innerHTML = '<div style="max-width:360px;background:var(--dark2);border:2px solid #FFB300;border-radius:16px;padding:24px;text-align:center;">'
+    + '<div style="font-size:2.4rem">⚠️</div>'
+    + '<div style="font-family:Orbitron,sans-serif;color:#FFB300;font-weight:700;margin:8px 0">AVERTISSEMENT</div>'
+    + '<p style="font-size:.9rem;line-height:1.5;color:#EEF2FF">Tu as quitté l\'application pendant une question. Le chrono a continué.<br>'
+    + 'La <strong>prochaine sortie</strong> comptera la question comme <strong>fausse</strong>.</p>'
+    + '<button class="btn btn-gold" type="button" style="margin-top:16px;width:100%" onclick="document.getElementById(\'ac-warn\').remove()">J\'ai compris</button>'
+    + '</div>';
+  document.body.appendChild(o);
+}
+
+function _acPenalize(){
+  const q = quizQuestions[quizIndex];
+  if(!q || answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+  quizAnswers.push(false);
+  document.querySelectorAll('.option-btn').forEach(b=>{ b.disabled = true; });
+  _sndWrong();
+  showFeedback(false, "🚫 Tu as quitté l'application : question comptée fausse.", q.correct);
+  document.getElementById('q-next-btn').style.display = 'block';
+  pushLiveAnswer(currentPlayer.name, q, -2, false);
+}
+
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) _acLeave(); else _acBack(); });
+window.addEventListener('blur', _acLeave);
+window.addEventListener('focus', _acBack);
+
+// Pendant le quiz : pas de sélection, de copier ni de menu contextuel (empêche de copier la question)
+['contextmenu','copy','cut'].forEach(ev=>{
+  document.addEventListener(ev,e=>{
+    if(e.target && e.target.closest && e.target.closest('#pv-quiz')) e.preventDefault();
+  });
+});
+
 // Suivi des réponses correctes/incorrectes pour l'affichage résultat
 let quizAnswers = [];
 
 function endLevel(){
   clearInterval(timerInterval);
+  _acFlag(false);
+  _progClear();
   const total = quizQuestions.length;
   const lv = LEVELS.find(l=>String(l.id)===String(currentLevelId));
   const correct = Math.round(quizScore / lv.pts);
@@ -5635,7 +5978,7 @@ function endLevel(){
   quizAnswers = [];
 }
 
-function backToLevels(){ clearInterval(timerInterval); showLevels(); }
+function backToLevels(){ clearInterval(timerInterval); _acFlag(false); showLevels(); }
 function goNextLevel(){ startLevel(String(Number(currentLevelId)+1)); }
 
 function awardPlayerPoints(pts){
@@ -5687,7 +6030,8 @@ function pushLiveAnswer(playerName, q, chosenIdx, correct){
     question: q.text,
     matiere: q.matiere || '—',
     niveau: lv ? lv.name : '—',
-    chosen: chosenIdx >= 0 ? letters[chosenIdx] : '⏰',
+    chosen: chosenIdx >= 0 ? letters[chosenIdx] : (chosenIdx === -2 ? '🚫' : '⏰'),
+    exits: currentPlayer ? (currentPlayer.exits || 0) : 0,
     correct,
     correctLetter: letters[q.correct],
     ptsGagnes,
@@ -5718,6 +6062,7 @@ function renderLiveAnswers(){
       <div style="flex:1;min-width:0;">
         <div style="font-weight:700;color:#E0E8FF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
           ${a.playerName}
+          ${a.exits?`<span title="Sorties de l'application" style="color:#FFB300;font-size:0.72rem;margin-left:6px;">⚠️ ${a.exits}</span>`:''}
           <span style="font-weight:400;color:var(--silver);font-size:0.75rem;margin-left:6px;">${a.niveau} · ${a.matiere}</span>
         </div>
         <div style="color:var(--silver);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${a.question}">
@@ -5849,6 +6194,19 @@ function importPlayers(){
 function renderPlayers(){
   const d=getData();
   const grid=document.getElementById('players-grid');
+  try{
+    let info=document.getElementById('doc-size-info');
+    if(!info && grid && grid.parentNode){
+      info=document.createElement('div'); info.id='doc-size-info';
+      info.style.cssText='font-size:.78rem;color:var(--silver);margin:0 0 10px;';
+      grid.parentNode.insertBefore(info,grid);
+    }
+    if(info){
+      const kb=Math.round(new Blob([JSON.stringify(_fsPayload(d))]).size/1024);
+      const col=kb>850?'#FF1744':kb>700?'#FFB300':'var(--green)';
+      info.innerHTML='💾 Données en ligne : <strong style="color:'+col+'">'+kb+' Ko</strong> / 1 000 Ko · '+d.players.length+' joueur'+(d.players.length>1?'s':'');
+    }
+  }catch(e){}
   if(!d.players.length){
     grid.innerHTML='<div style="text-align:center;color:var(--silver);padding:40px;">Aucun joueur. Ajoutez-en ci-dessus.</div>';
     return;
@@ -5886,7 +6244,7 @@ function renderPlayers(){
 
       <!-- Infos -->
       <div class="player-info" style="min-width:180px;flex:1;">
-        <div class="player-name">${p.name} ${p.sexe?'<span style="font-size:0.7rem;color:var(--silver);">('+p.sexe+')</span>':''}</div>
+        <div class="player-name">${p.name} ${p.sexe?'<span style="font-size:0.7rem;color:var(--silver);">('+p.sexe+')</span>':''} ${p.exits?'<span title="Sorties de l\'application pendant les quiz" style="font-size:0.7rem;color:#FFB300;border:1px solid rgba(255,179,0,.5);border-radius:8px;padding:1px 6px;margin-left:4px;">⚠️ '+p.exits+' sortie'+(p.exits>1?'s':'')+'</span>':''}</div>
         <div class="player-meta" style="margin-top:3px;">
           ${p.classe||'—'} &bull; ${p.school||'—'}${p.ville?' &bull; '+p.ville:''}
         </div>
@@ -6043,7 +6401,19 @@ function openEditPlayer(code){
     }
   }
   document.getElementById('ep-photo-input').value='';
+  _epPhotoRemoved = false;
   document.getElementById('modal-edit-player').classList.add('open');
+}
+
+let _epPhotoRemoved = false;
+function removeEditPhoto(){
+  _epPhotoRemoved = true;
+  const data = document.getElementById('ep-photo-data'); if(data) data.value = '';
+  const prev = document.getElementById('ep-photo-preview');
+  const ini = ((document.getElementById('ep-prenom')||{}).value || (document.getElementById('ep-nom')||{}).value || '?').charAt(0).toUpperCase();
+  if(prev) prev.innerHTML = '<span id="ep-photo-initial">'+ini+'</span>';
+  const inp = document.getElementById('ep-photo-input'); if(inp) inp.value = '';
+  toast('Photo retirée : clique sur « Enregistrer » pour valider.','info');
 }
 
 function saveEditPlayer(){
@@ -6067,9 +6437,16 @@ function saveEditPlayer(){
     classe:document.getElementById('ep-class').value.trim(),
     ville:document.getElementById('ep-ville').value.trim(),
     matricule:document.getElementById('ep-matricule').value.trim(),
-    photo: newPhoto || d.players[idx].photo || '',
+    photo: newPhoto ? newPhoto : (_epPhotoRemoved ? '' : (d.players[idx].photo || '')),
   };
-  saveData(d);
+  const _removedPhoto = _epPhotoRemoved;
+  _epPhotoRemoved = false;
+  const _svEdit = saveData(d);
+  if(newPhoto){
+    Promise.all([_photoWrite(code,newPhoto), Promise.resolve(_svEdit)]).then(()=>_photoDropFromMain(code)).catch(()=>_photoWarn());
+  } else if(_removedPhoto){
+    _photoDelete(code);
+  }
   closeModal('modal-edit-player');
   renderPlayers(); renderDashboard();
   toast('Joueur "'+name+'" mis à jour !','success');
@@ -6081,6 +6458,8 @@ function deletePlayer(code){
   d.players=d.players.filter(p=>p.code!==code);
   _deletedCodes.add(code);
   saveData(d);
+  _photoDelete(code);
+  if(db && !_useLocalOnly) db.collection(PROG_COL).doc(code).delete().catch(()=>{});
   renderPlayers(); renderDashboard();
   toast('Joueur supprimé','info');
 }
@@ -6977,6 +7356,9 @@ function loadSampleQuestions(){
 // ════════════════════════════════════════
 function renderClassement(){
   const d=getData();
+  _rankSnap(false);
+  _renderSchoolRank();
+  _renderClimber();
   const sorted=[...d.players].sort((a,b)=>(b.score||0)-(a.score||0));
   const max=sorted[0]?.score||1;
   const body=document.getElementById('classement-body');
@@ -6997,8 +7379,10 @@ function renderClassement(){
 function resetAllScores(){
   if(!confirm('Remettre tous les scores à 0 ?')) return;
   const d=getData();
-  d.players.forEach(p=>{ p.score=0; p.completedLevels=[]; });
+  d.players.forEach(p=>{ p.score=0; p.completedLevels=[]; p.exits=0; delete p.progress; });
+  d.rankHist=[];
   saveData(d);
+  if(db && !_useLocalOnly) d.players.forEach(p=>{ if(p && p.code) db.collection(PROG_COL).doc(p.code).delete().catch(()=>{}); });
   renderClassement(); renderPlayers();
   toast('Scores réinitialisés','info');
 }
@@ -7225,14 +7609,384 @@ function genCompetition(){
       <div style="font-size:0.85rem;color:var(--silver);letter-spacing:2px;text-transform:uppercase;">Champion de l'Olympiade</div>
       <div class="comp-winner-name">${champion.name}</div>
       <div class="comp-winner-sub">${champion.classe||''} ${champion.school?'· '+champion.school:''} · ${champion.score||0} points</div>
+      <button class="btn btn-gold" style="margin-top:14px;" onclick="announceWinner(${JSON.stringify(champion.name).replace(/"/g,'&quot;')},'Champion de l\'Olympiade',0)">📣 Annoncer le champion</button>
     `;
     container.appendChild(bannerDiv);
   }
 
+  window._compPhasesData = phasesData;
+  _renderNotifyCard(container);
   toast('Tableau de compétition généré !','success');
   // Horodatage dernière mise à jour automatique
   const luEl = document.getElementById('comp-last-update');
   if(luEl) luEl.textContent = 'Mis à jour : ' + new Date().toLocaleTimeString('fr-FR');
+}
+
+// ════════════════════════════════════════
+// NOTIFIER LES QUALIFIÉS (WhatsApp / e-mail, un clic par joueur)
+// ════════════════════════════════════════
+let _notifPh = 0;
+function _notifPlayers(phIdx){
+  const pd = (window._compPhasesData||[])[phIdx]; if(!pd) return [];
+  const seen = new Set(), out = [];
+  pd.matches.forEach(m=>[m.p1,m.p2].forEach(pl=>{ if(pl && pl.code && !seen.has(pl.code)){ seen.add(pl.code); out.push(pl); } }));
+  return out;
+}
+function _notifState(code, phId){
+  const p = getData().players.find(x=>x.code===code);
+  return (p && p.notified && p.notified[phId]) || {};
+}
+function _renderNotifyCard(container){
+  const old = document.getElementById('notif-card'); if(old) old.remove();
+  const pds = window._compPhasesData||[]; if(!pds.length) return;
+  if(_notifPh >= pds.length) _notifPh = 0;
+  const card = document.createElement('div');
+  card.id = 'notif-card';
+  card.className = 'comp-phase';
+  card.style.marginBottom = '18px';
+  card.innerHTML = `
+    <div class="comp-phase-title">📣 Notifier les qualifiés</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+      <select id="notif-ph" onchange="_notifPh=+this.value;_notifRows()" style="flex:1;min-width:160px;">
+        ${pds.map((x,i)=>`<option value="${i}" ${i===_notifPh?'selected':''}>${x.phase.icon} ${x.phase.label}</option>`).join('')}
+      </select>
+      <button class="btn btn-green btn-sm" onclick="_notifNext()">▶ Suivant non notifié</button>
+      <button class="btn btn-gold btn-sm" onclick="showQualifWall(_notifPlayers(_notifPh).length)">🧱 Mur des qualifiés</button>
+    </div>
+    <div id="notif-rows"></div>`;
+  container.insertBefore(card, container.firstChild);
+  _notifRows();
+}
+function _notifRows(){
+  const el = document.getElementById('notif-rows'); if(!el) return;
+  const pd = window._compPhasesData[_notifPh]; if(!pd) return;
+  const list = _notifPlayers(_notifPh);
+  const done = list.filter(pl=>{ const st=_notifState(pl.code,pd.phase.id); return st.wa||st.mail; }).length;
+  el.innerHTML = `<div style="font-size:0.78rem;color:var(--silver);margin-bottom:6px;">${done} / ${list.length} notifié${done>1?'s':''}</div>` +
+    list.map(pl=>{
+      const st = _notifState(pl.code, pd.phase.id);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;margin:3px 0;border-radius:8px;border:1px solid rgba(255,255,255,0.08);font-size:0.85rem;">
+        <span>${pl.name} <span style="font-size:0.72rem;color:var(--silver);">${pl.classe||''}</span></span>
+        <span style="display:flex;gap:6px;align-items:center;">
+          ${st.wa||st.mail ? '<span style="color:var(--green);font-size:0.75rem;">✓ notifié</span>' : ''}
+          <button class="btn btn-green btn-sm" title="WhatsApp" onclick="sendQualifWA('${pl.code}',${_notifPh})">📱</button>
+          <button class="btn btn-outline btn-sm" title="E-mail" onclick="sendQualifMail('${pl.code}',${_notifPh})">✉️</button>
+        </span>
+      </div>`;
+    }).join('');
+}
+function _qualifMsg(p, pd, link){
+  return { wa:`Bonjour ${p.name} ! 🎉\nFélicitations, tu es *qualifié(e)* pour les *${pd.phase.label}* de l'*Olympiade des Cerveaux Guinée* !\n🔑 Ton code joueur : *${p.code}*\nAccède à ton espace ici :\n${link}\nBonne chance ! ⚡`,
+           mail:`Bonjour ${p.name} !\n\nFélicitations, tu es qualifié(e) pour les ${pd.phase.label} de l'Olympiade des Cerveaux Guinée !\n\n🔑 Ton code joueur : ${p.code}\n\n👉 Accède à ton espace ici :\n${link}\n\nBonne chance ! ⚡\n\n— Collection BHDS / Boubacar Diallo Édition 2026` };
+}
+function _qualifMark(code, phId, via){
+  const d = getData(); const p = d.players.find(x=>x.code===code); if(!p) return;
+  p.notified = Object.assign({}, p.notified||{}, {[phId]: Object.assign({}, (p.notified||{})[phId]||{}, {[via]:Date.now()})});
+  saveData(d); _notifRows();
+}
+function sendQualifWA(code, phIdx){
+  const x = _playerSendData(code); const pd = window._compPhasesData[phIdx]; if(!x||!pd) return;
+  let phone = _normPhone(x.p.phone);
+  if(phone.length < 11){
+    const ans = prompt('Aucun numéro WhatsApp valide pour '+x.p.name+'.\nSaisis-le (ex. 622 00 00 00) :','');
+    phone = _normPhone(ans);
+    if(phone.length < 11){ toast('Numéro invalide : envoi annulé','error'); return; }
+    x.p.phone = String(ans).trim();
+  }
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(_qualifMsg(x.p,pd,x.link).wa)}`,'_blank');
+  _qualifMark(code, pd.phase.id, 'wa');
+}
+function sendQualifMail(code, phIdx){
+  const x = _playerSendData(code); const pd = window._compPhasesData[phIdx]; if(!x||!pd) return;
+  let email = (x.p.email||'').trim();
+  if(!email){
+    const ans = prompt('Aucun e-mail enregistré pour '+x.p.name+'.\nSaisis-le :','');
+    email = String(ans||'').trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ toast('E-mail invalide : envoi annulé','error'); return; }
+    x.p.email = email;
+  }
+  const subject = encodeURIComponent('🎉 Tu es qualifié(e) – Olympiade des Cerveaux Guinée');
+  window.open(`mailto:${encodeURIComponent(email)}?subject=${subject}&body=${encodeURIComponent(_qualifMsg(x.p,pd,x.link).mail)}`,'_blank');
+  _qualifMark(code, pd.phase.id, 'mail');
+}
+// Ouvre le prochain joueur non notifié (WhatsApp si numéro connu, sinon e-mail)
+function _notifNext(){
+  const pd = window._compPhasesData[_notifPh]; if(!pd) return;
+  const nxt = _notifPlayers(_notifPh).find(pl=>{ const st=_notifState(pl.code,pd.phase.id); return !st.wa && !st.mail; });
+  if(!nxt){ toast('✅ Tous les qualifiés de cette phase sont notifiés','success'); return; }
+  const full = getData().players.find(x=>x.code===nxt.code)||nxt;
+  if(_normPhone(full.phone).length>=11 || !(full.email||'').trim()) sendQualifWA(nxt.code,_notifPh);
+  else sendQualifMail(nxt.code,_notifPh);
+}
+
+// ════════════════════════════════════════
+// CLASSEMENT PAR ÉCOLE
+// ════════════════════════════════════════
+function _schoolBoard(){
+  const m = {};
+  getData().players.forEach(p=>{
+    const raw = (p.school||'').trim(); if(!raw) return;
+    const k = raw.toLowerCase();
+    if(!m[k]) m[k] = { name:raw, pts:0, n:0 };
+    m[k].pts += (p.score||0); m[k].n++;
+  });
+  return Object.values(m).sort((a,b)=>b.pts-a.pts);
+}
+function _renderSchoolRank(){
+  const el = document.getElementById('school-rank'); if(!el) return;
+  const b = _schoolBoard();
+  if(!b.length){ el.innerHTML=''; return; }
+  const max = b[0].pts || 1;
+  el.innerHTML = `<div style="font-weight:700;color:var(--gold);margin-bottom:8px;">🏫 Classement des écoles <span style="font-weight:400;font-size:0.75rem;color:var(--silver);">(total des points de leurs élèves)</span></div>` +
+    b.slice(0,10).map((x,i)=>`<div style="margin:5px 0;">
+      <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+        <span>${i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.'} <strong>${x.name}</strong> <span style="color:var(--silver);font-size:0.72rem;">${x.n} élève${x.n>1?'s':''}</span></span>
+        <strong style="color:var(--gold);">${x.pts} pts</strong>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${(x.pts/max)*100}%"></div></div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════
+// CARTE JOUEUR PARTAGEABLE (image PNG)
+// ════════════════════════════════════════
+function shareCard(){
+  if(!currentPlayer){ return; }
+  const d = getData();
+  const sorted = [...d.players].sort((a,b)=>(b.score||0)-(a.score||0));
+  const me = d.players.find(x=>x.code===currentPlayer.code) || currentPlayer;
+  const rank = sorted.findIndex(x=>x.code===me.code) + 1;
+  const sb = _schoolBoard();
+  const sIdx = me.school ? sb.findIndex(x=>x.name.toLowerCase()===me.school.trim().toLowerCase()) : -1;
+  const done = (me.completedLevels||[]).length;
+  const W=1080, H=1350, c=document.createElement('canvas'); c.width=W; c.height=H;
+  const g=c.getContext('2d');
+  const finish = (img)=>{
+    const bg=g.createLinearGradient(0,0,W,H); bg.addColorStop(0,'#0a1020'); bg.addColorStop(1,'#1b0f3a');
+    g.fillStyle=bg; g.fillRect(0,0,W,H);
+    g.strokeStyle='#FFD740'; g.lineWidth=8; g.strokeRect(30,30,W-60,H-60);
+    g.textAlign='center'; g.fillStyle='#FFD740'; g.font='bold 46px sans-serif';
+    g.fillText('🏆 OLYMPIADE DES CERVEAUX',W/2,140);
+    g.fillStyle='#9fb3c8'; g.font='34px sans-serif'; g.fillText('GUINÉE 2026',W/2,195);
+    // photo ronde
+    const cx=W/2, cy=420, r=170;
+    g.save(); g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.closePath(); g.clip();
+    if(img){ const s=Math.max(2*r/img.width,2*r/img.height), w=img.width*s, h=img.height*s; g.drawImage(img,cx-w/2,cy-h/2,w,h); }
+    else { g.fillStyle='#243b6b'; g.fillRect(cx-r,cy-r,2*r,2*r); g.fillStyle='#fff'; g.font='bold 170px sans-serif'; g.textBaseline='middle'; g.fillText((me.name||'?')[0].toUpperCase(),cx,cy+8); g.textBaseline='alphabetic'; }
+    g.restore();
+    g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.strokeStyle='#00E5FF'; g.lineWidth=10; g.stroke();
+    // nom
+    g.fillStyle='#ffffff'; g.font='bold 74px sans-serif';
+    let nm=me.name||''; while(g.measureText(nm).width>W-140 && nm.length>3) nm=nm.slice(0,-2);
+    g.fillText(nm,W/2,690);
+    g.fillStyle='#9fb3c8'; g.font='38px sans-serif';
+    g.fillText(((me.classe||'')+(me.school?' · '+me.school:'')).slice(0,48),W/2,750);
+    // rang + score
+    g.fillStyle='#FFD740'; g.font='bold 200px sans-serif'; g.fillText(rank?('#'+rank):'—',W/2,980);
+    g.fillStyle='#ffffff'; g.font='bold 60px sans-serif'; g.fillText((me.score||0)+' points',W/2,1060);
+    g.fillStyle='#00E676'; g.font='40px sans-serif';
+    g.fillText('Niveaux réussis : '+done+' / '+LEVELS.length+(sIdx>=0?'   ·   École #'+(sIdx+1):''),W/2,1130);
+    g.fillStyle='#9fb3c8'; g.font='30px sans-serif'; g.fillText('Collection BHDS · Boubacar Diallo · Édition 2026',W/2,1250);
+    c.toBlob(async blob=>{
+      if(!blob){ toast('Image impossible à créer','error'); return; }
+      const file=new File([blob],'carte-olympiade.png',{type:'image/png'});
+      const text='🏆 Je suis #'+rank+' à l\'Olympiade des Cerveaux Guinée avec '+(me.score||0)+' points ! Viens me défier ⚡';
+      try{
+        if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],text,title:'Olympiade des Cerveaux'}); return; }
+      }catch(e){ if(e && e.name==='AbortError') return; }
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='carte-olympiade.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      toast('Carte téléchargée : partage-la sur WhatsApp ou Facebook','success');
+    },'image/png');
+  };
+  if(me.photo){ const im=new Image(); im.onload=()=>finish(im); im.onerror=()=>finish(null); im.src=me.photo; }
+  else finish(null);
+}
+
+// ════════════════════════════════════════
+// MODE ÉCRAN GÉANT (projection en salle)
+// ════════════════════════════════════════
+let _giantTimer = null;
+function _giantBoard(){
+  const el = document.getElementById('spec-giant-board'); if(!el) return;
+  const pl = [...getData().players].sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,5);
+  const sc = _schoolBoard().slice(0,5);
+  const med = i=>['🥇','🥈','🥉'][i]||(i+1)+'.';
+  const cl = _bestClimber();
+  el.innerHTML = (cl ? `<div class="gb-col" style="grid-column:1/-1;text-align:center;border-color:var(--green);"><div class="gb-title" style="color:var(--green);">🚀 Meilleure remontée</div><div style="font-size:2.4rem;color:#E0E8FF;"><b style="color:var(--gold);">${cl.p.name}</b> · +${cl.delta} place${cl.delta>1?'s':''} <span style="font-size:1.5rem;color:var(--silver);">(${cl.from}e → ${cl.to}e)</span></div></div>` : '') + `<div class="gb-col"><div class="gb-title">🏆 Top joueurs</div>${pl.map((p,i)=>`<div class="gb-row"><span>${med(i)} ${p.name}</span><b>${p.score||0}</b></div>`).join('')||'—'}</div>
+    <div class="gb-col"><div class="gb-title">🏫 Top écoles</div>${sc.map((x,i)=>`<div class="gb-row"><span>${med(i)} ${x.name}</span><b>${x.pts}</b></div>`).join('')||'—'}</div>`;
+}
+function toggleGiantScreen(force){
+  const scr = document.getElementById('screen-spectator'); if(!scr) return;
+  const on = typeof force==='boolean' ? force : !scr.classList.contains('giant');
+  scr.classList.toggle('giant', on);
+  const b = document.getElementById('btn-giant'); if(b) b.textContent = on ? '✖ Quitter écran géant' : '📺 Écran géant';
+  clearInterval(_giantTimer);
+  if(on){
+    _giantBoard(); _giantTimer = setInterval(_giantBoard, 10000);
+    try{ const r=document.documentElement; (r.requestFullscreen||r.webkitRequestFullscreen||function(){}).call(r); }catch(e){}
+    try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').catch(()=>{}); }catch(e){}
+  } else {
+    try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
+  }
+}
+function exitSpectator(){ toggleGiantScreen(false); showScreen('screen-landing'); }
+// Echap (sortie du plein écran) => retour à la vue normale
+document.addEventListener('fullscreenchange', ()=>{
+  if(!document.fullscreenElement){
+    const scr=document.getElementById('screen-spectator');
+    if(scr && scr.classList.contains('giant')) toggleGiantScreen(false);
+  }
+});
+
+// ════════════════════════════════════════
+// ANNONCE DU VAINQUEUR EN GRAND (3-2-1, confettis, fanfare)
+// ════════════════════════════════════════
+let _awTimers = [], _awRaf = 0;
+function closeWinnerAnnounce(){
+  _awTimers.forEach(clearTimeout); _awTimers = []; cancelAnimationFrame(_awRaf);
+  const o = document.getElementById('winner-overlay'); if(o) o.remove();
+}
+function announceWinner(name, sub, autoCloseMs){
+  closeWinnerAnnounce();
+  const pl = getData().players.find(x=>(x.name||'').trim().toLowerCase()===String(name).trim().toLowerCase());
+  const o = document.createElement('div');
+  o.id = 'winner-overlay';
+  o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:radial-gradient(circle at 50% 40%,#2a1a5e,#05060f 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;font-family:Orbitron,sans-serif;cursor:pointer;';
+  o.innerHTML = '<canvas id="aw-conf" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></canvas><div id="aw-body" style="position:relative;z-index:2;padding:20px;"></div>';
+  o.onclick = closeWinnerAnnounce;
+  document.body.appendChild(o);
+  const body = o.querySelector('#aw-body');
+  const step = (txt)=>{ body.innerHTML=''; const d=document.createElement('div'); d.style.cssText='font-size:min(30vw,22rem);font-weight:900;color:#FFD740;text-shadow:0 0 60px rgba(255,215,0,.7);'; d.textContent=txt; body.appendChild(d); try{ _playTone(txt==='🏆'?1046:440,'square',0.15,0.3); }catch(e){} };
+  const reveal = ()=>{
+    body.innerHTML = '';
+    const mk=(css,txt)=>{ const d=document.createElement('div'); d.style.cssText=css; d.textContent=txt; body.appendChild(d); return d; };
+    mk('font-size:min(8vw,5rem);','🏆');
+    if(pl && pl.photo){ const im=document.createElement('img'); im.src=pl.photo; im.style.cssText='width:min(34vw,300px);height:min(34vw,300px);border-radius:50%;object-fit:cover;border:8px solid #FFD740;box-shadow:0 0 70px rgba(255,215,0,.6);margin:10px 0;'; body.appendChild(im); }
+    mk('font-size:min(9vw,6.5rem);font-weight:900;color:#FFD740;text-shadow:0 0 40px rgba(255,215,0,.6);line-height:1.1;', name);
+    if(pl && (pl.classe||pl.school)) mk('font-size:min(3.4vw,2rem);color:#9fb3c8;margin-top:12px;', (pl.classe||'')+(pl.school?' · '+pl.school:''));
+    if(sub) mk('font-size:min(3vw,1.8rem);color:#00E5FF;margin-top:14px;letter-spacing:3px;text-transform:uppercase;', sub);
+    try{ _sndVictory(); setTimeout(_sndVictory,900); }catch(e){}
+    confetti();
+    if(autoCloseMs>0) _awTimers.push(setTimeout(closeWinnerAnnounce, autoCloseMs));
+  };
+  const confetti = ()=>{
+    const cv=document.getElementById('aw-conf'); if(!cv) return;
+    cv.width=innerWidth; cv.height=innerHeight; const g=cv.getContext('2d');
+    const cols=['#FFD740','#00E5FF','#FF1744','#00E676','#CE93D8','#fff'];
+    const ps=Array.from({length:220},()=>({x:Math.random()*cv.width,y:-Math.random()*cv.height,w:8+Math.random()*10,h:12+Math.random()*14,vy:3+Math.random()*5,vx:-2+Math.random()*4,r:Math.random()*6,vr:-.2+Math.random()*.4,c:cols[(Math.random()*cols.length)|0]}));
+    const t0=performance.now();
+    const loop=(t)=>{
+      g.clearRect(0,0,cv.width,cv.height);
+      ps.forEach(q=>{ q.x+=q.vx; q.y+=q.vy; q.r+=q.vr; if(q.y>cv.height && t-t0<9000){ q.y=-20; q.x=Math.random()*cv.width; }
+        g.save(); g.translate(q.x,q.y); g.rotate(q.r); g.fillStyle=q.c; g.fillRect(-q.w/2,-q.h/2,q.w,q.h); g.restore(); });
+      if(document.getElementById('aw-conf')) _awRaf=requestAnimationFrame(loop);
+    };
+    _awRaf=requestAnimationFrame(loop);
+  };
+  step('3');
+  _awTimers.push(setTimeout(()=>step('2'),1000), setTimeout(()=>step('1'),2000), setTimeout(()=>step('🏆'),3000), setTimeout(reveal,3600));
+}
+
+// ════════════════════════════════════════
+// MUR DES QUALIFIÉS (plein écran, photos + école)
+// ════════════════════════════════════════
+function closeQualifWall(){ const o=document.getElementById('qwall'); if(o) o.remove(); document.removeEventListener('keydown',_qwKey); }
+function _qwKey(e){ if(e.key==='Escape') closeQualifWall(); }
+function showQualifWall(n){
+  n = [2,4,8,16].includes(n) ? n : (n<=2?2:n<=4?4:n<=8?8:16);
+  closeQualifWall();
+  const list = [...getData().players].sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,n);
+  const label = {16:'16èmes de finale',8:'8èmes de finale',4:'Quarts de finale',2:'Finale'};
+  const cols = n<=2 ? 2 : n<=4 ? 4 : n<=8 ? 4 : 8;
+  const o = document.createElement('div');
+  o.id = 'qwall';
+  o.style.cssText = 'position:fixed;inset:0;z-index:99998;background:radial-gradient(circle at 50% 0%,#2a1a5e,#05060f 75%);color:#fff;font-family:Orbitron,sans-serif;display:flex;flex-direction:column;padding:2vh 3vw;overflow:auto;';
+  const style = document.createElement('style');
+  style.textContent = '@keyframes qwIn{from{opacity:0;transform:scale(.6) translateY(30px)}to{opacity:1;transform:none}}';
+  o.appendChild(style);
+  const head = document.createElement('div');
+  head.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:2vh;gap:12px;flex-wrap:wrap;';
+  const t = document.createElement('div');
+  t.style.cssText = 'font-size:min(4vw,2.6rem);font-weight:900;color:#FFD740;letter-spacing:3px;';
+  t.textContent = '🎉 QUALIFIÉS · ' + label[n];
+  head.appendChild(t);
+  const bar = document.createElement('div'); bar.style.cssText = 'display:flex;gap:8px;align-items:center;';
+  [16,8,4,2].forEach(k=>{
+    const b = document.createElement('button'); b.textContent = k;
+    b.style.cssText = 'font:inherit;font-weight:700;padding:6px 16px;border-radius:20px;cursor:pointer;border:1px solid #FFD740;'+(k===n?'background:#FFD740;color:#000;':'background:transparent;color:#FFD740;');
+    b.onclick = ()=>showQualifWall(k); bar.appendChild(b);
+  });
+  const x = document.createElement('button'); x.textContent='✕'; x.onclick=closeQualifWall;
+  x.style.cssText='font:inherit;padding:6px 14px;border-radius:20px;cursor:pointer;border:1px solid #888;background:transparent;color:#ccc;';
+  bar.appendChild(x); head.appendChild(bar); o.appendChild(head);
+  const grid = document.createElement('div');
+  grid.style.cssText = 'flex:1;display:grid;gap:1.6vw;grid-template-columns:repeat('+cols+',1fr);align-content:center;';
+  const ph = n>=16 ? 'min(9vw,110px)' : n>=8 ? 'min(14vw,170px)' : 'min(18vw,230px)';
+  list.forEach((p,i)=>{
+    const c = document.createElement('div');
+    c.style.cssText = 'background:rgba(255,255,255,.06);border:2px solid rgba(255,215,0,.45);border-radius:20px;padding:1.4vh 1vw;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;animation:qwIn .6s ease both;animation-delay:'+(i*0.25)+'s;';
+    const av = document.createElement('div');
+    av.style.cssText = 'width:'+ph+';height:'+ph+';border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#7C4DFF,#00E5FF);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:3rem;border:4px solid #FFD740;';
+    if(p.photo){ const im=document.createElement('img'); im.src=p.photo; im.style.cssText='width:100%;height:100%;object-fit:cover;'; av.appendChild(im); }
+    else av.textContent = (p.name||'?')[0].toUpperCase();
+    const nm = document.createElement('div'); nm.style.cssText='font-weight:900;color:#FFD740;font-size:'+(n>=16?'min(1.5vw,1.1rem)':'min(2.4vw,1.7rem)')+';line-height:1.15;'; nm.textContent = (i+1)+'. '+p.name;
+    const sc = document.createElement('div'); sc.style.cssText='color:#9fb3c8;font-size:'+(n>=16?'min(1.1vw,.8rem)':'min(1.7vw,1.15rem)')+';font-family:sans-serif;'; sc.textContent = ((p.classe||'')+(p.school?' · '+p.school:'')).trim();
+    const pt = document.createElement('div'); pt.style.cssText='color:#00E676;font-weight:700;font-size:'+(n>=16?'min(1.2vw,.9rem)':'min(2vw,1.3rem)')+';'; pt.textContent = (p.score||0)+' pts';
+    c.append(av,nm,sc,pt); grid.appendChild(c);
+  });
+  o.appendChild(grid);
+  document.body.appendChild(o);
+  document.addEventListener('keydown',_qwKey);
+  try{ _sndVictory(); }catch(e){}
+}
+
+// ════════════════════════════════════════
+// MEILLEURE REMONTÉE (progression au classement)
+// ════════════════════════════════════════
+function _rankNow(){
+  const m = {};
+  [...getData().players].sort((a,b)=>(b.score||0)-(a.score||0)).forEach((p,i)=>{ if(p.code) m[p.code]=i+1; });
+  return m;
+}
+// Photo du classement : enregistrée par l'admin (auto toutes les ~20 h, ou à la demande)
+function _rankSnap(force){
+  const isAdm = !!(window.firebase && firebase.auth && firebase.auth().currentUser) || _useLocalOnly;
+  if(!isAdm) return;
+  const d = getData();
+  if(!Array.isArray(d.rankHist)) d.rankHist = d.rankHist ? Object.values(d.rankHist) : [];
+  const last = d.rankHist[d.rankHist.length-1];
+  if(!force && last && Date.now()-last.ts < 20*3600*1000) return;
+  if(!d.players || d.players.length<2) { if(force) toast('Pas assez de joueurs','info'); return; }
+  d.rankHist.push({ ts:Date.now(), ranks:_rankNow() });
+  d.rankHist = d.rankHist.slice(-10);
+  saveData(d);
+  if(force){ toast('📸 Point de référence enregistré','success'); _renderClimber(); }
+}
+function _bestClimber(){
+  let h = getData().rankHist; if(!h) return null;
+  if(!Array.isArray(h)) h = Object.values(h);
+  if(!h.length) return null;
+  const now = Date.now();
+  const old = h.filter(x=>now-x.ts > 12*3600*1000);
+  const ref = old.length ? old[old.length-1] : h[0];
+  const cur = _rankNow(); let best = null;
+  getData().players.forEach(p=>{
+    const before = ref.ranks && ref.ranks[p.code], after = cur[p.code];
+    if(!before || !after) return;
+    const delta = before-after;
+    if(delta>0 && (!best || delta>best.delta || (delta===best.delta && (p.score||0)>(best.p.score||0)))) best = { p, from:before, to:after, delta, ts:ref.ts };
+  });
+  return best;
+}
+function _renderClimber(){
+  const el = document.getElementById('climber-card'); if(!el) return;
+  const b = _bestClimber();
+  if(!b){ el.innerHTML = '<div style="font-size:0.8rem;color:var(--silver);">🚀 Meilleure remontée : pas encore de comparaison. Clique sur « 📸 Point de référence » avant une phase, la remontée s\'affichera ensuite.</div>'; return; }
+  el.innerHTML = `<div style="padding:12px 16px;border-radius:12px;border:1px solid var(--green);background:rgba(0,230,118,0.08);">
+    <div style="font-size:0.75rem;color:var(--green);letter-spacing:1px;">🚀 MEILLEURE REMONTÉE · depuis le ${new Date(b.ts).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
+    <div style="font-size:1.1rem;margin-top:4px;"><strong>${b.p.name}</strong> <span style="color:var(--gold);font-weight:700;">+${b.delta} place${b.delta>1?'s':''}</span> <span style="color:var(--silver);font-size:0.85rem;">(${b.from}e → ${b.to}e · ${b.p.classe||''} ${b.p.school?'· '+b.p.school:''})</span></div>
+  </div>`;
 }
 
 function resetCompetition(){
@@ -7343,6 +8097,71 @@ function _startCountdown(dateStr){
 }
 
 // ════════════════════════════════════════
+// PHOTO DU JOUEUR (il la choisit lui-même ; visible dans les matchs en direct)
+// Chaque photo est stockée dans son propre document Firebase (olympiade_photos/{code}).
+// ════════════════════════════════════════
+function _squarePhoto(file, size, quality, cb){
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const img = new Image();
+    img.onload = function(){
+      const side = Math.min(img.width, img.height);
+      const sx = (img.width - side)/2, sy = (img.height - side)/2;
+      const canvas = document.createElement('canvas');
+      canvas.width = size; canvas.height = size;
+      canvas.getContext('2d').drawImage(img, sx, sy, side, side, 0, 0, size, size);
+      cb(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = function(){ toast("Image illisible, essaie une autre photo.",'error'); };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function playerPickPhoto(){
+  const pv = document.getElementById('pv-quiz');
+  if(pv && pv.style.display==='block'){ toast('📷 Change ta photo après le quiz (ne quitte pas l\'app pendant les questions).','info'); return; }
+  const inp = document.getElementById('pl-photo-input');
+  if(inp) inp.click();
+}
+
+function playerSetPhoto(input){
+  const file = input.files && input.files[0];
+  if(!file || !currentPlayer) return;
+  if(!/^image\//.test(file.type)){ toast('Choisis une image (JPG ou PNG).','error'); input.value=''; return; }
+  if(file.size > 12*1024*1024){ toast('Photo trop lourde (max 12 Mo).','error'); input.value=''; return; }
+  _squarePhoto(file, 128, 0.7, function(b64){
+    const d = getData();
+    const idx = d.players.findIndex(p=>p.code===currentPlayer.code);
+    if(idx<0){ toast('Joueur introuvable.','error'); return; }
+    const code = currentPlayer.code;
+    d.players[idx].photo = b64;
+    currentPlayer.photo = b64;
+    _lsSet(d);
+    _setHeaderAvatar(b64);
+    input.value = '';
+    _photoWrite(code, b64).then(()=>{
+      toast('✅ Photo enregistrée : elle sera visible dans les matchs en direct.','success');
+    }).catch(()=>{
+      // Repli : règles Firebase pas encore ajoutées ou hors ligne → stockage dans le document principal
+      if(ARENA_REF){
+        ARENA_REF.update({['players.'+idx+'.photo']: b64})
+          .then(()=>toast('✅ Photo enregistrée : elle sera visible dans les matchs en direct.','success'))
+          .catch(()=>toast('Photo non enregistrée en ligne (connexion ?). Réessaie.','error'));
+      } else { saveData(d); }
+    });
+  });
+}
+
+function _setHeaderAvatar(b64){
+  const av = document.getElementById('ph-avatar');
+  if(av && b64){
+    av.innerHTML = '<img src="'+b64+'" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" alt="">';
+    av.style.padding = '0';
+  }
+}
+
+// ════════════════════════════════════════
 // PHOTO PROFIL – helpers
 // ════════════════════════════════════════
 function _resizePhoto(file, maxW, maxH, quality, cb){
@@ -7368,8 +8187,8 @@ function _resizePhoto(file, maxW, maxH, quality, cb){
 function _loadPhotoPreview(input, previewId, initialId, dataId){
   const file=input.files[0];
   if(!file) return;
-  if(file.size>1.5*1024*1024){ toast('Photo trop lourde (max 1 Mo)','error'); input.value=''; return; }
-  _resizePhoto(file,200,200,0.82,function(b64){
+  if(file.size>12*1024*1024){ toast('Photo trop lourde (max 12 Mo)','error'); input.value=''; return; }
+  _squarePhoto(file,128,0.7,function(b64){
     const prev=document.getElementById(previewId);
     if(prev){ prev.innerHTML=`<img src="${b64}" style="width:100%;height:100%;object-fit:cover;" alt="photo">`; }
     const dataEl=document.getElementById(dataId);
@@ -8273,6 +9092,14 @@ function _specRenderSingleMatch(data, container){
     const rw = document.getElementById('spec-result-winner'); if(rw) rw.textContent = data.winnerName||'—';
     const rs = document.getElementById('spec-result-scores'); if(rs) rs.innerHTML = data.finalScores||'—';
     if(qBox) qBox.style.display = 'none';
+    // Annonce plein écran du vainqueur (uniquement en mode écran géant, une seule fois par match)
+    const _mw = /^\s*🏆\s*(.+?)\s+remporte le match/.exec(data.winnerName||'');
+    const _scrG = document.getElementById('screen-spectator');
+    const _key = (data.winnerName||'')+'|'+(data.finalScores||'');
+    if(_mw && _scrG && _scrG.classList.contains('giant') && window._lastAnnounced!==_key){
+      window._lastAnnounced = _key;
+      announceWinner(_mw[1], (data.phase||'')+(data.level?' · Niveau '+data.level:''), 12000);
+    }
   } else if(resultBox){
     resultBox.style.display = 'none';
   }
