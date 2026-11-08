@@ -9468,7 +9468,8 @@ let _specTimerHandle = null; // setInterval du chrono spectateur
 // l'admin l'écoute pendant le match et rejoue l'action comme s'il avait cliqué lui-même.
 // ════════════════════════════════════════
 let _remSubs = {}, _remKey = '', _remSeen = {};
-function _remStop(){ Object.keys(_remSubs).forEach(k=>{ try{ _remSubs[k](); }catch(e){} }); _remSubs = {}; _remKey = ''; _remSeen = {}; }
+let _remPollT = null;
+function _remStop(){ Object.keys(_remSubs).forEach(k=>{ try{ _remSubs[k](); }catch(e){} }); _remSubs = {}; _remKey = ''; _remSeen = {}; clearInterval(_remPollT); _remPollT = null; }
 function _remSync(list){
   const key = list.map(x=>x.code).join('|');
   if(key === _remKey) return;
@@ -9483,6 +9484,18 @@ function _remSync(list){
       _remSeen[x.code] = lv.id; _remEvent(x, lv);
     }, err=>{ console.error('écoute buzz', err); try{ toast('⚠️ Écoute du buzz impossible : '+((err&&err.code)||'erreur'),'error'); }catch(e){} });
   });
+  // Filet de sécurité : lecture directe sur le serveur toutes les 1,2 s (au cas où l'écoute temps réel manque un buzz)
+  clearInterval(_remPollT);
+  _remPollT = setInterval(()=>{
+    list.forEach(x=>{
+      db.collection(PROG_COL).doc(x.code).get({source:'server'}).then(sn=>{
+        const lv = sn.exists ? (sn.data() || {}).lv : null;
+        if(_remSeen[x.code] === undefined){ _remSeen[x.code] = lv ? lv.id : ''; return; }
+        if(!lv || lv.id === _remSeen[x.code]) return;
+        _remSeen[x.code] = lv.id; _remEvent(x, lv);
+      }).catch(err=>{ if(!window._remPollWarned){ window._remPollWarned = true; _remDbg('Lecture buzz impossible : '+((err&&err.code)||'erreur')); } });
+    });
+  }, 1200);
 }
 function _remDbg(m){ try{ console.log('[buzz]', m); toast('🔧 '+m,'info'); }catch(e){} }
 function _remEvent(x, lv){
