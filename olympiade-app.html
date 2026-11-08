@@ -9473,7 +9473,7 @@ function _remSync(list){
   const key = list.map(x=>x.code).join('|');
   if(key === _remKey) return;
   _remStop(); _remKey = key;
-  if(!db || _useLocalOnly) return;
+  if(!db || _useLocalOnly){ try{ toast('⚠️ Buzz téléphone désactivé : base non connectée','error'); }catch(e){} return; }
   list.forEach(x=>{
     let first = true;
     _remSubs[x.code] = db.collection(PROG_COL).doc(x.code).onSnapshot(s=>{
@@ -9481,7 +9481,7 @@ function _remSync(list){
       if(first){ first = false; _remSeen[x.code] = lv ? lv.id : ''; return; }   // ancien événement : ignoré
       if(!lv || lv.id === _remSeen[x.code]) return;
       _remSeen[x.code] = lv.id; _remEvent(x, lv);
-    }, ()=>{});
+    }, err=>{ console.error('écoute buzz', err); try{ toast('⚠️ Écoute du buzz impossible : '+((err&&err.code)||'erreur'),'error'); }catch(e){} });
   });
 }
 function _remEvent(x, lv){
@@ -9788,19 +9788,24 @@ function _plApply(data){
   }, 250);
 }
 function _plSend(a){
-  if(!db || !currentPlayer) return;
+  if(!db || !currentPlayer){ toast('⚠️ Envoi impossible : base non connectée','error'); return Promise.reject(new Error('no-db')); }
   try{ if(navigator.vibrate) navigator.vibrate(40); }catch(e){}
-  db.collection(PROG_COL).doc(currentPlayer.code)
-    .set({ lv:{ q:_pl.q, a, id:Date.now()+'-'+Math.random().toString(36).slice(2,6) } }, { merge:true })
-    .catch(()=>toast('⚠️ Envoi impossible : vérifie ta connexion','error'));
+  return db.collection(PROG_COL).doc(currentPlayer.code)
+    .set({ lv:{ q:parseInt(_pl.q,10)||0, a:parseInt(a,10), id:Date.now()+'-'+Math.random().toString(36).slice(2,6) } }, { merge:true })
+    .catch(err=>{ console.error('buzz', err); toast('⚠️ Envoi refusé : '+((err&&err.code)||'erreur'),'error'); throw err; });
 }
 function _plBuzz(){
-  _plSend(-1);
-  const b = document.querySelector('#pl-live .pl-buzz'); if(b){ b.disabled = true; b.textContent = '🔔 Envoyé…'; }
+  const b = document.querySelector('#pl-live .pl-buzz');
+  if(b){ b.disabled = true; b.textContent = '🔔 Envoi…'; }
+  let done = false;
+  // si rien ne se passe au bout de 4 s, on réactive le bouton pour réessayer
+  const t = setTimeout(()=>{ if(!done){ const bb = document.querySelector('#pl-live .pl-buzz'); if(bb){ bb.disabled = false; bb.textContent = '🔔 BUZZ (réessayer)'; } } }, 4000);
+  _plSend(-1).then(()=>{ done = true; clearTimeout(t); const bb = document.querySelector('#pl-live .pl-buzz'); if(bb){ bb.textContent = '🔔 Envoyé… en attente'; } })
+             .catch(()=>{ done = true; clearTimeout(t); const bb = document.querySelector('#pl-live .pl-buzz'); if(bb){ bb.disabled = false; bb.textContent = '🔔 BUZZ'; } });
 }
 function _plAnswer(k){
   if(_pl.sel >= 0) return;
-  _pl.sel = k; _plSend(k);
+  _pl.sel = k; _plSend(k).catch(()=>{ _pl.sel = -1; document.querySelectorAll('#pl-live .pl-opt').forEach(o=>{ o.disabled = false; o.classList.remove('sel'); }); });
   document.querySelectorAll('#pl-live .pl-opt').forEach((o,i)=>{ o.disabled = true; if(i === k) o.classList.add('sel'); });
 }
 
