@@ -9478,20 +9478,23 @@ function _remSync(list){
     let first = true;
     _remSubs[x.code] = db.collection(PROG_COL).doc(x.code).onSnapshot(s=>{
       const lv = s.exists ? (s.data() || {}).lv : null;
-      if(first){ first = false; _remSeen[x.code] = lv ? lv.id : ''; return; }   // ancien événement : ignoré
+      if(first){ first = false; _remSeen[x.code] = lv ? lv.id : ''; _remDbg('Écoute buzz active : '+x.code); return; }   // ancien événement : ignoré
       if(!lv || lv.id === _remSeen[x.code]) return;
       _remSeen[x.code] = lv.id; _remEvent(x, lv);
     }, err=>{ console.error('écoute buzz', err); try{ toast('⚠️ Écoute du buzz impossible : '+((err&&err.code)||'erreur'),'error'); }catch(e){} });
   });
 }
+function _remDbg(m){ try{ console.log('[buzz]', m); toast('🔧 '+m,'info'); }catch(e){} }
 function _remEvent(x, lv){
+  _remDbg('Reçu J'+(x.i+(x.duel?1:0))+' · q='+lv.q+' a='+lv.a);
   if(x.duel){
-    const D = _duel; if(!D || lv.q !== D.qi) return;
+    const D = _duel; if(!D || lv.q !== D.qi){ _remDbg('Ignoré : question différente ('+(D?D.qi:'aucun duel')+')'); return; }
     if(lv.a < 0) return duelBuzz(x.i);
     if(D.rapid && D.buzz !== x.i) duelBuzz(x.i);
     duelAnswer(x.i, lv.a);
   } else {
-    if(!_lmActive || lv.q !== _lmQIndex) return;
+    if(!_lmActive || lv.q !== _lmQIndex){ _remDbg('Ignoré : match '+(_lmActive?'actif':'inactif')+', question hôte='+_lmQIndex+', reçue='+lv.q); return; }
+    if(!_lmRapid && lv.a < 0){ _remDbg('Ignoré : mode rapidité désactivé côté hôte'); return; }
     if(lv.a < 0) return lmBuzz(x.i);
     if(_lmRapid && _lmBuzz === 0) lmBuzz(x.i);
     lmSelectAnswer(x.i, lv.a);
