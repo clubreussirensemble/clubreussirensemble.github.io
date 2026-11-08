@@ -5075,7 +5075,7 @@ ARENA_REF.onSnapshot(
 
     // Normalise les tableaux (Firebase transforme [] en objet {})
     if (_cache.players && !Array.isArray(_cache.players))
-      _cache.players = Object.values(_cache.players);
+      _cache.players = _normPlayers(_cache.players);
     if (_cache.questions && !Array.isArray(_cache.questions))
       _cache.questions = Object.values(_cache.questions);
     // Firebase supprime les champs à valeur 0 — restaurer level manquant comme "0"
@@ -5175,6 +5175,39 @@ function getData() {
   return _cache;
 }
 
+// ════════════════════════════════════════
+// JOUEURS ADRESSÉS PAR LEUR CODE (et non par leur position dans la liste)
+// Firestore : players = { CODE: {...joueur} }. Ajouter/supprimer un joueur ne décale plus
+// les écritures ciblées (score, progression, photo). Les anciens documents (clés 0,1,2…)
+// restent lisibles : _normPlayers fusionne les deux formats par code.
+// ════════════════════════════════════════
+function _normPlayers(raw){
+  if(Array.isArray(raw)) return raw;
+  if(!raw || typeof raw !== 'object') return [];
+  const full = new Map();
+  const partial = [];
+  Object.keys(raw).forEach(k=>{
+    const v = raw[k];
+    if(!v || typeof v !== 'object') return;
+    if(v.code){
+      const prev = full.get(v.code);
+      full.set(v.code, prev ? Object.assign({}, prev, v) : v);
+    } else {
+      partial.push([k, v]);   // mise à jour ciblée arrivée avant la migration complète : la clé est le code
+    }
+  });
+  partial.forEach(([k, v])=>{
+    const base = full.get(k);
+    if(base) full.set(k, Object.assign({}, base, v)); // un résidu sans joueur correspondant est ignoré
+  });
+  return Array.from(full.values());
+}
+
+// Écriture ciblée d'un seul champ d'un joueur, repéré par son code
+function _fbPlayerSet(code, field, value){
+  return ARENA_REF.update(new firebase.firestore.FieldPath('players', String(code), field), value);
+}
+
 // Firestore : joueurs stockés en "map" indexée (mises à jour ciblées sans écraser les autres joueurs)
 function _fsPayload(d){
   const o = JSON.parse(JSON.stringify(d));
@@ -5185,7 +5218,7 @@ function _fsPayload(d){
         delete pl.progress;                                       // la progression vit dans PROG_COL
         if(pl.code && _photoStored.has(pl.code)) delete pl.photo; // photo confirmée dans PHOTO_COL
       }
-      m[i] = pl;
+      m[(pl && pl.code) ? pl.code : i] = pl;   // clé = code du joueur
     });
     o.players = m;
   }
@@ -5221,7 +5254,7 @@ function _photoDropFromMain(code){
   if(!ARENA_REF || !_cache || !Array.isArray(_cache.players)) return;
   const i = _cache.players.findIndex(x=>x && x.code===code);
   if(i<0) return;
-  ARENA_REF.update({ ['players.'+i+'.photo']: firebase.firestore.FieldValue.delete() }).catch(()=>{});
+  _fbPlayerSet(code, 'photo', firebase.firestore.FieldValue.delete()).catch(()=>{});
 }
 
 function _photoMigrate(code, b64){
@@ -5304,7 +5337,7 @@ function saveData(d) {
   return ARENA_REF.get({source:'server'}).then(snap=>{
       if(snap.exists){
         let sp = snap.data().players || [];
-        if(!Array.isArray(sp)) sp = Object.values(sp);
+        if(!Array.isArray(sp)) sp = _normPlayers(sp);
         const have = new Set(d.players.map(p=>p.code));
         sp.forEach(p=>{ if(p && p.code && !have.has(p.code) && !_deletedCodes.has(p.code)){ d.players.push(p); have.add(p.code); } });
       }
@@ -5547,7 +5580,7 @@ function _doLogin(code, _retried){
     // Avant de refuser : relire la liste des joueurs directement sur le serveur
     if(!_retried && ARENA_REF && !_useLocalOnly){
       ARENA_REF.get({source:'server'}).then(snap=>{
-        if(snap.exists){ let pl = snap.data().players || []; if(!Array.isArray(pl)) pl = Object.values(pl); if(_cache) _cache.players = pl; }
+        if(snap.exists){ let pl = snap.data().players || []; if(!Array.isArray(pl)) pl = _normPlayers(pl); if(_cache) _cache.players = pl; }
         _doLogin(code, true);
       }).catch(()=>_doLogin(code, true));
       return;
@@ -6133,7 +6166,7 @@ function _acCountExit(){
     d.players[idx].exits = total;
     currentPlayer.exits = total;
     if(ARENA_REF){
-      ARENA_REF.update({['players.'+idx+'.exits']: total}).catch(()=>{});
+      _fbPlayerSet(currentPlayer.code, 'exits', total).catch(()=>{});
       _cache = d;
       _lsSet(d);
     } else {
@@ -6247,20 +6280,36 @@ function endLevel(){
     if(rEnc2){ rEnc2.textContent='✅ Niveau réussi ! Tu dois être dans le top '+_topN+' pour accéder au niveau suivant.'; rEnc2.style.display='block'; }
   } else { nextBtn.style.display='none'; }
 
-  // ── 🤖 Annonce du robot : qualifié pour la phase suivante ou non ──
+  // ── 🤖 Annonce du robot : classement + qualification pour la phase suivante ──
   const _first = String(currentPlayer.name||'').split(' ')[0];
-  const _rank = _allSorted.findIndex(p=>p.code===currentPlayer.code)+1;
+  const _myScore = (_allSorted.find(p=>p.code===currentPlayer.code)||{}).score || 0;
+  // Rang "à égalité" : deux joueurs avec le même score ont la même place
+  const _rank = 1 + _allSorted.filter(p=>(p.score||0) > _myScore).length;
+  // Égalité à la limite de qualification (le top N coupe un groupe de joueurs à égalité)
+  const _tieEdge = _topN>0 && _allSorted.length>_topN &&
+    (_allSorted[_topN-1].score||0) === (_allSorted[_topN].score||0) &&
+    _myScore === (_allSorted[_topN-1].score||0);
+  // Classement provisoire tant que tous les joueurs concernés n'ont pas terminé ce niveau
+  const _lvN = Number(currentLevelId);
+  const _cap = _lvN===1 ? _d2.players.length : Math.min(_d2.players.length, ({2:16,3:8,4:4,5:2})[_lvN] || _d2.players.length);
+  const _finished = _d2.players.filter(p=>(p.completedLevels||[]).map(String).includes(String(currentLevelId))).length;
+  const _provisional = _finished < _cap;
+  const _provTxt = _provisional ? ' Ce classement est provisoire : '+_finished+' joueur'+(_finished>1?'s':'')+' sur '+_cap+' ont terminé ce niveau.' : '';
   let _say;
   if(!pass){
     _say = 'Dommage '+_first+', tu n\'as pas réussi ce niveau. Tu n\'es pas qualifié pour la phase suivante. Courage, ne lâche rien !';
   } else if(!nextLv){
-    _say = 'Bravo '+_first+' ! Tu as terminé le dernier niveau. Félicitations !';
+    _say = 'Bravo '+_first+' ! Tu as terminé le dernier niveau. Tu es à la place numéro '+_rank+' du classement. Félicitations !';
+  } else if(_tieEdge){
+    _say = 'Bravo '+_first+', niveau réussi ! Tu es à la place numéro '+_rank+', à égalité de points avec d\'autres joueurs à la limite de qualification pour '+nextLv.name+'. Un barrage pourra être organisé pour vous départager.'+_provTxt;
+    const rEnc4 = document.getElementById('r-encouragement');
+    if(rEnc4){ rEnc4.textContent = '⚖️ À égalité à la limite de qualification : un barrage pourra être organisé.'; rEnc4.style.display='block'; }
   } else if(_qualifNext){
-    _say = 'Félicitations '+_first+' ! Tu es qualifié pour la phase suivante : '+nextLv.name+'. Tu es actuellement à la place numéro '+_rank+'. Tu peux continuer !';
+    _say = 'Félicitations '+_first+' ! Tu es qualifié pour la phase suivante : '+nextLv.name+'. Tu es actuellement à la place numéro '+_rank+'. Tu peux continuer !'+_provTxt;
     const rEnc3 = document.getElementById('r-encouragement');
-    if(rEnc3){ rEnc3.textContent = '🏅 Félicitations, tu es qualifié(e) pour : '+nextLv.name+' !'; rEnc3.style.display='block'; }
+    if(rEnc3){ rEnc3.textContent = '🏅 Félicitations, tu es qualifié(e) pour : '+nextLv.name+' !'+(_provisional?' (classement provisoire)':''); rEnc3.style.display='block'; }
   } else {
-    _say = 'Bravo '+_first+', niveau réussi ! Mais pour l\'instant tu n\'es pas dans les '+_topN+' premiers : tu es à la place numéro '+_rank+'. Tu n\'es pas encore qualifié pour la phase suivante. Le classement peut encore évoluer, reste attentif.';
+    _say = 'Bravo '+_first+', niveau réussi ! Mais pour l\'instant tu n\'es pas dans les '+_topN+' premiers : tu es à la place numéro '+_rank+'. Tu n\'es pas encore qualifié pour la phase suivante.'+(_provisional ? _provTxt+' Le classement peut encore évoluer, reste attentif.' : '');
   }
   robotAnnounceResult(_say);
 
@@ -6280,7 +6329,7 @@ function awardPlayerPoints(pts){
     document.getElementById('ph-score').textContent = currentPlayer.score;
     // Sauvegarder uniquement le score du joueur (évite d'écraser levelQuestions)
     if(ARENA_REF){
-      ARENA_REF.update({['players.'+idx+'.score']: d.players[idx].score}).catch(()=>{});
+      _fbPlayerSet(currentPlayer.code, 'score', d.players[idx].score).catch(()=>{});
       _cache = d; // mise à jour locale immédiate
       _lsSet(d);
     } else {
@@ -6296,7 +6345,7 @@ function savePlayerState(){
     d.players[idx].completedLevels = currentPlayer.completedLevels;
     // Sauvegarder uniquement completedLevels (évite d'écraser levelQuestions)
     if(ARENA_REF){
-      ARENA_REF.update({['players.'+idx+'.completedLevels']: currentPlayer.completedLevels}).catch(()=>{});
+      _fbPlayerSet(currentPlayer.code, 'completedLevels', currentPlayer.completedLevels).catch(()=>{});
       _cache = d;
       _lsSet(d);
     } else {
@@ -6443,7 +6492,7 @@ function addPlayer(){
   Promise.race([Promise.resolve(_sv), new Promise(r=>setTimeout(()=>r('timeout'),10000))]).then(ok=>{
     if(ok===true && ARENA_REF){
       return ARENA_REF.get({source:'server'}).then(sn=>{
-        let pl = (sn.exists && sn.data().players) || []; if(!Array.isArray(pl)) pl = Object.values(pl);
+        let pl = (sn.exists && sn.data().players) || []; if(!Array.isArray(pl)) pl = _normPlayers(pl);
         if(pl.some(p=>p.code===code)) toast('✅ Code '+code+' enregistré en ligne','success');
         else alert('⚠️ Le code '+code+' n\'est PAS enregistré en ligne. Reconnecte-toi en admin et réessaie.');
       });
@@ -8436,7 +8485,7 @@ function playerSetPhoto(input){
     }).catch(()=>{
       // Repli : règles Firebase pas encore ajoutées ou hors ligne → stockage dans le document principal
       if(ARENA_REF){
-        ARENA_REF.update({['players.'+idx+'.photo']: b64})
+        _fbPlayerSet(code, 'photo', b64)
           .then(()=>toast('✅ Photo enregistrée : elle sera visible dans les matchs en direct.','success'))
           .catch(()=>toast('Photo non enregistrée en ligne (connexion ?). Réessaie.','error'));
       } else { saveData(d); }
