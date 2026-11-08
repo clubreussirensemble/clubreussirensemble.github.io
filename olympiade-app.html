@@ -4,7 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Espace participant — Olympiades Réussir Ensemble</title>
-<!-- PWA retiré : évite les conflits avec le site du club -->
+<!-- PWA : installable, service worker limité à cette seule page (aucun conflit avec le site du club) -->
+<link rel="manifest" href="olympiade-manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Olympiades">
 <meta name="theme-color" content="#00E5FF">
 <!-- Firebase SDK (compat) – chargement robuste avec fallback localStorage -->
 <script>
@@ -1743,6 +1750,17 @@
         <input id="landing-code" maxlength="10" autocomplete="off" autocapitalize="characters" placeholder="Ex. K7M2QX" style="flex:1;min-width:0;text-transform:uppercase;letter-spacing:.15em;text-align:center;padding:12px;border-radius:10px;border:1.5px solid rgba(0,229,255,.4);background:rgba(13,27,46,.9);color:#fff;font:700 1rem 'Exo 2',sans-serif" onkeydown="if(event.key==='Enter')loginPlayer(this.value)">
         <button class="btn btn-gold" type="button" onclick="loginPlayer(document.getElementById('landing-code').value)">Entrer</button>
       </div>
+    </div>
+
+    <div id="install-box" style="display:none;margin:0 auto 18px;max-width:360px;text-align:center">
+      <button id="install-btn" class="btn btn-outline" type="button"
+        style="width:100%;justify-content:center;border-color:rgba(255,215,0,.6);color:var(--gold);font-weight:700">
+        📲 Installer l'application
+      </button>
+      <p id="install-ios" style="display:none;margin-top:10px;font-size:.8rem;color:var(--silver);line-height:1.5">
+        Sur iPhone : appuie sur <strong>Partager</strong> (carré avec une flèche) puis sur
+        <strong>« Sur l'écran d'accueil »</strong>.
+      </p>
     </div>
 
     <div class="landing-btns" style="gap:12px;">
@@ -8576,6 +8594,52 @@ function toast(msg,type='info'){
       if (_fbReady || tries > 80) { clearInterval(wait); applySettings(); }
     }, 100);
   }
+})();
+</script>
+<script>
+// ── Installation de l'app (PWA) ──
+(function(){
+  var box=document.getElementById('install-box');
+  var btn=document.getElementById('install-btn');
+  var iosMsg=document.getElementById('install-ios');
+  var deferred=null;
+  var standalone=window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+  var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+
+  // Service worker limité à cette seule page
+  if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+    window.addEventListener('load',function(){
+      navigator.serviceWorker.register('olympiade-sw.js',{scope:'./olympiade-app.html'})
+        .catch(function(e){ console.warn('SW non enregistré :',e); });
+    });
+  }
+
+  if(standalone){ return; } // déjà installée : on ne montre rien
+
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault();
+    deferred=e;
+    if(box) box.style.display='block';
+  });
+
+  if(btn){
+    btn.addEventListener('click',function(){
+      if(deferred){
+        deferred.prompt();
+        deferred.userChoice.then(function(){ deferred=null; if(box) box.style.display='none'; });
+      } else if(isIOS && iosMsg){
+        iosMsg.style.display='block';
+      }
+    });
+  }
+
+  // iPhone/iPad : pas de prompt automatique, on affiche le bouton + la marche à suivre
+  if(isIOS && box){ box.style.display='block'; }
+
+  window.addEventListener('appinstalled',function(){
+    deferred=null;
+    if(box) box.style.display='none';
+  });
 })();
 </script>
 </body>
