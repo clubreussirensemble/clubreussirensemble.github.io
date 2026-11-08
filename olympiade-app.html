@@ -10927,7 +10927,7 @@ const _MATIERES_PAR_NIVEAU = {
 function _updateMatieres(level) {
   const sel = document.getElementById('aq-matiere');
   if (!sel) return;
-  const matieres = _MATIERES_PAR_NIVEAU[String(level)] || _MATIERES_PAR_NIVEAU["1"];
+  const matieres = (_MATIERES_PAR_NIVEAU[String(level)] || _MATIERES_PAR_NIVEAU["1"]).concat(["Énigmes africaines"]);
   const current = sel.value;
   sel.innerHTML = matieres.map(m =>
     `<option value="${m}"${m === current ? ' selected' : ''}>${m}</option>`
