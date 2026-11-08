@@ -5705,38 +5705,83 @@ function _robotUI(){
   return bar;
 }
 
+let _robotOnDone = null;   // action à lancer quand le robot a fini de lire (démarrage du chrono)
+let _robotCur = null;      // phrase en cours de lecture
+let _robotFbT = null;      // filet de sécurité si la voix ne signale jamais la fin
+let _qStartTok = 0;
+
+function _robotFinish(){
+  clearTimeout(_robotFbT); _robotFbT = null;
+  const f = _robotOnDone; _robotOnDone = null;
+  if(f){ try{ f(); }catch(e){} }
+}
+
+// Renvoie true si la voix a bien démarré
 function _robotSay(text, bubble){
   const bub = document.getElementById('robot-bubble');
   const av = document.getElementById('robot-avatar');
   if(bub) bub.textContent = bubble || text;
-  if(!_ROBOT_OK || _robotMuted) return;
+  if(!_ROBOT_OK || _robotMuted){ _robotCur = null; return false; }
   try{
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'fr-FR';
     if(_robotVoice) u.voice = _robotVoice;
     u.rate = 1; u.pitch = 1.05;
+    _robotCur = u;
     u.onstart = ()=>{ if(av) av.classList.add('speaking'); };
-    u.onend = u.onerror = ()=>{ if(av) av.classList.remove('speaking'); };
+    u.onend = u.onerror = ()=>{
+      if(av) av.classList.remove('speaking');
+      if(_robotCur === u){ _robotCur = null; _robotFinish(); } // seulement la dernière phrase compte
+    };
     window.speechSynthesis.speak(u);
-  }catch(e){}
+    return true;
+  }catch(e){ _robotCur = null; return false; }
 }
 
 function robotStop(){
+  _robotOnDone = null; _robotCur = null;
+  clearTimeout(_robotFbT); _robotFbT = null;
   if(_ROBOT_OK){ try{ window.speechSynthesis.cancel(); }catch(e){} }
   const av = document.getElementById('robot-avatar');
   if(av) av.classList.remove('speaking');
 }
 
-function robotReadQuestion(q){
+// onDone : appelé quand la lecture est terminée (ou tout de suite si le robot est muet / indisponible)
+function robotReadQuestion(q, onDone){
   _robotUI();
-  if(!q) return;
-  const _qn=document.getElementById('rb-qnum');
-  if(_qn){ _qn.textContent=(quizIndex+1)+'.'; _qn.setAttribute('font-size',(quizIndex+1)>=10?'22':'30'); }
+  if(!q){ if(onDone) onDone(); return; }
+  if(onDone) _robotOnDone = onDone;   // une relecture (🔁) garde l'action en attente
+  const _qn = document.getElementById('rb-qnum');
+  if(_qn){ _qn.textContent = (quizIndex+1)+'.'; _qn.setAttribute('font-size', (quizIndex+1)>=10 ? '22' : '30'); }
   const letters = ['A','B','C','D'];
   const opts = (q.options||[]).map((o,i)=> letters[i]+' : '+_robotClean(o)).join('. ');
   const txt = 'Question '+(quizIndex+1)+'. '+_robotClean(q.text)+'. '+opts;
-  _robotSay(txt, '🎙️ Question '+(quizIndex+1)+' : j\'écoute avec toi !');
+  const spoken = _robotSay(txt, '🎙️ Question '+(quizIndex+1)+' : écoute bien, le chrono démarre après !');
+  if(!spoken){ _robotFinish(); return; }
+  clearTimeout(_robotFbT);
+  _robotFbT = setTimeout(_robotFinish, Math.min(60000, 6000 + txt.length*110));
+}
+
+// Déplace le robot entre l'écran de quiz et l'écran de résultat
+function robotDock(mode){
+  const bar = document.getElementById('robot-bar');
+  if(!bar) return;
+  if(mode === 'result'){
+    const r = document.querySelector('#pv-result .level-result');
+    if(r && bar.parentNode !== r) r.insertBefore(bar, r.firstChild);
+  } else {
+    const qt = document.getElementById('q-text');
+    if(qt && bar.parentNode !== qt.parentNode) qt.parentNode.insertBefore(bar, qt);
+  }
+  const rep = document.getElementById('robot-replay');
+  if(rep) rep.style.display = (mode === 'result' || !_ROBOT_OK) ? 'none' : '';
+}
+
+// Annonce de fin de niveau : qualifié ou non pour la phase suivante
+function robotAnnounceResult(text){
+  robotDock('result');
+  _robotSay(text, '🎙️ ' + text);
 }
 
 function robotReplay(){
@@ -5749,7 +5794,7 @@ function robotReplay(){
 function robotToggleMute(){
   _robotMuted = !_robotMuted;
   try{ localStorage.setItem('olympiade_robot_muted', _robotMuted?'1':'0'); }catch(e){}
-  if(_robotMuted) robotStop();
+  if(_robotMuted){ const _f = _robotOnDone; robotStop(); if(_f){ try{ _f(); }catch(e){} } } // voix coupée : le chrono démarre tout de suite
   _robotUI();
 }
 
@@ -5805,6 +5850,7 @@ function startLevel(levelId){
         ? '↩️ Quiz repris à la question '+Math.min(quizIndex+1,quizQuestions.length)+'. La question interrompue est comptée fausse.'
         : '↩️ Quiz repris à la question '+Math.min(quizIndex+1,quizQuestions.length)+'.','info');
     }
+    robotDock('quiz');
     document.getElementById('pv-levels').style.display='none';
     document.getElementById('pv-quiz').style.display='block';
     document.getElementById('pv-result').style.display='none';
@@ -5880,8 +5926,21 @@ function loadQuestion(){
     </button>
   `).join('');
 
-  startTimer(timer, q);
-  robotReadQuestion(q);
+  // Chrono affiché plein mais à l'arrêt ; il démarre quand le robot a fini de lire
+  clearInterval(timerInterval);
+  timeLeft = timer;
+  const _tn = document.getElementById('ql-timer'), _tc = document.getElementById('timer-circle');
+  if(_tn){ _tn.textContent = timer; _tn.className = 'timer-num'; }
+  if(_tc){ _tc.style.strokeDashoffset = 0; _tc.className = 'timer-fill'; }
+  const _tok = ++_qStartTok;
+  robotReadQuestion(q, function(){
+    if(_tok !== _qStartTok || answered) return;
+    const pv = document.getElementById('pv-quiz');
+    if(!pv || pv.style.display === 'none') return;
+    const bub = document.getElementById('robot-bubble');
+    if(bub) bub.textContent = '⏱️ À toi de jouer !';
+    startTimer(timer, q);
+  });
 }
 
 // Périmètre du cercle r=22 → 2π*22 ≈ 138.2
@@ -6187,6 +6246,23 @@ function endLevel(){
     const rEnc2 = document.getElementById('r-encouragement');
     if(rEnc2){ rEnc2.textContent='✅ Niveau réussi ! Tu dois être dans le top '+_topN+' pour accéder au niveau suivant.'; rEnc2.style.display='block'; }
   } else { nextBtn.style.display='none'; }
+
+  // ── 🤖 Annonce du robot : qualifié pour la phase suivante ou non ──
+  const _first = String(currentPlayer.name||'').split(' ')[0];
+  const _rank = _allSorted.findIndex(p=>p.code===currentPlayer.code)+1;
+  let _say;
+  if(!pass){
+    _say = 'Dommage '+_first+', tu n\'as pas réussi ce niveau. Tu n\'es pas qualifié pour la phase suivante. Courage, ne lâche rien !';
+  } else if(!nextLv){
+    _say = 'Bravo '+_first+' ! Tu as terminé le dernier niveau. Félicitations !';
+  } else if(_qualifNext){
+    _say = 'Félicitations '+_first+' ! Tu es qualifié pour la phase suivante : '+nextLv.name+'. Tu es actuellement à la place numéro '+_rank+'. Tu peux continuer !';
+    const rEnc3 = document.getElementById('r-encouragement');
+    if(rEnc3){ rEnc3.textContent = '🏅 Félicitations, tu es qualifié(e) pour : '+nextLv.name+' !'; rEnc3.style.display='block'; }
+  } else {
+    _say = 'Bravo '+_first+', niveau réussi ! Mais pour l\'instant tu n\'es pas dans les '+_topN+' premiers : tu es à la place numéro '+_rank+'. Tu n\'es pas encore qualifié pour la phase suivante. Le classement peut encore évoluer, reste attentif.';
+  }
+  robotAnnounceResult(_say);
 
   logActivity(`${currentPlayer.name} a terminé ${lv.name} (+${quizScore} pts)`);
   quizAnswers = [];
