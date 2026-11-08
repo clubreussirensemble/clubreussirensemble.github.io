@@ -5726,6 +5726,7 @@ function _doLogin(code, _retried){
     return;
   }
   currentPlayer = p;
+  try{ _plLiveStart(); }catch(e){}
   document.getElementById('ph-name').textContent = p.name;
   const phClassEl=document.getElementById('ph-class-txt')||document.getElementById('ph-class'); if(phClassEl){ phClassEl.textContent=(p.classe||'')+(p.school?' • '+p.school:''); }
   document.getElementById('ph-score').textContent = p.score || 0;
@@ -6223,7 +6224,7 @@ function _progFetch(){
   let local = null;
   try{ local = JSON.parse(localStorage.getItem(_progLocalKey()) || 'null'); }catch(e){}
   if(!db || _useLocalOnly || !currentPlayer) return Promise.resolve(local);
-  const srv = db.collection(PROG_COL).doc(currentPlayer.code).get().then(sn=> sn.exists ? sn.data() : null);
+  const srv = db.collection(PROG_COL).doc(currentPlayer.code).get().then(sn=> (sn.exists && sn.data().level != null) ? sn.data() : null);   // ignore un document ne contenant que le champ lv (buzz)
   const timeout = new Promise(res=>setTimeout(()=>res(undefined),4000));
   return Promise.race([srv, timeout]).then(r=> r===undefined ? local : r).catch(()=>local);
 }
@@ -9461,6 +9462,42 @@ let _lmLiveRef = null;      // Firebase ref bhds_live_match
 let _specUnsubscribe = null; // listener spectateur
 let _specTimerHandle = null; // setInterval du chrono spectateur
 
+// ════════════════════════════════════════
+// BUZZ / RÉPONSES DEPUIS LE TÉLÉPHONE DES JOUEURS
+// Le joueur écrit son action dans son document olympiade_progress/{code} (champ lv) ;
+// l'admin l'écoute pendant le match et rejoue l'action comme s'il avait cliqué lui-même.
+// ════════════════════════════════════════
+let _remSubs = {}, _remKey = '', _remSeen = {};
+function _remStop(){ Object.keys(_remSubs).forEach(k=>{ try{ _remSubs[k](); }catch(e){} }); _remSubs = {}; _remKey = ''; _remSeen = {}; }
+function _remSync(list){
+  const key = list.map(x=>x.code).join('|');
+  if(key === _remKey) return;
+  _remStop(); _remKey = key;
+  if(!db || _useLocalOnly) return;
+  list.forEach(x=>{
+    let first = true;
+    _remSubs[x.code] = db.collection(PROG_COL).doc(x.code).onSnapshot(s=>{
+      const lv = s.exists ? (s.data() || {}).lv : null;
+      if(first){ first = false; _remSeen[x.code] = lv ? lv.id : ''; return; }   // ancien événement : ignoré
+      if(!lv || lv.id === _remSeen[x.code]) return;
+      _remSeen[x.code] = lv.id; _remEvent(x, lv);
+    }, ()=>{});
+  });
+}
+function _remEvent(x, lv){
+  if(x.duel){
+    const D = _duel; if(!D || lv.q !== D.qi) return;
+    if(lv.a < 0) return duelBuzz(x.i);
+    if(D.rapid && D.buzz !== x.i) duelBuzz(x.i);
+    duelAnswer(x.i, lv.a);
+  } else {
+    if(!_lmActive || lv.q !== _lmQIndex) return;
+    if(lv.a < 0) return lmBuzz(x.i);
+    if(_lmRapid && _lmBuzz === 0) lmBuzz(x.i);
+    lmSelectAnswer(x.i, lv.a);
+  }
+}
+
 function _lmGetLiveRef(){
   if(!_lmLiveRef && typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length){
     _lmLiveRef = firebase.firestore().collection('olympiade_arena').doc('live');
@@ -9500,6 +9537,7 @@ function _lmPublish(extra){
     ...(extra || {})
   };
   ref.set(state).catch(()=>{});
+  try{ if(_lmP1 && _lmP2) _remSync([{code:_lmP1.code,i:1},{code:_lmP2.code,i:2}]); }catch(e){}
 }
 
 // Publier après résolution d'une question (révèle la bonne réponse)
@@ -9541,6 +9579,7 @@ function _lmPublishEnd(winnerName, scores){
 function _lmPublishClear(){
   const ref = _lmGetLiveRef();
   if(!ref) return;
+  _remStop();
   ref.set({ active: false, bracket: window._pubBracket || null, ts: Date.now() }).catch(()=>{});
 }
 
@@ -9653,6 +9692,118 @@ function _specVsIntro(list, label){
   try{ _sndTimerBeep(); setTimeout(()=>{ try{ _sndTimerBeep(); }catch(e){} }, 400); }catch(e){}
   setTimeout(()=>{ o.style.animation = 'vsOut .5s forwards'; setTimeout(()=>o.remove(), 500); }, 3500);
 }
+// ════════════════════════════════════════
+// JOUEUR : voir la question, buzzer et répondre depuis son téléphone
+// ════════════════════════════════════════
+let _plUnsub = null, _plTries = 0, _plTimer = null, _plHideT = null;
+let _pl = { key:'', sel:-1, q:0, ts:0, t0:0, dur:0, rapid:false, inMatch:false };
+function _plLiveStart(){
+  if(_plUnsub || !currentPlayer) return;
+  const ref = _lmGetLiveRef();
+  if(!ref){ if(++_plTries < 20) setTimeout(_plLiveStart, 1500); return; }
+  _plUnsub = ref.onSnapshot(s=>{ try{ _plApply(s.exists ? s.data() : null); }catch(e){ console.error(e); } }, ()=>{});
+}
+function _plBox(){
+  let b = document.getElementById('pl-live');
+  if(b) return b;
+  const st = document.createElement('style');
+  st.textContent = '#pl-live{display:none;position:fixed;inset:0;z-index:9600;background:var(--dark);overflow:auto;padding:16px}'
+   +'#pl-live .pl-c{width:100%;max-width:520px;display:flex;flex-direction:column;gap:10px;text-align:center;margin:auto}'
+   +'#pl-live .pl-h{display:flex;justify-content:space-between;color:var(--gold);font-weight:800;font-size:.85rem}'
+   +'#pl-live .pl-bar{height:8px;border-radius:6px;background:rgba(255,255,255,.1);overflow:hidden}'
+   +'#pl-live .pl-bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--green),var(--accent));transition:width .25s linear}'
+   +'#pl-live .pl-q{font-size:1.15rem;font-weight:700;line-height:1.4}#pl-live .pl-m,#pl-live .pl-s{color:var(--silver);font-size:.8rem}'
+   +'#pl-live .pl-st{font-weight:800;color:var(--gold);min-height:1.4em}'
+   +'#pl-live .pl-buzz{padding:28px;border:none;border-radius:18px;font:900 1.9rem Orbitron,sans-serif;color:#050A14;background:linear-gradient(135deg,var(--gold),var(--gold2));box-shadow:0 0 30px rgba(255,215,0,.5)}'
+   +'#pl-live .pl-buzz:disabled{opacity:.6}'
+   +'#pl-live .pl-opt{display:flex;gap:10px;text-align:left;padding:14px;border-radius:12px;border:1.5px solid var(--border);background:rgba(255,255,255,.05);color:#EEF2FF;font:600 .95rem "Exo 2",sans-serif}'
+   +'#pl-live .pl-opt:disabled{opacity:.55}#pl-live .pl-opt.sel{border-color:var(--accent);opacity:1}'
+   +'#pl-live .pl-opt.ok{border-color:var(--green);background:rgba(0,230,118,.18);opacity:1}#pl-live .pl-opt.ko{border-color:var(--red);background:rgba(255,23,68,.15);opacity:1}';
+  document.head.appendChild(st);
+  b = document.createElement('div'); b.id = 'pl-live'; document.body.appendChild(b);
+  return b;
+}
+function _plClose(){
+  const b = document.getElementById('pl-live'); if(b) b.style.display = 'none';
+  clearInterval(_plTimer); clearTimeout(_plHideT); _pl.inMatch = false; _pl.key = '';
+}
+function _plMe(data){
+  if(!currentPlayer || !data || data.matches) return null;
+  const nm = currentPlayer.name;
+  if(data.duel && data.players){ const i = data.players.findIndex(p=>p && p.name === nm); return i < 0 ? null : { i, duel:true }; }
+  if(data.p1 && data.p1.name === nm) return { i:1 };
+  if(data.p2 && data.p2.name === nm) return { i:2 };
+  return null;
+}
+function _plApply(data){
+  clearTimeout(_plHideT);
+  const me = _plMe(data), was = _pl.inMatch;
+  if(!me || (!was && (!data.active || data.finished))){ _plClose(); return; }
+  const box = _plBox(); box.style.display = 'flex'; _pl.inMatch = true;
+  const duel = !!me.duel, list = duel ? data.players : [data.p1, data.p2], mi = duel ? me.i : me.i - 1, mine = list[mi];
+  const opp = list.filter((_, k)=>k !== mi).map(p=>p.name).join(', ');
+  if(!data.active || data.finished){
+    const w = duel ? (data.winners || []).join(' & ') : (data.winnerName || '');
+    box.innerHTML = '<div class="pl-c"><div style="font-size:3rem">🏁</div><div class="pl-q">Match terminé</div><div>'+_dEsc(w)+'</div>'
+      +'<div class="pl-s">'+_dEsc(list.map(p=>p.name+' : '+(p.score||0)+' pts').join(' · '))+'</div><button class="btn btn-outline" onclick="_plClose()">Fermer</button></div>';
+    clearInterval(_plTimer); _plHideT = setTimeout(_plClose, 15000); return;
+  }
+  const q = data.question || { text:'', options:[] };
+  const key = (data.phase||'') + '|' + data.qIndex + '|' + q.text;
+  if(key !== _pl.key){ _pl.key = key; _pl.sel = -1; }
+  if(data.timerStart !== _pl.ts){ _pl.ts = data.timerStart; _pl.t0 = Date.now(); }
+  _pl.dur = data.timerDuration || 0; _pl.q = data.qIndex || 0; _pl.rapid = !!data.rapid;
+  const hold = duel ? data.buzz === mi : data.buzz === me.i;
+  const anyHold = duel ? data.buzz >= 0 : data.buzz > 0;
+  const holder = anyHold ? (duel ? data.players[data.buzz] : data['p'+data.buzz]) : null;
+  const answered = duel ? !!mine.answered : !!data['p'+me.i+'Answered'];
+  const locked = duel ? !!mine.locked : !!data['p'+me.i+'Locked'];
+  const ans = duel ? mine.answer : data['p'+me.i+'Answer'];
+  const myAns = (ans != null && ans >= 0) ? ans : _pl.sel;
+  let status, canBuzz = false, canAns = false;
+  if(data.resolved) status = myAns < 0 ? '⏰ Pas de réponse' : (myAns === data.correctAnswer ? '✅ Bonne réponse !' : '❌ Mauvaise réponse');
+  else if(duel && mine.out) status = 'Tu ne participes pas à ce barrage';
+  else if(_pl.rapid){
+    if(hold && !answered){ status = '🔔 À TOI ! Réponds vite'; canAns = _pl.sel < 0; }
+    else if(anyHold) status = '⏳ ' + _dEsc(holder ? holder.name : '') + ' répond…';
+    else if(locked || answered) status = '✗ Éliminé pour cette question';
+    else { status = 'Appuie sur BUZZ !'; canBuzz = true; }
+  } else if(answered || _pl.sel >= 0) status = '✔ Réponse envoyée';
+  else { status = 'Choisis ta réponse'; canAns = true; }
+  box.innerHTML = '<div class="pl-c">'
+    + '<div class="pl-h"><span>'+_dEsc(data.phase||'')+'</span><span>Q '+((data.qIndex||0)+1)+' / '+(data.qTotal||'?')+'</span></div>'
+    + '<div class="pl-bar"><i id="pl-bar"></i></div>'
+    + '<div class="pl-s">Toi : <b>'+(mine.score||0)+'</b> pts · contre '+_dEsc(opp)+'</div>'
+    + '<div class="pl-m">'+_dEsc(q.matiere||'')+'</div><div class="pl-q">'+_dEsc(q.text)+'</div>'
+    + (canBuzz ? '<button class="pl-buzz" onclick="_plBuzz()">🔔 BUZZ</button>' : '')
+    + '<div class="pl-st">'+status+'</div>'
+    + (q.options||[]).map((o,k)=>{
+        const cls = data.resolved ? (k === data.correctAnswer ? ' ok' : (k === myAns ? ' ko' : '')) : (k === _pl.sel ? ' sel' : '');
+        return '<button class="pl-opt'+cls+'" '+(canAns ? '' : 'disabled')+' onclick="_plAnswer('+k+')"><b>'+'ABCD'[k]+'</b><span>'+_dEsc(o)+'</span></button>';
+      }).join('') + '</div>';
+  clearInterval(_plTimer);
+  _plTimer = setInterval(()=>{
+    const b = document.getElementById('pl-bar'); if(!b || !_pl.dur) return;
+    b.style.width = Math.max(0, 100 - (Date.now() - _pl.t0) / 10 / _pl.dur) + '%';
+  }, 250);
+}
+function _plSend(a){
+  if(!db || !currentPlayer) return;
+  try{ if(navigator.vibrate) navigator.vibrate(40); }catch(e){}
+  db.collection(PROG_COL).doc(currentPlayer.code)
+    .set({ lv:{ q:_pl.q, a, id:Date.now()+'-'+Math.random().toString(36).slice(2,6) } }, { merge:true })
+    .catch(()=>toast('⚠️ Envoi impossible : vérifie ta connexion','error'));
+}
+function _plBuzz(){
+  _plSend(-1);
+  const b = document.querySelector('#pl-live .pl-buzz'); if(b){ b.disabled = true; b.textContent = '🔔 Envoyé…'; }
+}
+function _plAnswer(k){
+  if(_pl.sel >= 0) return;
+  _pl.sel = k; _plSend(k);
+  document.querySelectorAll('#pl-live .pl-opt').forEach((o,i)=>{ o.disabled = true; if(i === k) o.classList.add('sel'); });
+}
+
 let _brSig = '', _brPrev = {}, _brHad = false;
 function _specBracket(b){
   const host = document.getElementById('spec-bracket'), idle = document.getElementById('spec-idle');
@@ -10207,6 +10358,7 @@ function duelPublish(){
     finished: D.finished, winners: D.winners.map(i=>D.players[i].name),
     ts: Date.now()
   }).catch(()=>{});
+  try{ _remSync(D.players.map((p,i)=>({code:p.code,i,duel:true}))); }catch(e){}
 }
 
 // ── Spectateur : vue duel ──
