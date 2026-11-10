@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maintenance électronique — Club Réussir Ensemble</title>
+<meta name="description" content="Dépannage et réparation électronique : méthode, schémas et manuels, téléphones, alimentations et énergie, vidéos, forums, sécurité, avec deux calculateurs (code des condensateurs, autonomie de batterie).">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0A2A57; --navy-deep:#071A38; --blue:#2563EB; --gold:#FAB202;
+  --gn-green:#009460; --gn-yellow:#FCD116; --gn-red:#CE1126;
+  --ink:#0F172A; --ink2:#5B6B85; --paper:#F5F8FC; --paper2:#EEF2F8; --line:#E3E9F2; --card:#FFFFFF;
+  --good:#117A3A; --bad:#C0070C; --warn-bg:#FFF6DA;
+  --radius:16px; --shadow:0 6px 24px rgba(10,42,87,.08); --ease:cubic-bezier(.4,0,.2,1);
+}
+:root[data-theme="dark"]{
+  --ink:#EAF0FA; --ink2:#9FB0C8; --paper:#0B1626; --paper2:#111F35; --line:#22314A; --card:#101E33;
+  --navy-deep:#050D1A; --good:#4ADE80; --bad:#FF6B6B; --warn-bg:#2A2410; --shadow:0 6px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:'Work Sans',sans-serif;background:var(--paper);color:var(--ink);transition:background .25s var(--ease),color .25s var(--ease)}
+h1,h2,h3{font-family:'Poppins',sans-serif;color:var(--ink);line-height:1.15;margin:0}
+a{color:var(--blue)}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 18px}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* En-tête */
+.site-nav{position:sticky;top:0;z-index:50;background:var(--navy-deep)}
+.nav-row{display:flex;align-items:center;gap:14px;min-height:62px}
+.brand{color:#fff;font-family:'Poppins',sans-serif;font-weight:800;font-size:18px;line-height:1.15;flex:1;min-width:0}
+.brand span{display:block;color:var(--gold);font-size:11px;font-weight:700;letter-spacing:.06em}
+.nav-link,.theme-btn{color:#fff;background:rgba(255,255,255,.1);border:0;border-radius:999px;padding:9px 14px;font:600 14px 'Work Sans',sans-serif;text-decoration:none;cursor:pointer}
+.nav-link:hover,.theme-btn:hover{background:rgba(255,255,255,.2)}
+
+/* Haut de page */
+.hero{background:linear-gradient(180deg,var(--navy) 0%,var(--navy-deep) 100%);padding:34px 0 92px;color:#fff;position:relative}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background:linear-gradient(90deg,var(--gn-red) 0 33.3%,var(--gn-yellow) 33.3% 66.6%,var(--gn-green) 66.6%)}
+.hero h1{color:#fff;font-size:clamp(26px,5vw,40px);font-weight:800}
+.hero p{margin:12px 0 0;max-width:60ch;color:#C9D6EC;font-size:16px;line-height:1.55}
+.jump{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.jump a{color:#fff;background:rgba(255,255,255,.12);border-radius:999px;padding:8px 14px;font:600 13.5px 'Work Sans',sans-serif;text-decoration:none}
+.jump a:hover{background:rgba(255,255,255,.22)}
+
+/* Recherche */
+.comp{margin-top:-62px;background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:20px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+.field input{width:100%;height:46px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);font:500 15px 'Work Sans',sans-serif;padding:0 14px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:14px 0 4px;scrollbar-width:thin}
+.tab{flex:none;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:8px 14px;font:600 13.5px 'Work Sans',sans-serif;cursor:pointer;white-space:nowrap}
+.tab[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+:root[data-theme="dark"] .tab[aria-pressed="true"]{background:var(--blue);border-color:var(--blue)}
+.count{margin:10px 0 0;font-size:13px;color:var(--ink2)}
+
+/* Sections */
+section{padding:38px 0 6px}
+.sec-head{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+.sec-head h2{font-size:clamp(21px,3.6vw,28px);font-weight:800}
+.sec-head p{margin:0;color:var(--ink2);font-size:14px;line-height:1.5;max-width:62ch}
+#ressources{padding-top:26px}
+
+/* Cartes de ressources */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.res{display:flex;flex-direction:column;gap:6px;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;text-decoration:none;color:var(--ink)}
+.res:hover{border-color:var(--blue)}
+.rt{font:700 15.5px 'Poppins',sans-serif;line-height:1.25}
+.rd{font-size:13.5px;line-height:1.5;color:var(--ink2);flex:1}
+.rm{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:12.5px;color:var(--ink2);min-width:0}
+.rm em{font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg{flex:none;font:700 11.5px 'Work Sans',sans-serif;border-radius:6px;padding:2px 7px}
+.lg.fr{background:#DDF3E8;color:#0B6B3A}
+.lg.en{background:#E3ECFD;color:#1D4ED8}
+:root[data-theme="dark"] .lg.fr{background:#12392A;color:#7BE0A8}
+:root[data-theme="dark"] .lg.en{background:#14284F;color:#9DBBFF}
+.empty{padding:22px;border:1.5px dashed var(--line);border-radius:var(--radius);color:var(--ink2);text-align:center;line-height:1.55}
+.legend{margin:14px 0 0;font-size:13px;color:var(--ink2);line-height:1.55}
+
+/* Calculateurs */
+.calcs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.calc{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;min-width:0}
+.calc h3{font-size:17px;font-weight:700}
+.calc .help{margin:6px 0 12px;font-size:13px;color:var(--ink2);line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cf label{display:block;font-size:12.5px;font-weight:600;color:var(--ink2);margin-bottom:4px}
+.cf input,.cf select{width:100%;height:42px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font:500 15px 'Work Sans',sans-serif;padding:0 10px}
+.cf input.out{background:var(--paper2);border-color:var(--blue);font-weight:700}
+.res-box{margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--paper2);font-size:14px;line-height:1.6;min-height:48px}
+.res-box b{font-family:'Poppins',sans-serif}
+.res-box.err{color:var(--bad)}
+.btn{margin-top:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 14px;font:600 13px 'Work Sans',sans-serif;cursor:pointer}
+.btn:hover{border-color:var(--blue);color:var(--blue)}
+.resistor{display:block;width:100%;max-width:260px;height:auto;margin:6px auto 10px}
+
+/* Sécurité */
+.safe{background:var(--warn-bg);border:1px solid var(--line);border-left:6px solid var(--gold);border-radius:var(--radius);padding:18px 20px}
+.safe h2{font-size:clamp(19px,3vw,24px);margin-bottom:8px}
+.safe ul{margin:0;padding-left:20px;line-height:1.65;font-size:14.5px}
+.safe li+li{margin-top:5px}
+
+/* Voir aussi */
+.pills{display:flex;flex-wrap:wrap;gap:10px}
+.pills a{display:inline-block;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:9px 16px;font:600 14px 'Work Sans',sans-serif;text-decoration:none}
+.pills a:hover{border-color:var(--blue);color:var(--blue)}
+
+.note{margin:30px 0 0;padding:16px 18px;border-radius:14px;background:var(--paper2);font-size:13.5px;line-height:1.6;color:var(--ink2)}
+footer{margin-top:34px;background:var(--navy-deep);color:#C9D6EC;padding:22px 0;font-size:14px}
+footer a{color:var(--gold)}
+
+@media (max-width:640px){
+  .brand{font-size:15px}
+  .calcs{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+.hero{padding-bottom:48px}
+/* Méthode et pannes */
+.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.steps li{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px 14px 54px;position:relative;font-size:14.5px;line-height:1.55;box-shadow:var(--shadow)}
+.steps li::before{content:counter(s);position:absolute;left:14px;top:13px;width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;font:700 14px 'Poppins',sans-serif;display:flex;align-items:center;justify-content:center}
+:root[data-theme="dark"] .steps li::before{background:var(--blue)}
+.steps b{font-family:'Poppins',sans-serif}
+.faq{display:grid;gap:10px}
+.faq details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0 16px}
+.faq summary{cursor:pointer;list-style:none;padding:14px 0;font:700 15px 'Poppins',sans-serif;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-size:20px;color:var(--ink2);flex:none}
+.faq details[open] summary::after{content:"−"}
+.faq details p,.faq details ul{margin:0 0 14px;font-size:14.5px;line-height:1.6;color:var(--ink2)}
+.faq details ul{padding-left:20px}
+</style>
+</head>
+<body>
+
+<header class="site-nav">
+  <div class="wrap nav-row">
+    <div class="brand">Club Réussir Ensemble<span>GUINÉE · FONDÉ À MAMOU</span></div>
+    <a class="nav-link" href="index.html">🏠 Accueil</a>
+    <button type="button" class="theme-btn" id="themeBtn" aria-label="Changer de thème">🌙</button>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <h1>Maintenance électronique</h1>
+    <p>Diagnostiquer une panne, mesurer, souder, trouver un schéma ou une pièce de rechange : une méthode, des ressources choisies et deux calculateurs pour dépanner téléphones, alimentations, onduleurs et appareils du quotidien.</p>
+    <nav class="jump" aria-label="Aller à une partie de la page">
+      <a href="#methode">Méthode</a>
+      <a href="#pannes">Pannes courantes</a>
+      <a href="#ressources">Ressources</a>
+      <a href="#calculateurs">Calculateurs</a>
+      <a href="#securite">Sécurité</a>
+    </nav>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section id="methode" style="padding-top:26px">
+    <div class="sec-head">
+      <h2>Une méthode de dépannage en six étapes</h2>
+      <p>Dans l’ordre : on ne remplace jamais un composant au hasard.</p>
+    </div>
+    <ol class="steps">
+      <li><b>Comprendre la panne.</b> Demande à l’utilisateur ce qui s’est passé, depuis quand, et reproduis le défaut si c’est possible.</li>
+      <li><b>Regarder.</b> Composants brûlés ou gonflés, soudures fendues, traces d’humidité ou de corrosion, connecteurs desserrés, fusible grillé.</li>
+      <li><b>Commencer par l’alimentation.</b> Prise, cordon, fusible, bloc d’alimentation, puis les tensions présentes sur la carte.</li>
+      <li><b>Mesurer.</b> Continuité, tensions, résistances. Compare avec les valeurs attendues, avec un schéma ou avec un appareil identique qui fonctionne.</li>
+      <li><b>Isoler le bloc en cause.</b> Alimentation, commande, sortie ou affichage : réduis la zone suspecte avant de toucher à quoi que ce soit.</li>
+      <li><b>Réparer, tester, noter.</b> Remplace la pièce par une référence équivalente, teste sous charge, puis note la panne et la solution pour la fois suivante.</li>
+    </ol>
+  </section>
+
+  <section id="pannes">
+    <div class="sec-head">
+      <h2>Pannes courantes : premières vérifications</h2>
+      <p>Des pistes de départ, pas des recettes : adapte-les à l’appareil.</p>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>L’appareil est complètement mort</summary>
+        <ul>
+          <li>Teste la prise et la rallonge avec un autre appareil, puis le cordon.</li>
+          <li>Vérifie le fusible et la tension en sortie du bloc d’alimentation.</li>
+          <li>Cherche des condensateurs de filtrage gonflés ou qui suintent.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>Il redémarre ou s’éteint tout seul</summary>
+        <ul>
+          <li>Surchauffe : poussière, ventilateur bloqué, pâte thermique sèche.</li>
+          <li>Alimentation trop faible ou condensateurs fatigués.</li>
+          <li>Soudures fendues autour des gros connecteurs et des composants qui chauffent.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>Le téléphone ne charge plus</summary>
+        <ul>
+          <li>Essaie un autre câble et un autre chargeur.</li>
+          <li>Nettoie le port de charge de la poussière avec un objet non métallique.</li>
+          <li>Une batterie fatiguée ou gonflée est la cause fréquente : si elle est gonflée, arrête de l’utiliser, ne la perce pas, ne la chauffe pas, et remplace-la par une pièce adaptée.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>Le téléviseur ou l’écran reste noir</summary>
+        <ul>
+          <li>Y a-t-il du son ? Une image très sombre visible de près avec une lampe ? Ce sont des indices sur le rétroéclairage ou l’alimentation.</li>
+          <li>Les circuits internes de certains écrans fonctionnent en haute tension : ne les ouvre pas sans formation.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>L’onduleur ne tient plus la charge</summary>
+        <ul>
+          <li>La batterie est souvent en cause : vieillissement, bornes oxydées, tension trop basse au repos.</li>
+          <li>Remplace les batteries par des modèles de même type et de même capacité, et ne mélange pas vieilles et neuves.</li>
+          <li>Vérifie que la puissance branchée ne dépasse pas celle de l’onduleur ; le calculateur d’autonomie ci-dessous t’aide à estimer la durée.</li>
+        </ul>
+      </details>
+    </div>
+  </section>
+
+  <div class="comp" id="recherche" style="margin-top:38px">
+    <div class="field">
+      <label for="q">Chercher une ressource</label>
+      <input id="q" type="search" placeholder="multimètre, schéma, batterie, forum…" autocomplete="off">
+    </div>
+    <div class="tabs" id="tabs" role="group" aria-label="Catégories">
+      <button type="button" class="tab" data-cat="all" aria-pressed="true">Tout</button>
+      <button type="button" class="tab" data-cat="methode" aria-pressed="false">Méthode & outils</button>
+      <button type="button" class="tab" data-cat="schemas" aria-pressed="false">Schémas & manuels</button>
+      <button type="button" class="tab" data-cat="appareils" aria-pressed="false">Téléphones & ordinateurs</button>
+      <button type="button" class="tab" data-cat="energie" aria-pressed="false">Alimentations & énergie</button>
+      <button type="button" class="tab" data-cat="video" aria-pressed="false">Vidéos</button>
+      <button type="button" class="tab" data-cat="aide" aria-pressed="false">Forums & entraide</button>
+      <button type="button" class="tab" data-cat="secu" aria-pressed="false">Sécurité & environnement</button>
+    </div>
+    <p class="count" id="count" aria-live="polite">27 ressources</p>
+  </div>
+
+  <section id="ressources" style="padding-top:20px">
+    <div class="grid" id="grid">
+    <a class="res" href="https://learn.sparkfun.com/tutorials/how-to-use-a-multimeter" target="_blank" rel="noopener noreferrer" data-cat="methode" data-q="sparkfun : utiliser un multimetre tutoriel pas a pas : mesurer une tension, un courant, une resistance et tester la continuite. learn.sparkfun.com methode &amp; outils">
+      <span class="rt">SparkFun : utiliser un multimètre</span>
+      <span class="rd">Tutoriel pas à pas : mesurer une tension, un courant, une résistance et tester la continuité.</span>
+      <span class="rm"><b class="lg en">EN</b><em>learn.sparkfun.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://learn.adafruit.com/adafruit-guide-excellent-soldering" target="_blank" rel="noopener noreferrer" data-cat="methode" data-q="adafruit : guide de la soudure les bons gestes pour souder proprement et eviter les soudures froides. learn.adafruit.com methode &amp; outils">
+      <span class="rt">Adafruit : guide de la soudure</span>
+      <span class="rd">Les bons gestes pour souder proprement et éviter les soudures froides.</span>
+      <span class="rm"><b class="lg en">EN</b><em>learn.adafruit.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.sonelec-musique.com/" target="_blank" rel="noopener noreferrer" data-cat="methode" data-q="sonelec-musique cours et montages d’electronique en francais, utiles pour comprendre les alimentations et les circuits de base. sonelec-musique.com methode &amp; outils">
+      <span class="rt">Sonelec-musique</span>
+      <span class="rd">Cours et montages d’électronique en français, utiles pour comprendre les alimentations et les circuits de base.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>sonelec-musique.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.electronics-tutorials.ws/" target="_blank" rel="noopener noreferrer" data-cat="methode" data-q="electronics tutorials tutoriels illustres pour comprendre le role de chaque composant avant de le tester. electronics-tutorials.ws methode &amp; outils">
+      <span class="rt">Electronics Tutorials</span>
+      <span class="rd">Tutoriels illustrés pour comprendre le rôle de chaque composant avant de le tester.</span>
+      <span class="rm"><b class="lg en">EN</b><em>electronics-tutorials.ws</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.manualslib.com/" target="_blank" rel="noopener noreferrer" data-cat="schemas" data-q="manualslib grande bibliotheque de manuels d’utilisation et de manuels de service d’appareils. manualslib.com schemas &amp; manuels">
+      <span class="rt">ManualsLib</span>
+      <span class="rd">Grande bibliothèque de manuels d’utilisation et de manuels de service d’appareils.</span>
+      <span class="rm"><b class="lg en">EN</b><em>manualslib.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.elektrotanya.com/" target="_blank" rel="noopener noreferrer" data-cat="schemas" data-q="elektrotanya collection de schemas et de manuels de service d’appareils electroniques. elektrotanya.com schemas &amp; manuels">
+      <span class="rt">Elektrotanya</span>
+      <span class="rd">Collection de schémas et de manuels de service d’appareils électroniques.</span>
+      <span class="rm"><b class="lg en">EN</b><em>elektrotanya.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.alldatasheet.com/" target="_blank" rel="noopener noreferrer" data-cat="schemas" data-q="alldatasheet retrouver les caracteristiques d’un composant a partir de sa reference. alldatasheet.com schemas &amp; manuels">
+      <span class="rt">Alldatasheet</span>
+      <span class="rd">Retrouver les caractéristiques d’un composant à partir de sa référence.</span>
+      <span class="rm"><b class="lg en">EN</b><em>alldatasheet.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://octopart.com/" target="_blank" rel="noopener noreferrer" data-cat="schemas" data-q="octopart chercher des composants equivalents et comparer les stocks avant de commander. octopart.com schemas &amp; manuels">
+      <span class="rt">Octopart</span>
+      <span class="rd">Chercher des composants équivalents et comparer les stocks avant de commander.</span>
+      <span class="rm"><b class="lg en">EN</b><em>octopart.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.ifixit.com/" target="_blank" rel="noopener noreferrer" data-cat="appareils" data-q="ifixit guides de reparation pas a pas : telephones, ordinateurs, appareils du quotidien. ifixit.com telephones &amp; ordinateurs">
+      <span class="rt">iFixit</span>
+      <span class="rd">Guides de réparation pas à pas : téléphones, ordinateurs, appareils du quotidien.</span>
+      <span class="rm"><b class="lg en">EN</b><em>ifixit.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.ifixit.com/Answers" target="_blank" rel="noopener noreferrer" data-cat="appareils" data-q="ifixit answers questions-reponses sur les pannes d’appareils, avec des reponses de reparateurs. ifixit.com telephones &amp; ordinateurs">
+      <span class="rt">iFixit Answers</span>
+      <span class="rd">Questions-réponses sur les pannes d’appareils, avec des réponses de réparateurs.</span>
+      <span class="rm"><b class="lg en">EN</b><em>ifixit.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.repaircafe.org/fr/" target="_blank" rel="noopener noreferrer" data-cat="appareils" data-q="repair cafe reseau d’ateliers de reparation collaboratifs : conseils, idees et esprit d’entraide. repaircafe.org telephones &amp; ordinateurs">
+      <span class="rt">Repair Café</span>
+      <span class="rd">Réseau d’ateliers de réparation collaboratifs : conseils, idées et esprit d’entraide.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>repaircafe.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://batteryuniversity.com/" target="_blank" rel="noopener noreferrer" data-cat="energie" data-q="battery university explications claires sur les batteries : plomb, lithium, duree de vie, bonnes pratiques de charge. batteryuniversity.com alimentations &amp; energie">
+      <span class="rt">Battery University</span>
+      <span class="rd">Explications claires sur les batteries : plomb, lithium, durée de vie, bonnes pratiques de charge.</span>
+      <span class="rm"><b class="lg en">EN</b><em>batteryuniversity.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.pveducation.org/" target="_blank" rel="noopener noreferrer" data-cat="energie" data-q="pveducation cours libre sur le solaire photovoltaique, des cellules aux systemes complets. pveducation.org alimentations &amp; energie">
+      <span class="rt">PVEducation</span>
+      <span class="rd">Cours libre sur le solaire photovoltaïque, des cellules aux systèmes complets.</span>
+      <span class="rm"><b class="lg en">EN</b><em>pveducation.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://energypedia.info/" target="_blank" rel="noopener noreferrer" data-cat="energie" data-q="energypedia wiki sur l’energie en milieu rural et hors reseau, avec beaucoup de contenus pour l’afrique ; certaines pages existent en francais. energypedia.info alimentations &amp; energie">
+      <span class="rt">Energypedia</span>
+      <span class="rd">Wiki sur l’énergie en milieu rural et hors réseau, avec beaucoup de contenus pour l’Afrique ; certaines pages existent en français.</span>
+      <span class="rm"><b class="lg en">EN</b><em>energypedia.info</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.victronenergy.com/" target="_blank" rel="noopener noreferrer" data-cat="energie" data-q="victron energy documentation, manuels et guides sur les onduleurs, les chargeurs et les systemes solaires. victronenergy.com alimentations &amp; energie">
+      <span class="rt">Victron Energy</span>
+      <span class="rd">Documentation, manuels et guides sur les onduleurs, les chargeurs et les systèmes solaires.</span>
+      <span class="rm"><b class="lg en">EN</b><em>victronenergy.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.youtube.com/@MrCarlsonsLab" target="_blank" rel="noopener noreferrer" data-cat="video" data-q="mr carlson’s lab remise en etat et depannage d’appareils anciens, avec des explications detaillees. youtube.com videos">
+      <span class="rt">Mr Carlson’s Lab</span>
+      <span class="rd">Remise en état et dépannage d’appareils anciens, avec des explications détaillées.</span>
+      <span class="rm"><b class="lg en">EN</b><em>youtube.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.youtube.com/@rossmanngroup" target="_blank" rel="noopener noreferrer" data-cat="video" data-q="rossmann repair group reparation de cartes electroniques au niveau des composants : ordinateurs portables et appareils apple. youtube.com videos">
+      <span class="rt">Rossmann Repair Group</span>
+      <span class="rd">Réparation de cartes électroniques au niveau des composants : ordinateurs portables et appareils Apple.</span>
+      <span class="rm"><b class="lg en">EN</b><em>youtube.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.youtube.com/@EEVblog" target="_blank" rel="noopener noreferrer" data-cat="video" data-q="eevblog demontages, reparations et mesures expliques par un ingenieur. youtube.com videos">
+      <span class="rt">EEVblog</span>
+      <span class="rd">Démontages, réparations et mesures expliqués par un ingénieur.</span>
+      <span class="rm"><b class="lg en">EN</b><em>youtube.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.youtube.com/results?search_query=d%C3%A9pannage+%C3%A9lectronique" target="_blank" rel="noopener noreferrer" data-cat="video" data-q="recherche : depannage electronique resultats youtube en francais sur la methode et les pannes courantes. youtube.com videos">
+      <span class="rt">Recherche : dépannage électronique</span>
+      <span class="rd">Résultats YouTube en français sur la méthode et les pannes courantes.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>youtube.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.youtube.com/results?search_query=r%C3%A9paration+t%C3%A9l%C3%A9phone+portable" target="_blank" rel="noopener noreferrer" data-cat="video" data-q="recherche : reparation telephone videos en francais sur les pannes de telephones : charge, ecran, batterie. youtube.com videos">
+      <span class="rt">Recherche : réparation téléphone</span>
+      <span class="rd">Vidéos en français sur les pannes de téléphones : charge, écran, batterie.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>youtube.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.youtube.com/results?search_query=d%C3%A9pannage+alimentation+%C3%A0+d%C3%A9coupage" target="_blank" rel="noopener noreferrer" data-cat="video" data-q="recherche : depannage alimentation videos en francais sur le depannage des alimentations a decoupage. youtube.com videos">
+      <span class="rt">Recherche : dépannage alimentation</span>
+      <span class="rd">Vidéos en français sur le dépannage des alimentations à découpage.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>youtube.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.badcaps.net/forum/" target="_blank" rel="noopener noreferrer" data-cat="aide" data-q="forum badcaps forum specialise dans les pannes dues aux condensateurs et la reparation de cartes. badcaps.net forums &amp; entraide">
+      <span class="rt">Forum Badcaps</span>
+      <span class="rd">Forum spécialisé dans les pannes dues aux condensateurs et la réparation de cartes.</span>
+      <span class="rm"><b class="lg en">EN</b><em>badcaps.net</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.eevblog.com/forum/repair/" target="_blank" rel="noopener noreferrer" data-cat="aide" data-q="reparation sur le forum eevblog section reparation du forum eevblog : pose ta question avec des photos et des mesures. eevblog.com forums &amp; entraide">
+      <span class="rt">Réparation sur le forum EEVblog</span>
+      <span class="rd">Section réparation du forum EEVblog : pose ta question avec des photos et des mesures.</span>
+      <span class="rm"><b class="lg en">EN</b><em>eevblog.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://forums.futura-sciences.com/" target="_blank" rel="noopener noreferrer" data-cat="aide" data-q="forums futura-sciences forums francophones ; cherche la rubrique « electronique ». forums.futura-sciences.com forums &amp; entraide">
+      <span class="rt">Forums Futura-Sciences</span>
+      <span class="rd">Forums francophones ; cherche la rubrique « Électronique ».</span>
+      <span class="rm"><b class="lg fr">FR</b><em>forums.futura-sciences.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://electronics.stackexchange.com/" target="_blank" rel="noopener noreferrer" data-cat="aide" data-q="electronics stack exchange questions-reponses techniques ; cherche toujours avant de poser ta question. electronics.stackexchange.com forums &amp; entraide">
+      <span class="rt">Electronics Stack Exchange</span>
+      <span class="rd">Questions-réponses techniques ; cherche toujours avant de poser ta question.</span>
+      <span class="rm"><b class="lg en">EN</b><em>electronics.stackexchange.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.inrs.fr/" target="_blank" rel="noopener noreferrer" data-cat="secu" data-q="inrs institut francais de prevention : brochures et fiches sur le risque electrique ; cherche « risque electrique ». inrs.fr securite &amp; environnement">
+      <span class="rt">INRS</span>
+      <span class="rd">Institut français de prévention : brochures et fiches sur le risque électrique ; cherche « risque électrique ».</span>
+      <span class="rm"><b class="lg fr">FR</b><em>inrs.fr</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://ewastemonitor.info/" target="_blank" rel="noopener noreferrer" data-cat="secu" data-q="global e-waste monitor chiffres et rapports sur les dechets electroniques dans le monde, dont l’afrique. ewastemonitor.info securite &amp; environnement">
+      <span class="rt">Global E-waste Monitor</span>
+      <span class="rd">Chiffres et rapports sur les déchets électroniques dans le monde, dont l’Afrique.</span>
+      <span class="rm"><b class="lg en">EN</b><em>ewastemonitor.info</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    </div>
+    <div class="empty" id="empty" hidden>Aucune ressource ne correspond à cette recherche. Essaie un autre mot ou choisis « Tout ».</div>
+    <p class="legend"><b>FR</b> : site en français. <b>EN</b> : site en anglais ; le traducteur de ton navigateur aide beaucoup. Pour les fiches techniques de composants courants, vois aussi la page <a href="fiches-techniques.html">Fiches techniques</a>.</p>
+  </section>
+
+  <section id="calculateurs">
+    <div class="sec-head">
+      <h2>Calculateurs</h2>
+      <p>Les calculs se font dans ton navigateur et donnent des valeurs indicatives.</p>
+    </div>
+    <div class="calcs">
+
+      <div class="calc" id="cap">
+        <h3>Code des condensateurs</h3>
+        <p class="help">Lis le code imprimé sur un petit condensateur : trois chiffres (104, 473…), éventuellement suivis d’une lettre de tolérance (104K).</p>
+        <div class="row2">
+          <div class="cf"><label for="k-code">Code</label><input id="k-code" type="text" value="104" autocomplete="off" autocapitalize="characters"></div>
+        </div>
+        <div class="res-box" id="k-msg" aria-live="polite"></div>
+      </div>
+
+      <div class="calc" id="bat">
+        <h3>Autonomie d’une batterie</h3>
+        <p class="help">Durée estimée d’une batterie (ou d’un parc de batteries) qui alimente un appareil, par exemple à travers un onduleur.</p>
+        <div class="row2">
+          <div class="cf"><label for="b-v">Tension de la batterie (V)</label><input id="b-v" type="text" inputmode="decimal" value="12" autocomplete="off"></div>
+          <div class="cf"><label for="b-ah">Capacité (Ah)</label><input id="b-ah" type="text" inputmode="decimal" value="100" autocomplete="off"></div>
+          <div class="cf"><label for="b-p">Puissance consommée (W)</label><input id="b-p" type="text" inputmode="decimal" value="300" autocomplete="off"></div>
+          <div class="cf"><label for="b-eff">Rendement de l’onduleur (%)</label><input id="b-eff" type="text" inputmode="decimal" value="85" autocomplete="off"></div>
+          <div class="cf"><label for="b-dod">Part utilisable de la batterie (%)</label><input id="b-dod" type="text" inputmode="decimal" value="50" autocomplete="off"></div>
+        </div>
+        <div class="res-box" id="b-msg" aria-live="polite"></div>
+        <p class="help" style="margin:8px 0 0">Part utilisable : environ 50 % pour une batterie au plomb si tu veux la préserver, plus pour le lithium. L’autonomie réelle est souvent plus faible (batterie vieillie, fort courant, chaleur).</p>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="securite">
+    <div class="safe">
+      <h2>La sécurité d’abord</h2>
+      <ul>
+        <li>Débranche l’appareil et retire la batterie avant d’ouvrir. Certains condensateurs gardent une charge dangereuse après l’arrêt (alimentations, téléviseurs, fours à micro-ondes).</li>
+        <li>Ne touche pas à un four à micro-ondes ni à un tube d’écran sans formation spécialisée : la haute tension peut tuer même appareil débranché.</li>
+        <li>Ne remplace jamais un fusible par un fil ou par un modèle plus fort. Une odeur de brûlé ou de la fumée : débranche immédiatement.</li>
+        <li>Une batterie lithium gonflée, chaude ou abîmée ne se perce pas, ne se chauffe pas et ne se charge plus. Tiens-la à l’écart de tout objet inflammable.</li>
+        <li>Travaille sur un plan dégagé, avec une bonne lumière, des lunettes de protection pour souder, et une aération pour les fumées de soudure.</li>
+        <li>Les appareils usagés contiennent des matières polluantes : dépose-les dans un point de collecte ou chez un réparateur plutôt que de les brûler ou de les jeter dans la nature.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="voir-aussi">
+    <div class="sec-head"><h2>Voir aussi sur le site</h2></div>
+    <div class="pills">
+      <a href="electronique-domotique.html">Électronique et domotique</a>
+      <a href="fiches-techniques.html">Fiches techniques</a>
+      <a href="glossaire-technique.html">Glossaire technique</a>
+      <a href="energie.html">Énergie et solaire</a>
+      <a href="metiers.html">Métiers</a>
+      <a href="ouvriers.html">Ouvriers</a>
+      <a href="annuaire-centres.html">Centres</a>
+    </div>
+  </section>
+
+  <p class="note">
+    Les liens de cette page mènent vers des sites externes, qui ne dépendent pas du Club Réussir Ensemble : leur contenu, leurs conditions et leurs prix peuvent changer. Si un lien ne s’ouvre plus, signale-le au club depuis la page Contact. Les conseils de dépannage sont des repères généraux : en cas de doute, ou pour tout appareil branché sur le secteur, fais appel à un technicien qualifié.
+  </p>
+</main>
+
+<footer>
+  <div class="wrap">Club Réussir Ensemble · <a href="index.html">Retour à l’accueil</a></div>
+</footer>
+
+<script>
+
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+/* ---------- Thème ---------- */
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme", t);
+  $("#themeBtn").textContent = t === "dark" ? "☀️" : "🌙";
+  try{ localStorage.setItem("cre-theme", t); }catch(e){}
+}
+$("#themeBtn").onclick = () => applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+applyTheme((() => { try{ return localStorage.getItem("cre-theme") || "light"; }catch(e){ return "light"; } })());
+
+/* ---------- Filtre des ressources ---------- */
+const norm = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+let curCat = "all";
+function filtre(){
+  const q = norm($("#q").value);
+  const mots = q ? q.split(/\s+/) : [];
+  let n = 0;
+  $$("#grid .res").forEach(a => {
+    const okCat = curCat === "all" || a.dataset.cat === curCat;
+    const okQ = mots.every(m => a.dataset.q.includes(m));
+    const show = okCat && okQ;
+    a.hidden = !show;
+    if(show) n++;
+  });
+  $("#count").textContent = n + (n > 1 ? " ressources" : " ressource");
+  $("#empty").hidden = n > 0;
+}
+$("#q").addEventListener("input", filtre);
+$$("#tabs .tab").forEach(b => b.addEventListener("click", () => {
+  curCat = b.dataset.cat;
+  $$("#tabs .tab").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  filtre();
+}));
+
+/* ---------- Outils de calcul ---------- */
+function parse(v){
+  let s = String(v == null ? "" : v).trim().replace(/[\s\u00a0\u202f]/g,"").replace(",",".");
+  if(!s) return NaN;
+  let m = 1;
+  if(/[kK]$/.test(s)){ m = 1e3; s = s.slice(0,-1); }
+  else if(/M$/.test(s)){ m = 1e6; s = s.slice(0,-1); }
+  if(!/^(\d+\.?\d*|\.\d+)$/.test(s)) return NaN;
+  return parseFloat(s) * m;
+}
+function fmt(x){
+  if(!isFinite(x)) return "";
+  return String(Number(x.toPrecision(4))).replace(".",",");
+}
+function fmtR(r){
+  if(r >= 1e6) return fmt(r/1e6) + " MΩ";
+  if(r >= 1e3) return fmt(r/1e3) + " kΩ";
+  return fmt(r) + " Ω";
+}
+
+/* Code des condensateurs */
+(function(){
+  const msg = $("#k-msg");
+  const TOL = {F:"± 1 %", G:"± 2 %", J:"± 5 %", K:"± 10 %", M:"± 20 %", Z:"− 20 % / + 80 %"};
+  function fmtC(pf){
+    if(pf >= 1e6) return fmt(pf/1e6) + " µF";
+    if(pf >= 1e3) return fmt(pf/1e3) + " nF";
+    return fmt(pf) + " pF";
+  }
+  function calc(){
+    msg.classList.remove("err");
+    const raw = $("#k-code").value.trim().toUpperCase().replace(/\s/g,"");
+    if(!raw){ msg.textContent = "Écris le code, par exemple 104 ou 473J."; return; }
+    const m = raw.match(/^(\d{1,3})([FGJKMZ])?$/);
+    if(!m){ msg.classList.add("err"); msg.textContent = "Code non reconnu. Écris un à trois chiffres, suivis éventuellement d’une lettre (F, G, J, K, M ou Z). Un marquage comme 4n7 se lit directement : 4,7 nF."; return; }
+    const d = m[1];
+    let pf, how;
+    if(d.length < 3){ pf = parseInt(d,10); how = "Avec un ou deux chiffres, la valeur est lue directement en picofarads."; }
+    else {
+      const base = parseInt(d.slice(0,2),10), e = parseInt(d[2],10);
+      if(e === 8) pf = base*0.01; else if(e === 9) pf = base*0.1; else pf = base*Math.pow(10,e);
+      how = d.slice(0,2) + " suivi de " + e + " : " + d.slice(0,2) + " × 10^" + e + " pF.";
+    }
+    const tol = m[2] ? "<br>Tolérance : <b>" + TOL[m[2]] + "</b>." : "";
+    msg.innerHTML = "Capacité : <b>" + fmtC(pf) + "</b> (" + fmt(pf) + " pF)<br>" + how + tol + "<br>La tension maximale est souvent imprimée à part : ne la dépasse pas.";
+  }
+  $("#k-code").addEventListener("input", calc);
+  calc();
+})();
+
+/* Autonomie d'une batterie */
+(function(){
+  const msg = $("#b-msg");
+  function calc(){
+    msg.classList.remove("err");
+    const v = parse($("#b-v").value), ah = parse($("#b-ah").value), p = parse($("#b-p").value), eff = parse($("#b-eff").value), dod = parse($("#b-dod").value);
+    if([v,ah,p,eff,dod].some(x => isNaN(x) || x <= 0)){ msg.classList.add("err"); msg.textContent = "Entre des nombres supérieurs à 0 dans toutes les cases."; return; }
+    if(eff > 100 || dod > 100){ msg.classList.add("err"); msg.textContent = "Le rendement et la part utilisable ne peuvent pas dépasser 100 %."; return; }
+    const wh = v*ah*(dod/100)*(eff/100);
+    const h = wh/p, mins = Math.round(h*60);
+    let t;
+    if(mins < 60) t = mins + " min";
+    else { const hh = Math.floor(mins/60), mm = mins % 60; t = hh + " h" + (mm ? " " + String(mm).padStart(2,"0") + " min" : ""); }
+    msg.innerHTML = "Énergie utilisable : <b>" + fmt(wh) + " Wh</b><br>Autonomie estimée : <b>" + t + "</b> pour " + fmt(p) + " W.";
+  }
+  ["#b-v","#b-ah","#b-p","#b-eff","#b-dod"].forEach(s => $(s).addEventListener("input", calc));
+  calc();
+})();
+
+</script>
+</body>
+</html>

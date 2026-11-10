@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Électronique et domotique — Club Réussir Ensemble</title>
+<meta name="description" content="Cours, Arduino et ESP32, simulateurs, domotique, composants, vidéos et forums : une sélection de ressources en électronique, avec des calculateurs (loi d’Ohm, LED, diviseur de tension, code couleur).">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0A2A57; --navy-deep:#071A38; --blue:#2563EB; --gold:#FAB202;
+  --gn-green:#009460; --gn-yellow:#FCD116; --gn-red:#CE1126;
+  --ink:#0F172A; --ink2:#5B6B85; --paper:#F5F8FC; --paper2:#EEF2F8; --line:#E3E9F2; --card:#FFFFFF;
+  --good:#117A3A; --bad:#C0070C; --warn-bg:#FFF6DA;
+  --radius:16px; --shadow:0 6px 24px rgba(10,42,87,.08); --ease:cubic-bezier(.4,0,.2,1);
+}
+:root[data-theme="dark"]{
+  --ink:#EAF0FA; --ink2:#9FB0C8; --paper:#0B1626; --paper2:#111F35; --line:#22314A; --card:#101E33;
+  --navy-deep:#050D1A; --good:#4ADE80; --bad:#FF6B6B; --warn-bg:#2A2410; --shadow:0 6px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:'Work Sans',sans-serif;background:var(--paper);color:var(--ink);transition:background .25s var(--ease),color .25s var(--ease)}
+h1,h2,h3{font-family:'Poppins',sans-serif;color:var(--ink);line-height:1.15;margin:0}
+a{color:var(--blue)}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 18px}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* En-tête */
+.site-nav{position:sticky;top:0;z-index:50;background:var(--navy-deep)}
+.nav-row{display:flex;align-items:center;gap:14px;min-height:62px}
+.brand{color:#fff;font-family:'Poppins',sans-serif;font-weight:800;font-size:18px;line-height:1.15;flex:1;min-width:0}
+.brand span{display:block;color:var(--gold);font-size:11px;font-weight:700;letter-spacing:.06em}
+.nav-link,.theme-btn{color:#fff;background:rgba(255,255,255,.1);border:0;border-radius:999px;padding:9px 14px;font:600 14px 'Work Sans',sans-serif;text-decoration:none;cursor:pointer}
+.nav-link:hover,.theme-btn:hover{background:rgba(255,255,255,.2)}
+
+/* Haut de page */
+.hero{background:linear-gradient(180deg,var(--navy) 0%,var(--navy-deep) 100%);padding:34px 0 92px;color:#fff;position:relative}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background:linear-gradient(90deg,var(--gn-red) 0 33.3%,var(--gn-yellow) 33.3% 66.6%,var(--gn-green) 66.6%)}
+.hero h1{color:#fff;font-size:clamp(26px,5vw,40px);font-weight:800}
+.hero p{margin:12px 0 0;max-width:60ch;color:#C9D6EC;font-size:16px;line-height:1.55}
+.jump{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.jump a{color:#fff;background:rgba(255,255,255,.12);border-radius:999px;padding:8px 14px;font:600 13.5px 'Work Sans',sans-serif;text-decoration:none}
+.jump a:hover{background:rgba(255,255,255,.22)}
+
+/* Recherche */
+.comp{margin-top:-62px;background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:20px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+.field input{width:100%;height:46px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);font:500 15px 'Work Sans',sans-serif;padding:0 14px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:14px 0 4px;scrollbar-width:thin}
+.tab{flex:none;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:8px 14px;font:600 13.5px 'Work Sans',sans-serif;cursor:pointer;white-space:nowrap}
+.tab[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+:root[data-theme="dark"] .tab[aria-pressed="true"]{background:var(--blue);border-color:var(--blue)}
+.count{margin:10px 0 0;font-size:13px;color:var(--ink2)}
+
+/* Sections */
+section{padding:38px 0 6px}
+.sec-head{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+.sec-head h2{font-size:clamp(21px,3.6vw,28px);font-weight:800}
+.sec-head p{margin:0;color:var(--ink2);font-size:14px;line-height:1.5;max-width:62ch}
+#ressources{padding-top:26px}
+
+/* Cartes de ressources */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.res{display:flex;flex-direction:column;gap:6px;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;text-decoration:none;color:var(--ink)}
+.res:hover{border-color:var(--blue)}
+.rt{font:700 15.5px 'Poppins',sans-serif;line-height:1.25}
+.rd{font-size:13.5px;line-height:1.5;color:var(--ink2);flex:1}
+.rm{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:12.5px;color:var(--ink2);min-width:0}
+.rm em{font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg{flex:none;font:700 11.5px 'Work Sans',sans-serif;border-radius:6px;padding:2px 7px}
+.lg.fr{background:#DDF3E8;color:#0B6B3A}
+.lg.en{background:#E3ECFD;color:#1D4ED8}
+:root[data-theme="dark"] .lg.fr{background:#12392A;color:#7BE0A8}
+:root[data-theme="dark"] .lg.en{background:#14284F;color:#9DBBFF}
+.empty{padding:22px;border:1.5px dashed var(--line);border-radius:var(--radius);color:var(--ink2);text-align:center;line-height:1.55}
+.legend{margin:14px 0 0;font-size:13px;color:var(--ink2);line-height:1.55}
+
+/* Calculateurs */
+.calcs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.calc{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;min-width:0}
+.calc h3{font-size:17px;font-weight:700}
+.calc .help{margin:6px 0 12px;font-size:13px;color:var(--ink2);line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cf label{display:block;font-size:12.5px;font-weight:600;color:var(--ink2);margin-bottom:4px}
+.cf input,.cf select{width:100%;height:42px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font:500 15px 'Work Sans',sans-serif;padding:0 10px}
+.cf input.out{background:var(--paper2);border-color:var(--blue);font-weight:700}
+.res-box{margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--paper2);font-size:14px;line-height:1.6;min-height:48px}
+.res-box b{font-family:'Poppins',sans-serif}
+.res-box.err{color:var(--bad)}
+.btn{margin-top:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 14px;font:600 13px 'Work Sans',sans-serif;cursor:pointer}
+.btn:hover{border-color:var(--blue);color:var(--blue)}
+.resistor{display:block;width:100%;max-width:260px;height:auto;margin:6px auto 10px}
+
+/* Sécurité */
+.safe{background:var(--warn-bg);border:1px solid var(--line);border-left:6px solid var(--gold);border-radius:var(--radius);padding:18px 20px}
+.safe h2{font-size:clamp(19px,3vw,24px);margin-bottom:8px}
+.safe ul{margin:0;padding-left:20px;line-height:1.65;font-size:14.5px}
+.safe li+li{margin-top:5px}
+
+/* Voir aussi */
+.pills{display:flex;flex-wrap:wrap;gap:10px}
+.pills a{display:inline-block;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:9px 16px;font:600 14px 'Work Sans',sans-serif;text-decoration:none}
+.pills a:hover{border-color:var(--blue);color:var(--blue)}
+
+.note{margin:30px 0 0;padding:16px 18px;border-radius:14px;background:var(--paper2);font-size:13.5px;line-height:1.6;color:var(--ink2)}
+footer{margin-top:34px;background:var(--navy-deep);color:#C9D6EC;padding:22px 0;font-size:14px}
+footer a{color:var(--gold)}
+
+@media (max-width:640px){
+  .brand{font-size:15px}
+  .calcs{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<header class="site-nav">
+  <div class="wrap nav-row">
+    <div class="brand">Club Réussir Ensemble<span>GUINÉE · FONDÉ À MAMOU</span></div>
+    <a class="nav-link" href="index.html">🏠 Accueil</a>
+    <button type="button" class="theme-btn" id="themeBtn" aria-label="Changer de thème">🌙</button>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <h1>Électronique et domotique</h1>
+    <p>Apprendre, simuler, programmer, automatiser : une sélection de ressources pour passer des bases de l’électronique aux montages Arduino, ESP32 et à la maison connectée, avec quatre calculateurs prêts à l’emploi.</p>
+    <nav class="jump" aria-label="Aller à une partie de la page">
+      <a href="#ressources">Ressources</a>
+      <a href="#calculateurs">Calculateurs</a>
+      <a href="#securite">Sécurité</a>
+    </nav>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <div class="comp">
+    <div class="field">
+      <label for="q">Chercher une ressource</label>
+      <input id="q" type="search" placeholder="Arduino, simulateur, ESP32, forum…" autocomplete="off">
+    </div>
+    <div class="tabs" id="tabs" role="group" aria-label="Catégories">
+      <button type="button" class="tab" data-cat="all" aria-pressed="true">Tout</button>
+      <button type="button" class="tab" data-cat="cours" aria-pressed="false">Cours</button>
+      <button type="button" class="tab" data-cat="micro" aria-pressed="false">Microcontrôleurs</button>
+      <button type="button" class="tab" data-cat="simu" aria-pressed="false">Simulation & conception</button>
+      <button type="button" class="tab" data-cat="domo" aria-pressed="false">Domotique</button>
+      <button type="button" class="tab" data-cat="compo" aria-pressed="false">Composants</button>
+      <button type="button" class="tab" data-cat="video" aria-pressed="false">Vidéos</button>
+      <button type="button" class="tab" data-cat="aide" aria-pressed="false">Dépannage & forums</button>
+    </div>
+    <p class="count" id="count" aria-live="polite">55 ressources</p>
+  </div>
+
+  <section id="ressources">
+    <div class="grid" id="grid">
+    <a class="res" href="https://www.sonelec-musique.com/" target="_blank" rel="noopener noreferrer" data-cat="cours" data-q="sonelec-musique cours et montages d’electronique en francais : composants, alimentations, audio. sonelec-musique.com cours">
+      <span class="rt">Sonelec-musique</span>
+      <span class="rd">Cours et montages d’électronique en français : composants, alimentations, audio.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>sonelec-musique.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://fr.wikibooks.org/wiki/%C3%89lectronique" target="_blank" rel="noopener noreferrer" data-cat="cours" data-q="wikibooks : electronique manuel libre pour revoir les bases de l’electronique. fr.wikibooks.org cours">
+      <span class="rt">Wikibooks : Électronique</span>
+      <span class="rd">Manuel libre pour revoir les bases de l’électronique.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>fr.wikibooks.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://openclassrooms.com/fr/" target="_blank" rel="noopener noreferrer" data-cat="cours" data-q="openclassrooms cours en ligne en francais sur la programmation et le numerique ; cherche « arduino » ou « electronique ». openclassrooms.com cours">
+      <span class="rt">OpenClassrooms</span>
+      <span class="rd">Cours en ligne en français sur la programmation et le numérique ; cherche « Arduino » ou « électronique ».</span>
+      <span class="rm"><b class="lg fr">FR</b><em>openclassrooms.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.fun-mooc.fr/" target="_blank" rel="noopener noreferrer" data-cat="cours" data-q="fun mooc cours ouverts d’universites francophones ; cherche « electronique » ou « energie ». fun-mooc.fr cours">
+      <span class="rt">FUN MOOC</span>
+      <span class="rd">Cours ouverts d’universités francophones ; cherche « électronique » ou « énergie ».</span>
+      <span class="rm"><b class="lg fr">FR</b><em>fun-mooc.fr</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://fr.khanacademy.org/" target="_blank" rel="noopener noreferrer" data-cat="cours" data-q="khan academy cours gratuits de physique et de mathematiques, utiles pour les bases de l’electricite. fr.khanacademy.org cours">
+      <span class="rt">Khan Academy</span>
+      <span class="rd">Cours gratuits de physique et de mathématiques, utiles pour les bases de l’électricité.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>fr.khanacademy.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.allaboutcircuits.com/textbook/" target="_blank" rel="noopener noreferrer" data-cat="cours" data-q="all about circuits manuel libre d’electricite et d’electronique, du courant continu aux semi-conducteurs. allaboutcircuits.com cours">
+      <span class="rt">All About Circuits</span>
+      <span class="rd">Manuel libre d’électricité et d’électronique, du courant continu aux semi-conducteurs.</span>
+      <span class="rm"><b class="lg en">EN</b><em>allaboutcircuits.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.electronics-tutorials.ws/" target="_blank" rel="noopener noreferrer" data-cat="cours" data-q="electronics tutorials tutoriels illustres : resistances, condensateurs, diodes, transistors, amplificateurs operationnels. electronics-tutorials.ws cours">
+      <span class="rt">Electronics Tutorials</span>
+      <span class="rd">Tutoriels illustrés : résistances, condensateurs, diodes, transistors, amplificateurs opérationnels.</span>
+      <span class="rm"><b class="lg en">EN</b><em>electronics-tutorials.ws</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://docs.arduino.cc/" target="_blank" rel="noopener noreferrer" data-cat="micro" data-q="documentation arduino documentation officielle, reference du langage, tutoriels et guides de demarrage. docs.arduino.cc microcontroleurs">
+      <span class="rt">Documentation Arduino</span>
+      <span class="rd">Documentation officielle, référence du langage, tutoriels et guides de démarrage.</span>
+      <span class="rm"><b class="lg en">EN</b><em>docs.arduino.cc</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.locoduino.org/" target="_blank" rel="noopener noreferrer" data-cat="micro" data-q="locoduino articles detailles sur arduino et la programmation embarquee. locoduino.org microcontroleurs">
+      <span class="rt">Locoduino</span>
+      <span class="rd">Articles détaillés sur Arduino et la programmation embarquée.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>locoduino.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.carnetdumaker.net/" target="_blank" rel="noopener noreferrer" data-cat="micro" data-q="carnet du maker tutoriels arduino, esp et electronique. carnetdumaker.net microcontroleurs">
+      <span class="rt">Carnet du Maker</span>
+      <span class="rd">Tutoriels Arduino, ESP et électronique.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>carnetdumaker.net</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://tutoduino.fr/" target="_blank" rel="noopener noreferrer" data-cat="micro" data-q="tutoduino tutoriels et projets arduino et esp32 pour debutants. tutoduino.fr microcontroleurs">
+      <span class="rt">Tutoduino</span>
+      <span class="rd">Tutoriels et projets Arduino et ESP32 pour débutants.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>tutoduino.fr</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.framboise314.fr/" target="_blank" rel="noopener noreferrer" data-cat="micro" data-q="framboise314 le blog francophone sur le raspberry pi : installation, projets, tutoriels. framboise314.fr microcontroleurs">
+      <span class="rt">Framboise314</span>
+      <span class="rd">Le blog francophone sur le Raspberry Pi : installation, projets, tutoriels.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>framboise314.fr</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.raspberrypi.com/documentation/" target="_blank" rel="noopener noreferrer" data-cat="micro" data-q="documentation raspberry pi documentation officielle du raspberry pi et du pico. raspberrypi.com microcontroleurs">
+      <span class="rt">Documentation Raspberry Pi</span>
+      <span class="rd">Documentation officielle du Raspberry Pi et du Pico.</span>
+      <span class="rm"><b class="lg en">EN</b><em>raspberrypi.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://randomnerdtutorials.com/" target="_blank" rel="noopener noreferrer" data-cat="micro" data-q="random nerd tutorials projets pas a pas avec l’esp32, l’esp8266 et arduino. randomnerdtutorials.com microcontroleurs">
+      <span class="rt">Random Nerd Tutorials</span>
+      <span class="rd">Projets pas à pas avec l’ESP32, l’ESP8266 et Arduino.</span>
+      <span class="rm"><b class="lg en">EN</b><em>randomnerdtutorials.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://docs.espressif.com/" target="_blank" rel="noopener noreferrer" data-cat="micro" data-q="documentation espressif documentation officielle des puces esp32 : guides de demarrage et references. docs.espressif.com microcontroleurs">
+      <span class="rt">Documentation Espressif</span>
+      <span class="rd">Documentation officielle des puces ESP32 : guides de démarrage et références.</span>
+      <span class="rm"><b class="lg en">EN</b><em>docs.espressif.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://micropython.org/" target="_blank" rel="noopener noreferrer" data-cat="micro" data-q="micropython programmer des microcontroleurs en python : documentation et telechargements. micropython.org microcontroleurs">
+      <span class="rt">MicroPython</span>
+      <span class="rd">Programmer des microcontrôleurs en Python : documentation et téléchargements.</span>
+      <span class="rm"><b class="lg en">EN</b><em>micropython.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://learn.adafruit.com/" target="_blank" rel="noopener noreferrer" data-cat="micro" data-q="adafruit learn des centaines de guides detailles sur les capteurs, les ecrans et les cartes. learn.adafruit.com microcontroleurs">
+      <span class="rt">Adafruit Learn</span>
+      <span class="rd">Des centaines de guides détaillés sur les capteurs, les écrans et les cartes.</span>
+      <span class="rm"><b class="lg en">EN</b><em>learn.adafruit.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://learn.sparkfun.com/" target="_blank" rel="noopener noreferrer" data-cat="micro" data-q="sparkfun learn tutoriels pour comprendre les composants et les cartes electroniques. learn.sparkfun.com microcontroleurs">
+      <span class="rt">SparkFun Learn</span>
+      <span class="rd">Tutoriels pour comprendre les composants et les cartes électroniques.</span>
+      <span class="rm"><b class="lg en">EN</b><em>learn.sparkfun.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.tinkercad.com/circuits" target="_blank" rel="noopener noreferrer" data-cat="simu" data-q="tinkercad circuits simule des circuits et des montages arduino dans le navigateur, sans rien installer. tinkercad.com simulation &amp; conception">
+      <span class="rt">Tinkercad Circuits</span>
+      <span class="rd">Simule des circuits et des montages Arduino dans le navigateur, sans rien installer.</span>
+      <span class="rm"><b class="lg en">EN</b><em>tinkercad.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://wokwi.com/" target="_blank" rel="noopener noreferrer" data-cat="simu" data-q="wokwi simulateur en ligne pour arduino, esp32 et raspberry pi pico. wokwi.com simulation &amp; conception">
+      <span class="rt">Wokwi</span>
+      <span class="rd">Simulateur en ligne pour Arduino, ESP32 et Raspberry Pi Pico.</span>
+      <span class="rm"><b class="lg en">EN</b><em>wokwi.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.falstad.com/circuit/" target="_blank" rel="noopener noreferrer" data-cat="simu" data-q="simulateur de circuits falstad simulateur anime dans le navigateur : on voit les courants et les tensions evoluer. falstad.com simulation &amp; conception">
+      <span class="rt">Simulateur de circuits Falstad</span>
+      <span class="rd">Simulateur animé dans le navigateur : on voit les courants et les tensions évoluer.</span>
+      <span class="rm"><b class="lg en">EN</b><em>falstad.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://easyeda.com/" target="_blank" rel="noopener noreferrer" data-cat="simu" data-q="easyeda dessiner des schemas et des circuits imprimes en ligne. easyeda.com simulation &amp; conception">
+      <span class="rt">EasyEDA</span>
+      <span class="rd">Dessiner des schémas et des circuits imprimés en ligne.</span>
+      <span class="rm"><b class="lg en">EN</b><em>easyeda.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.kicad.org/" target="_blank" rel="noopener noreferrer" data-cat="simu" data-q="kicad logiciel libre de schema electronique et de circuit imprime. kicad.org simulation &amp; conception">
+      <span class="rt">KiCad</span>
+      <span class="rd">Logiciel libre de schéma électronique et de circuit imprimé.</span>
+      <span class="rm"><b class="lg en">EN</b><em>kicad.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.analog.com/en/resources/design-tools-and-calculators/ltspice-simulator.html" target="_blank" rel="noopener noreferrer" data-cat="simu" data-q="ltspice simulateur de circuits analogiques d’analog devices, tres utilise en cours et en bureau d’etudes. analog.com simulation &amp; conception">
+      <span class="rt">LTspice</span>
+      <span class="rd">Simulateur de circuits analogiques d’Analog Devices, très utilisé en cours et en bureau d’études.</span>
+      <span class="rm"><b class="lg en">EN</b><em>analog.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://fritzing.org/" target="_blank" rel="noopener noreferrer" data-cat="simu" data-q="fritzing documenter ses montages avec des schemas de cablage sur plaque d’essai. fritzing.org simulation &amp; conception">
+      <span class="rt">Fritzing</span>
+      <span class="rd">Documenter ses montages avec des schémas de câblage sur plaque d’essai.</span>
+      <span class="rm"><b class="lg en">EN</b><em>fritzing.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.home-assistant.io/" target="_blank" rel="noopener noreferrer" data-cat="domo" data-q="home assistant plateforme libre pour piloter lampes, prises, capteurs et scenarios, avec un accent sur le controle local. home-assistant.io domotique">
+      <span class="rt">Home Assistant</span>
+      <span class="rd">Plateforme libre pour piloter lampes, prises, capteurs et scénarios, avec un accent sur le contrôle local.</span>
+      <span class="rm"><b class="lg en">EN</b><em>home-assistant.io</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://esphome.io/" target="_blank" rel="noopener noreferrer" data-cat="domo" data-q="esphome configurer des modules esp32 et esp8266 avec de simples fichiers yaml, pour home assistant. esphome.io domotique">
+      <span class="rt">ESPHome</span>
+      <span class="rd">Configurer des modules ESP32 et ESP8266 avec de simples fichiers YAML, pour Home Assistant.</span>
+      <span class="rm"><b class="lg en">EN</b><em>esphome.io</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://tasmota.github.io/docs/" target="_blank" rel="noopener noreferrer" data-cat="domo" data-q="tasmota micrologiciel libre pour piloter en local des prises et interrupteurs wi-fi compatibles. tasmota.github.io domotique">
+      <span class="rt">Tasmota</span>
+      <span class="rd">Micrologiciel libre pour piloter en local des prises et interrupteurs Wi-Fi compatibles.</span>
+      <span class="rm"><b class="lg en">EN</b><em>tasmota.github.io</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://nodered.org/" target="_blank" rel="noopener noreferrer" data-cat="domo" data-q="node-red programmation visuelle pour relier des capteurs, des appareils et des services. nodered.org domotique">
+      <span class="rt">Node-RED</span>
+      <span class="rd">Programmation visuelle pour relier des capteurs, des appareils et des services.</span>
+      <span class="rm"><b class="lg en">EN</b><em>nodered.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.zigbee2mqtt.io/" target="_blank" rel="noopener noreferrer" data-cat="domo" data-q="zigbee2mqtt utiliser des appareils zigbee sans passer par la passerelle du fabricant. zigbee2mqtt.io domotique">
+      <span class="rt">Zigbee2MQTT</span>
+      <span class="rd">Utiliser des appareils Zigbee sans passer par la passerelle du fabricant.</span>
+      <span class="rm"><b class="lg en">EN</b><em>zigbee2mqtt.io</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://mosquitto.org/" target="_blank" rel="noopener noreferrer" data-cat="domo" data-q="mosquitto serveur mqtt leger, a la base de nombreux montages d’objets connectes. mosquitto.org domotique">
+      <span class="rt">Mosquitto</span>
+      <span class="rd">Serveur MQTT léger, à la base de nombreux montages d’objets connectés.</span>
+      <span class="rm"><b class="lg en">EN</b><em>mosquitto.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.domoticz.com/" target="_blank" rel="noopener noreferrer" data-cat="domo" data-q="domoticz systeme de domotique leger, qui peut tourner sur un raspberry pi. domoticz.com domotique">
+      <span class="rt">Domoticz</span>
+      <span class="rd">Système de domotique léger, qui peut tourner sur un Raspberry Pi.</span>
+      <span class="rm"><b class="lg en">EN</b><em>domoticz.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.jeedom.com/" target="_blank" rel="noopener noreferrer" data-cat="domo" data-q="jeedom solution de domotique francaise, avec une communaute francophone. jeedom.com domotique">
+      <span class="rt">Jeedom</span>
+      <span class="rd">Solution de domotique française, avec une communauté francophone.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>jeedom.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.openhab.org/" target="_blank" rel="noopener noreferrer" data-cat="domo" data-q="openhab plateforme de domotique libre qui relie de nombreuses marques d’appareils. openhab.org domotique">
+      <span class="rt">openHAB</span>
+      <span class="rd">Plateforme de domotique libre qui relie de nombreuses marques d’appareils.</span>
+      <span class="rm"><b class="lg en">EN</b><em>openhab.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.maison-et-domotique.com/" target="_blank" rel="noopener noreferrer" data-cat="domo" data-q="maison et domotique blog et forum francophones : tests, tutoriels et retours d’experience. maison-et-domotique.com domotique">
+      <span class="rt">Maison et Domotique</span>
+      <span class="rd">Blog et forum francophones : tests, tutoriels et retours d’expérience.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>maison-et-domotique.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.alldatasheet.com/" target="_blank" rel="noopener noreferrer" data-cat="compo" data-q="alldatasheet moteur de recherche de fiches techniques (datasheets) de composants. alldatasheet.com composants">
+      <span class="rt">Alldatasheet</span>
+      <span class="rd">Moteur de recherche de fiches techniques (datasheets) de composants.</span>
+      <span class="rm"><b class="lg en">EN</b><em>alldatasheet.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://octopart.com/" target="_blank" rel="noopener noreferrer" data-cat="compo" data-q="octopart compare les prix et les stocks d’un composant chez de nombreux distributeurs. octopart.com composants">
+      <span class="rt">Octopart</span>
+      <span class="rd">Compare les prix et les stocks d’un composant chez de nombreux distributeurs.</span>
+      <span class="rm"><b class="lg en">EN</b><em>octopart.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.digikey.com/" target="_blank" rel="noopener noreferrer" data-cat="compo" data-q="digikey grand distributeur de composants, avec des filtres de recherche tres precis. digikey.com composants">
+      <span class="rt">DigiKey</span>
+      <span class="rd">Grand distributeur de composants, avec des filtres de recherche très précis.</span>
+      <span class="rm"><b class="lg en">EN</b><em>digikey.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.mouser.com/" target="_blank" rel="noopener noreferrer" data-cat="compo" data-q="mouser grand distributeur de composants electroniques. mouser.com composants">
+      <span class="rt">Mouser</span>
+      <span class="rd">Grand distributeur de composants électroniques.</span>
+      <span class="rm"><b class="lg en">EN</b><em>mouser.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.lcsc.com/" target="_blank" rel="noopener noreferrer" data-cat="compo" data-q="lcsc catalogue de composants courants, souvent utilise avec la fabrication de circuits imprimes jlcpcb. lcsc.com composants">
+      <span class="rt">LCSC</span>
+      <span class="rd">Catalogue de composants courants, souvent utilisé avec la fabrication de circuits imprimés JLCPCB.</span>
+      <span class="rm"><b class="lg en">EN</b><em>lcsc.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.snapeda.com/" target="_blank" rel="noopener noreferrer" data-cat="compo" data-q="snapeda bibliotheque de symboles et d’empreintes de composants pour les logiciels de cao. snapeda.com composants">
+      <span class="rt">SnapEDA</span>
+      <span class="rd">Bibliothèque de symboles et d’empreintes de composants pour les logiciels de CAO.</span>
+      <span class="rm"><b class="lg en">EN</b><em>snapeda.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://jlcpcb.com/" target="_blank" rel="noopener noreferrer" data-cat="compo" data-q="jlcpcb commande de circuits imprimes en ligne a partir de tes fichiers de conception. jlcpcb.com composants">
+      <span class="rt">JLCPCB</span>
+      <span class="rd">Commande de circuits imprimés en ligne à partir de tes fichiers de conception.</span>
+      <span class="rm"><b class="lg en">EN</b><em>jlcpcb.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.youtube.com/@ElectroBOOM" target="_blank" rel="noopener noreferrer" data-cat="video" data-q="electroboom electricite et electronique expliquees avec beaucoup d’humour. youtube.com videos">
+      <span class="rt">ElectroBOOM</span>
+      <span class="rd">Électricité et électronique expliquées avec beaucoup d’humour.</span>
+      <span class="rm"><b class="lg en">EN</b><em>youtube.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.youtube.com/@greatscottlab" target="_blank" rel="noopener noreferrer" data-cat="video" data-q="greatscott! projets d’electronique et d’energie expliques etape par etape. youtube.com videos">
+      <span class="rt">GreatScott!</span>
+      <span class="rd">Projets d’électronique et d’énergie expliqués étape par étape.</span>
+      <span class="rm"><b class="lg en">EN</b><em>youtube.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.youtube.com/@EEVblog" target="_blank" rel="noopener noreferrer" data-cat="video" data-q="eevblog cours, demontages, reparations et mesures pour passionnes et professionnels. youtube.com videos">
+      <span class="rt">EEVblog</span>
+      <span class="rd">Cours, démontages, réparations et mesures pour passionnés et professionnels.</span>
+      <span class="rm"><b class="lg en">EN</b><em>youtube.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.youtube.com/@AndreasSpiess" target="_blank" rel="noopener noreferrer" data-cat="video" data-q="andreas spiess esp32, capteurs, objets connectes et mesures. youtube.com videos">
+      <span class="rt">Andreas Spiess</span>
+      <span class="rd">ESP32, capteurs, objets connectés et mesures.</span>
+      <span class="rm"><b class="lg en">EN</b><em>youtube.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.youtube.com/results?search_query=%C3%A9lectronique+pour+d%C3%A9butants" target="_blank" rel="noopener noreferrer" data-cat="video" data-q="recherche : electronique pour debutants resultats youtube en francais pour commencer. youtube.com videos">
+      <span class="rt">Recherche : électronique pour débutants</span>
+      <span class="rd">Résultats YouTube en français pour commencer.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>youtube.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.youtube.com/results?search_query=arduino+tutoriel+fran%C3%A7ais" target="_blank" rel="noopener noreferrer" data-cat="video" data-q="recherche : arduino en francais tutoriels arduino en francais sur youtube. youtube.com videos">
+      <span class="rt">Recherche : Arduino en français</span>
+      <span class="rd">Tutoriels Arduino en français sur YouTube.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>youtube.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.youtube.com/results?search_query=domotique+ESP32+Home+Assistant" target="_blank" rel="noopener noreferrer" data-cat="video" data-q="recherche : domotique esp32 videos sur la domotique avec esp32 et home assistant. youtube.com videos">
+      <span class="rt">Recherche : domotique ESP32</span>
+      <span class="rd">Vidéos sur la domotique avec ESP32 et Home Assistant.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>youtube.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.ifixit.com/" target="_blank" rel="noopener noreferrer" data-cat="aide" data-q="ifixit guides de reparation pas a pas : telephones, ordinateurs, appareils. ifixit.com depannage &amp; forums">
+      <span class="rt">iFixit</span>
+      <span class="rd">Guides de réparation pas à pas : téléphones, ordinateurs, appareils.</span>
+      <span class="rm"><b class="lg en">EN</b><em>ifixit.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://electronics.stackexchange.com/" target="_blank" rel="noopener noreferrer" data-cat="aide" data-q="electronics stack exchange questions-reponses techniques ; cherche toujours avant de poser ta question. electronics.stackexchange.com depannage &amp; forums">
+      <span class="rt">Electronics Stack Exchange</span>
+      <span class="rd">Questions-réponses techniques ; cherche toujours avant de poser ta question.</span>
+      <span class="rm"><b class="lg en">EN</b><em>electronics.stackexchange.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.eevblog.com/forum/" target="_blank" rel="noopener noreferrer" data-cat="aide" data-q="forum eevblog forum de passionnes et de professionnels : conception, mesure, depannage. eevblog.com depannage &amp; forums">
+      <span class="rt">Forum EEVblog</span>
+      <span class="rd">Forum de passionnés et de professionnels : conception, mesure, dépannage.</span>
+      <span class="rm"><b class="lg en">EN</b><em>eevblog.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://forum.arduino.cc/" target="_blank" rel="noopener noreferrer" data-cat="aide" data-q="forum arduino forum officiel : questions de programmation et de cablage. forum.arduino.cc depannage &amp; forums">
+      <span class="rt">Forum Arduino</span>
+      <span class="rd">Forum officiel : questions de programmation et de câblage.</span>
+      <span class="rm"><b class="lg en">EN</b><em>forum.arduino.cc</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://community.element14.com/" target="_blank" rel="noopener noreferrer" data-cat="aide" data-q="communaute element14 forum et projets d’une grande communaute d’ingenieurs et de makers. community.element14.com depannage &amp; forums">
+      <span class="rt">Communauté element14</span>
+      <span class="rd">Forum et projets d’une grande communauté d’ingénieurs et de makers.</span>
+      <span class="rm"><b class="lg en">EN</b><em>community.element14.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://hackaday.com/" target="_blank" rel="noopener noreferrer" data-cat="aide" data-q="hackaday projets, actualites et idees d’electronique et de bricolage. hackaday.com depannage &amp; forums">
+      <span class="rt">Hackaday</span>
+      <span class="rd">Projets, actualités et idées d’électronique et de bricolage.</span>
+      <span class="rm"><b class="lg en">EN</b><em>hackaday.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    </div>
+    <div class="empty" id="empty" hidden>Aucune ressource ne correspond à cette recherche. Essaie un autre mot ou choisis « Tout ».</div>
+    <p class="legend"><b>FR</b> : site en français. <b>EN</b> : site en anglais ; le traducteur de ton navigateur aide beaucoup. Pour les fiches techniques de composants courants, vois aussi la page <a href="fiches-techniques.html">Fiches techniques</a>.</p>
+  </section>
+
+  <section id="calculateurs">
+    <div class="sec-head">
+      <h2>Calculateurs</h2>
+      <p>Les calculs se font dans ton navigateur. Pour les résistances, tu peux écrire 4,7k ou 10k.</p>
+    </div>
+    <div class="calcs">
+
+      <!-- Loi d'Ohm -->
+      <div class="calc" id="ohm">
+        <h3>Loi d’Ohm et puissance</h3>
+        <p class="help">Remplis deux cases : les deux autres se calculent. Courant en ampères (0,02 A = 20 mA).</p>
+        <div class="row2">
+          <div class="cf"><label for="o-U">Tension U (V)</label><input id="o-U" data-k="U" type="text" inputmode="decimal" autocomplete="off"></div>
+          <div class="cf"><label for="o-I">Courant I (A)</label><input id="o-I" data-k="I" type="text" inputmode="decimal" autocomplete="off"></div>
+          <div class="cf"><label for="o-R">Résistance R (Ω)</label><input id="o-R" data-k="R" type="text" inputmode="decimal" autocomplete="off"></div>
+          <div class="cf"><label for="o-P">Puissance P (W)</label><input id="o-P" data-k="P" type="text" inputmode="decimal" autocomplete="off"></div>
+        </div>
+        <div class="res-box" id="o-msg" aria-live="polite">Formules : U = R × I et P = U × I.</div>
+        <button type="button" class="btn" id="o-reset">Effacer</button>
+      </div>
+
+      <!-- Résistance de LED -->
+      <div class="calc" id="led">
+        <h3>Résistance pour une LED</h3>
+        <p class="help">Valeurs courantes : alimentation 5 V, LED rouge autour de 2 V, courant de 10 à 20 mA.</p>
+        <div class="row2">
+          <div class="cf"><label for="l-vs">Alimentation (V)</label><input id="l-vs" type="text" inputmode="decimal" value="5" autocomplete="off"></div>
+          <div class="cf"><label for="l-vf">Tension de la LED (V)</label><input id="l-vf" type="text" inputmode="decimal" value="2" autocomplete="off"></div>
+          <div class="cf"><label for="l-if">Courant voulu (mA)</label><input id="l-if" type="text" inputmode="decimal" value="20" autocomplete="off"></div>
+        </div>
+        <div class="res-box" id="l-msg" aria-live="polite"></div>
+      </div>
+
+      <!-- Diviseur de tension -->
+      <div class="calc" id="div">
+        <h3>Diviseur de tension</h3>
+        <p class="help">Deux résistances en série : on mesure la tension aux bornes de R2. Calcul valable sans charge branchée sur la sortie.</p>
+        <div class="row2">
+          <div class="cf"><label for="d-vin">Entrée (V)</label><input id="d-vin" type="text" inputmode="decimal" value="5" autocomplete="off"></div>
+          <div></div>
+          <div class="cf"><label for="d-r1">R1 (Ω)</label><input id="d-r1" type="text" inputmode="decimal" value="10k" autocomplete="off"></div>
+          <div class="cf"><label for="d-r2">R2 (Ω)</label><input id="d-r2" type="text" inputmode="decimal" value="10k" autocomplete="off"></div>
+        </div>
+        <div class="res-box" id="d-msg" aria-live="polite"></div>
+      </div>
+
+      <!-- Code couleur -->
+      <div class="calc" id="col">
+        <h3>Code couleur des résistances</h3>
+        <p class="help">Choisis les quatre bandes, de gauche à droite, pour lire la valeur.</p>
+        <svg class="resistor" viewBox="0 0 260 70" role="img" aria-label="Résistance à quatre bandes de couleur">
+          <path d="M0 35 H40 M220 35 H260" stroke="#9AA6B8" stroke-width="5" stroke-linecap="round"/>
+          <rect x="36" y="10" width="188" height="50" rx="22" fill="#E7D3AE" stroke="#B9A37A" stroke-width="2"/>
+          <rect id="b1" x="76" y="10" width="14" height="50" fill="#FCD116"/>
+          <rect id="b2" x="104" y="10" width="14" height="50" fill="#7C3AED"/>
+          <rect id="b3" x="132" y="10" width="14" height="50" fill="#D62828"/>
+          <rect id="b4" x="184" y="10" width="14" height="50" fill="#D4A017"/>
+        </svg>
+        <div class="row2">
+          <div class="cf"><label for="c1">1re bande</label><select id="c1"></select></div>
+          <div class="cf"><label for="c2">2e bande</label><select id="c2"></select></div>
+          <div class="cf"><label for="cm">3e bande (multiplicateur)</label><select id="cm"></select></div>
+          <div class="cf"><label for="ct">4e bande (tolérance)</label><select id="ct"></select></div>
+        </div>
+        <div class="res-box" id="c-msg" aria-live="polite"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="securite">
+    <div class="safe">
+      <h2>La sécurité d’abord</h2>
+      <ul>
+        <li>Le courant du secteur (220 V en Guinée) peut tuer. Ne touche jamais à une installation sous tension sans formation.</li>
+        <li>Avant toute intervention : coupe l’alimentation, puis vérifie l’absence de tension avec un testeur adapté.</li>
+        <li>Pour apprendre, commence avec des montages en 5 V ou 3,3 V alimentés par un bloc d’alimentation du commerce, pas par un montage secteur fait maison.</li>
+        <li>Les batteries au lithium peuvent chauffer ou s’enflammer en cas de court-circuit ou de mauvaise charge : utilise des modules de protection et un chargeur adapté.</li>
+        <li>Pour un tableau électrique, des prises ou un compteur dans un bâtiment, fais appel à un électricien qualifié.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="voir-aussi">
+    <div class="sec-head"><h2>Voir aussi sur le site</h2></div>
+    <div class="pills">
+      <a href="maintenance-electronique.html">Maintenance électronique</a>
+      <a href="fiches-techniques.html">Fiches techniques</a>
+      <a href="glossaire-technique.html">Glossaire technique</a>
+      <a href="simulateurs.html">Simulateurs</a>
+      <a href="energie.html">Énergie et solaire</a>
+      <a href="technologie.html">Technologie</a>
+      <a href="veille-technologique.html">Veille technologique</a>
+      <a href="informatique.html">Informatique</a>
+      <a href="metiers.html">Métiers</a>
+    </div>
+  </section>
+
+  <p class="note">
+    Les liens de cette page mènent vers des sites externes, qui ne dépendent pas du Club Réussir Ensemble : leur contenu, leurs conditions et leurs prix peuvent changer (certains services proposent une offre gratuite et des options payantes). Pour les boutiques en ligne, pense aux frais de livraison et de douane vers la Guinée. Si un lien ne s’ouvre plus, signale-le au club depuis la page Contact. Les calculateurs donnent des valeurs indicatives : vérifie toujours les caractéristiques de tes composants avant de monter un circuit.
+  </p>
+</main>
+
+<footer>
+  <div class="wrap">Club Réussir Ensemble · <a href="index.html">Retour à l’accueil</a></div>
+</footer>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+/* ---------- Thème ---------- */
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme", t);
+  $("#themeBtn").textContent = t === "dark" ? "☀️" : "🌙";
+  try{ localStorage.setItem("cre-theme", t); }catch(e){}
+}
+$("#themeBtn").onclick = () => applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+applyTheme((() => { try{ return localStorage.getItem("cre-theme") || "light"; }catch(e){ return "light"; } })());
+
+/* ---------- Filtre des ressources ---------- */
+const norm = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+let curCat = "all";
+function filtre(){
+  const q = norm($("#q").value);
+  const mots = q ? q.split(/\s+/) : [];
+  let n = 0;
+  $$("#grid .res").forEach(a => {
+    const okCat = curCat === "all" || a.dataset.cat === curCat;
+    const okQ = mots.every(m => a.dataset.q.includes(m));
+    const show = okCat && okQ;
+    a.hidden = !show;
+    if(show) n++;
+  });
+  $("#count").textContent = n + (n > 1 ? " ressources" : " ressource");
+  $("#empty").hidden = n > 0;
+}
+$("#q").addEventListener("input", filtre);
+$$("#tabs .tab").forEach(b => b.addEventListener("click", () => {
+  curCat = b.dataset.cat;
+  $$("#tabs .tab").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  filtre();
+}));
+
+/* ---------- Outils de calcul ---------- */
+function parse(v){
+  let s = String(v == null ? "" : v).trim().replace(/[\s\u00a0\u202f]/g,"").replace(",",".");
+  if(!s) return NaN;
+  let m = 1;
+  if(/[kK]$/.test(s)){ m = 1e3; s = s.slice(0,-1); }
+  else if(/M$/.test(s)){ m = 1e6; s = s.slice(0,-1); }
+  if(!/^(\d+\.?\d*|\.\d+)$/.test(s)) return NaN;
+  return parseFloat(s) * m;
+}
+function fmt(x){
+  if(!isFinite(x)) return "";
+  return String(Number(x.toPrecision(4))).replace(".",",");
+}
+function fmtR(r){
+  if(r >= 1e6) return fmt(r/1e6) + " MΩ";
+  if(r >= 1e3) return fmt(r/1e3) + " kΩ";
+  return fmt(r) + " Ω";
+}
+
+/* Loi d'Ohm : on garde les deux champs saisis le plus récemment */
+(function(){
+  const box = $("#ohm"), msg = $("#o-msg");
+  const F = {}; $$("input[data-k]", box).forEach(i => F[i.dataset.k] = i);
+  const DEF = "Formules : U = R × I et P = U × I.";
+  let recent = [];
+  function clearCalc(except){
+    for(const k in F){
+      if(F[k] !== except && F[k].dataset.calc){ F[k].value = ""; delete F[k].dataset.calc; F[k].classList.remove("out"); }
+    }
+  }
+  function onInput(e){
+    const f = e.target, k = f.dataset.k;
+    delete f.dataset.calc; f.classList.remove("out");
+    recent = [k].concat(recent.filter(x => x !== k));
+    clearCalc(f);
+    msg.classList.remove("err");
+    const bad = Object.keys(F).filter(x => F[x].value.trim() && isNaN(parse(F[x].value)));
+    if(bad.length){ msg.classList.add("err"); msg.textContent = "Valeur non reconnue : écris un nombre, par exemple 12 ou 4,7k."; return; }
+    const ok = recent.filter(x => { const v = parse(F[x].value); return !isNaN(v) && v > 0; }).slice(0,2);
+    if(ok.length < 2){ msg.textContent = DEF; return; }
+    const v = {}; ok.forEach(x => v[x] = parse(F[x].value));
+    const has = (a,b) => (a in v) && (b in v);
+    let U=v.U, I=v.I, R=v.R, P=v.P;
+    if(has("U","I")){ R=U/I; P=U*I; }
+    else if(has("U","R")){ I=U/R; P=U*U/R; }
+    else if(has("I","R")){ U=I*R; P=I*I*R; }
+    else if(has("U","P")){ I=P/U; R=U*U/P; }
+    else if(has("I","P")){ U=P/I; R=P/(I*I); }
+    else if(has("R","P")){ U=Math.sqrt(P*R); I=Math.sqrt(P/R); }
+    const res = {U,I,R,P};
+    for(const x in F){
+      if(!(x in v)){ F[x].value = fmt(res[x]); F[x].dataset.calc = "1"; F[x].classList.add("out"); }
+    }
+    msg.innerHTML = "U = <b>" + fmt(U) + " V</b> · I = <b>" + fmt(I) + " A</b> (" + fmt(I*1000) + " mA) · R = <b>" + fmtR(R) + "</b> · P = <b>" + fmt(P) + " W</b>";
+  }
+  $$("input[data-k]", box).forEach(i => i.addEventListener("input", onInput));
+  $("#o-reset").onclick = () => {
+    for(const k in F){ F[k].value = ""; delete F[k].dataset.calc; F[k].classList.remove("out"); }
+    recent = []; msg.classList.remove("err"); msg.textContent = DEF;
+  };
+})();
+
+/* Résistance de LED + valeur normalisée E12 */
+(function(){
+  const E12 = [1,1.2,1.5,1.8,2.2,2.7,3.3,3.9,4.7,5.6,6.8,8.2];
+  function nextE12(r){
+    const d = Math.pow(10, Math.floor(Math.log10(r))), m = r/d;
+    for(const e of E12){ if(e >= m - 1e-9) return e*d; }
+    return 10*d;
+  }
+  const msg = $("#l-msg");
+  function calc(){
+    msg.classList.remove("err");
+    const vs = parse($("#l-vs").value), vf = parse($("#l-vf").value), i = parse($("#l-if").value);
+    if([vs,vf,i].some(isNaN) || i <= 0){ msg.classList.add("err"); msg.textContent = "Entre trois nombres valides (le courant doit être supérieur à 0)."; return; }
+    if(vs <= vf){ msg.classList.add("err"); msg.textContent = "L’alimentation doit être supérieure à la tension de la LED."; return; }
+    const A = i/1000, r = (vs - vf)/A, rs = nextE12(r);
+    const iReel = (vs - vf)/rs, p = (vs - vf)*(vs - vf)/rs;
+    const watt = p < 0.25 ? "une résistance 1/4 W suffit" : "prévois une résistance de plus forte puissance";
+    msg.innerHTML = "Valeur calculée : <b>" + fmtR(r) + "</b><br>Valeur normalisée (série E12) : <b>" + fmtR(rs) + "</b>, soit un courant d’environ " + fmt(iReel*1000) + " mA.<br>Puissance dissipée : " + fmt(p*1000) + " mW, " + watt + ".";
+  }
+  ["#l-vs","#l-vf","#l-if"].forEach(s => $(s).addEventListener("input", calc));
+  calc();
+})();
+
+/* Diviseur de tension */
+(function(){
+  const msg = $("#d-msg");
+  function calc(){
+    msg.classList.remove("err");
+    const vin = parse($("#d-vin").value), r1 = parse($("#d-r1").value), r2 = parse($("#d-r2").value);
+    if([vin,r1,r2].some(isNaN) || r1 <= 0 || r2 <= 0){ msg.classList.add("err"); msg.textContent = "Entre une tension et deux résistances supérieures à 0 (par exemple 10k)."; return; }
+    const vout = vin*r2/(r1+r2), i = vin/(r1+r2);
+    msg.innerHTML = "Sortie : <b>" + fmt(vout) + " V</b> (" + fmt(r2/(r1+r2)*100) + " % de l’entrée)<br>Courant dans le pont : " + fmt(i*1000) + " mA.";
+  }
+  ["#d-vin","#d-r1","#d-r2"].forEach(s => $(s).addEventListener("input", calc));
+  calc();
+})();
+
+/* Code couleur 4 bandes */
+(function(){
+  const COL = [
+    {n:"noir",   h:"#111111", d:0, m:1,    mt:"× 1"},
+    {n:"marron", h:"#8B4513", d:1, m:10,   mt:"× 10", t:1},
+    {n:"rouge",  h:"#D62828", d:2, m:100,  mt:"× 100", t:2},
+    {n:"orange", h:"#F77F00", d:3, m:1e3,  mt:"× 1 k"},
+    {n:"jaune",  h:"#FCD116", d:4, m:1e4,  mt:"× 10 k"},
+    {n:"vert",   h:"#2E9E4F", d:5, m:1e5,  mt:"× 100 k"},
+    {n:"bleu",   h:"#2563EB", d:6, m:1e6,  mt:"× 1 M"},
+    {n:"violet", h:"#7C3AED", d:7, m:1e7,  mt:"× 10 M"},
+    {n:"gris",   h:"#8A94A6", d:8},
+    {n:"blanc",  h:"#FFFFFF", d:9}
+  ];
+  const MULT_EXTRA = [{n:"or", h:"#D4A017", m:0.1, mt:"× 0,1"},{n:"argent", h:"#C0C0C0", m:0.01, mt:"× 0,01"}];
+  const TOL = [{n:"marron", h:"#8B4513", t:"± 1 %"},{n:"rouge", h:"#D62828", t:"± 2 %"},{n:"or", h:"#D4A017", t:"± 5 %"},{n:"argent", h:"#C0C0C0", t:"± 10 %"}];
+  const mults = COL.filter(c => c.m).concat(MULT_EXTRA);
+  const fill = (sel, arr, label, def) => {
+    $(sel).innerHTML = arr.map((c,i) => "<option value=\"" + i + "\"" + (i===def?" selected":"") + ">" + label(c) + "</option>").join("");
+  };
+  fill("#c1", COL, c => c.n + " (" + c.d + ")", 4);
+  fill("#c2", COL, c => c.n + " (" + c.d + ")", 7);
+  fill("#cm", mults, c => c.n + " (" + c.mt + ")", 2);
+  fill("#ct", TOL, c => c.n + " (" + c.t + ")", 2);
+  function calc(){
+    const a = COL[+$("#c1").value], b = COL[+$("#c2").value], m = mults[+$("#cm").value], t = TOL[+$("#ct").value];
+    $("#b1").setAttribute("fill", a.h); $("#b2").setAttribute("fill", b.h);
+    $("#b3").setAttribute("fill", m.h); $("#b4").setAttribute("fill", t.h);
+    const ohms = (a.d*10 + b.d) * m.m;
+    $("#c-msg").innerHTML = "Valeur : <b>" + fmtR(ohms) + "</b> " + t.t;
+  }
+  ["#c1","#c2","#cm","#ct"].forEach(s => $(s).addEventListener("change", calc));
+  calc();
+})();
+</script>
+</body>
+</html>
