@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La Guinée en chiffres — Club Réussir Ensemble</title>
+<meta name="description" content="Population, économie, santé, éducation, électricité et internet : les chiffres de la Guinée, comparés à ses voisins, d’après la Banque mondiale.">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0A2A57; --navy-deep:#071A38; --blue:#2563EB; --gold:#FAB202;
+  --gn-green:#009460; --gn-yellow:#FCD116; --gn-red:#CE1126;
+  --ink:#0F172A; --ink2:#5B6B85; --paper:#F5F8FC; --paper2:#EEF2F8; --line:#E3E9F2; --card:#FFFFFF;
+  --good:#117A3A; --bad:#C0070C;
+  --radius:16px; --shadow:0 6px 24px rgba(10,42,87,.08); --ease:cubic-bezier(.4,0,.2,1);
+}
+:root[data-theme="dark"]{
+  --ink:#EAF0FA; --ink2:#9FB0C8; --paper:#0B1626; --paper2:#111F35; --line:#22314A; --card:#101E33;
+  --navy-deep:#050D1A; --good:#4ADE80; --bad:#FF6B6B; --shadow:0 6px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:'Work Sans',sans-serif;background:var(--paper);color:var(--ink);transition:background .25s var(--ease),color .25s var(--ease)}
+h1,h2,h3{font-family:'Poppins',sans-serif;color:var(--ink);line-height:1.15;margin:0}
+a{color:var(--blue)}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 18px}
+
+/* En-tête */
+.site-nav{position:sticky;top:0;z-index:50;background:var(--navy-deep)}
+.nav-row{display:flex;align-items:center;gap:14px;min-height:62px}
+.brand{color:#fff;font-family:'Poppins',sans-serif;font-weight:800;font-size:18px;line-height:1.15;flex:1;min-width:0}
+.brand span{display:block;color:var(--gold);font-size:11px;font-weight:700;letter-spacing:.06em}
+.nav-link,.theme-btn{color:#fff;background:rgba(255,255,255,.1);border:0;border-radius:999px;padding:9px 14px;font:600 14px 'Work Sans',sans-serif;text-decoration:none;cursor:pointer}
+.nav-link:hover,.theme-btn:hover{background:rgba(255,255,255,.2)}
+
+/* Haut de page */
+.hero{background:linear-gradient(180deg,var(--navy) 0%,var(--navy-deep) 100%);padding:34px 0 92px;color:#fff;position:relative}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background:linear-gradient(90deg,var(--gn-red) 0 33.3%,var(--gn-yellow) 33.3% 66.6%,var(--gn-green) 66.6%)}
+.hero h1{color:#fff;font-size:clamp(26px,5vw,40px);font-weight:800}
+.hero p{margin:12px 0 0;max-width:60ch;color:#C9D6EC;font-size:16px;line-height:1.55}
+
+/* Comparateur */
+.comp{margin-top:-62px;background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:20px}
+.comp-top{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end;justify-content:space-between}
+.field{flex:1 1 280px;min-width:0}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+.field select{width:100%;height:46px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);font:500 15px 'Work Sans',sans-serif;padding:0 12px}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper)}
+.seg button{border:0;background:transparent;color:var(--ink2);font:600 14px 'Work Sans',sans-serif;padding:0 16px;height:43px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--navy);color:#fff}
+:root[data-theme="dark"] .seg button[aria-pressed="true"]{background:var(--blue)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:7px 12px;font:600 13px 'Work Sans',sans-serif;cursor:pointer}
+.chip i{width:11px;height:11px;border-radius:50%;display:inline-block}
+.chip[aria-pressed="false"]{opacity:.55}
+.chip[aria-pressed="false"] i{background:transparent!important;box-shadow:inset 0 0 0 2px var(--ink2)}
+.chip[aria-pressed="true"]{border-color:var(--ink2)}
+.chart-title{margin:14px 0 6px;font:700 17px 'Poppins',sans-serif}
+.chart-sub{margin:0 0 6px;font-size:13.5px;color:var(--ink2);line-height:1.5}
+#chart{position:relative;min-height:200px}
+#chart svg{display:block;width:100%;height:auto;touch-action:pan-y}
+.ax text{fill:var(--ink2);font:12px 'Work Sans',sans-serif}
+.gl{stroke:var(--line);stroke-width:1}
+.cross{stroke:var(--ink2);stroke-width:1;stroke-dasharray:3 3}
+.tip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:12px;padding:9px 11px;font-size:13px;line-height:1.5;min-width:150px;z-index:3}
+.tip b{display:block;font-family:'Poppins',sans-serif;margin-bottom:2px}
+.tip i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.bars{display:grid;gap:10px;padding:6px 0}
+.brow{display:grid;grid-template-columns:minmax(96px,150px) 1fr minmax(84px,auto);gap:10px;align-items:center;font-size:14px}
+.bname{display:flex;gap:7px;align-items:center;font-weight:600;min-width:0}
+.bname i{width:10px;height:10px;border-radius:50%;flex:none}
+.btrack{height:20px;border-radius:10px;background:var(--paper2);overflow:hidden}
+.bfill{height:100%;border-radius:10px;min-width:3px}
+.bfill.neg{opacity:.55}
+.bval{font-weight:700;text-align:right;white-space:nowrap}
+.yr{display:block;font-weight:500;font-size:11.5px;color:var(--ink2)}
+.tools{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;margin-top:10px;font-size:13px;color:var(--ink2)}
+.btn{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 14px;font:600 13px 'Work Sans',sans-serif;cursor:pointer}
+.btn:hover{border-color:var(--blue);color:var(--blue)}
+
+/* Sections */
+section{padding:38px 0 6px}
+.sec-head{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+.sec-head h2{font-size:clamp(21px,3.6vw,28px);font-weight:800}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;margin-bottom:6px;scrollbar-width:thin}
+.tab{flex:none;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:9px 15px;font:600 14px 'Work Sans',sans-serif;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+:root[data-theme="dark"] .tab[aria-selected="true"]{background:var(--blue);border-color:var(--blue)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:5px;min-width:0;cursor:pointer;text-align:left}
+.card:hover{border-color:var(--blue)}
+.card .nm{font:700 15px 'Poppins',sans-serif;line-height:1.25}
+.card .val{font:800 30px 'Poppins',sans-serif;margin-top:4px;line-height:1.1}
+.card .unit{font-size:13px;color:var(--ink2)}
+.card .foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px;min-height:28px}
+.card .hint{font-size:12px;color:var(--ink2);margin-top:2px}
+.chg{font:700 13px 'Work Sans',sans-serif}
+.chg.good{color:var(--good)} .chg.bad{color:var(--bad)} .chg.neu,.chg.none{color:var(--ink2);font-weight:500}
+.spark{width:84px;height:26px;color:var(--blue);flex:none}
+.skel{color:transparent;background:var(--paper2);border-radius:8px;display:inline-block;min-width:90px}
+.empty{padding:22px;border:1.5px dashed var(--line);border-radius:var(--radius);color:var(--ink2);text-align:center;line-height:1.55}
+
+/* Fiche d'identité */
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.fact{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.fact dt{font-size:13px;color:var(--ink2);margin-bottom:3px}
+.fact dd{margin:0;font-weight:600;line-height:1.45}
+.note{margin:30px 0 0;padding:16px 18px;border-radius:14px;background:var(--paper2);font-size:13.5px;line-height:1.6;color:var(--ink2)}
+footer{margin-top:34px;background:var(--navy-deep);color:#C9D6EC;padding:22px 0;font-size:14px}
+footer a{color:var(--gold)}
+
+@media (max-width:640px){
+  .brand{font-size:15px}
+  .brow{grid-template-columns:104px 1fr 78px;gap:8px;font-size:13px}
+  .seg{width:100%}.seg button{flex:1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<header class="site-nav">
+  <div class="wrap nav-row">
+    <div class="brand">Club Réussir Ensemble<span>GUINÉE · FONDÉ À MAMOU</span></div>
+    <a class="nav-link" href="index.html">🏠 Accueil</a>
+    <button type="button" class="theme-btn" id="themeBtn" aria-label="Changer de thème">🌙</button>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <h1>La Guinée en chiffres</h1>
+    <p>Population, économie, santé, éducation, électricité, internet : les chiffres officiels de la Guinée, comparés à ceux de ses voisins, de l’Afrique subsaharienne et du monde.</p>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <!-- Comparateur -->
+  <div class="comp" id="comparateur">
+    <div class="comp-top">
+      <div class="field">
+        <label for="indSel">Indicateur à comparer</label>
+        <select id="indSel"></select>
+      </div>
+      <div class="seg" role="group" aria-label="Type d’affichage">
+        <button type="button" id="vLine" aria-pressed="true">Évolution</button>
+        <button type="button" id="vBar" aria-pressed="false">Dernière valeur</button>
+      </div>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Pays à comparer"></div>
+    <h2 class="chart-title" id="chTitle"></h2>
+    <p class="chart-sub" id="chSub"></p>
+    <div id="chart" aria-live="polite"></div>
+    <div class="tools">
+      <span id="chSrc">Source : Banque mondiale</span>
+      <button type="button" class="btn" id="csvBtn">⬇️ Télécharger les données (CSV)</button>
+    </div>
+  </div>
+
+  <!-- Indicateurs par thème -->
+  <section id="themes">
+    <div class="sec-head"><h2>Les indicateurs de la Guinée</h2></div>
+    <div class="tabs" id="tabs" role="tablist" aria-label="Thèmes"></div>
+    <div class="grid" id="cards"></div>
+  </section>
+
+  <!-- Fiche d'identité -->
+  <section id="fiche">
+    <div class="sec-head"><h2>Fiche d’identité</h2></div>
+    <dl class="facts">
+      <div class="fact"><dt>Capitale</dt><dd>Conakry</dd></div>
+      <div class="fact"><dt>Superficie</dt><dd>245 857 km²</dd></div>
+      <div class="fact"><dt>Indépendance</dt><dd>2 octobre 1958</dd></div>
+      <div class="fact"><dt>Langue officielle</dt><dd>Le français</dd></div>
+      <div class="fact"><dt>Monnaie</dt><dd>Le franc guinéen (GNF)</dd></div>
+      <div class="fact"><dt>Régions naturelles</dt><dd>Basse-Guinée, Moyenne-Guinée, Haute-Guinée, Guinée forestière</dd></div>
+      <div class="fact"><dt>Pays voisins</dt><dd>Sénégal, Guinée-Bissau, Mali, Côte d’Ivoire, Libéria, Sierra Leone</dd></div>
+      <div class="fact"><dt>Point culminant</dt><dd>Le mont Nimba (1 752 m)</dd></div>
+      <div class="fact"><dt>Château d’eau de l’Afrique de l’Ouest</dt><dd>Le Niger, le Sénégal et la Gambie y prennent leur source</dd></div>
+    </dl>
+  </section>
+
+  <p class="note">
+    Source des indicateurs : Banque mondiale (World Development Indicators). Les valeurs affichées sont les plus récentes disponibles : selon l’indicateur, elles peuvent dater de 1 à 3 ans, et certaines séries comportent des années manquantes. Les estimations peuvent être révisées par la Banque mondiale. Appuie sur une carte pour la comparer à d’autres pays.
+  </p>
+</main>
+
+<footer>
+  <div class="wrap">Club Réussir Ensemble · <a href="index.html">Retour à l’accueil</a></div>
+</footer>
+
+<script>
+/* ---------- Données de référence ---------- */
+const THEMES = [
+  { id:"pop",   nom:"Population",          ico:"👥" },
+  { id:"eco",   nom:"Économie",            ico:"💰" },
+  { id:"sante", nom:"Santé",               ico:"🩺" },
+  { id:"edu",   nom:"Éducation",           ico:"🎓" },
+  { id:"num",   nom:"Énergie & numérique", ico:"⚡" },
+  { id:"terr",  nom:"Territoire",          ico:"🌿" }
+];
+const P = "\u202f%";   /* espace fine insécable + % */
+/* code, thème, nom, échelle, décimales, unité (carte), suffixe court, "mieux" si hausse/baisse, type de variation, unité de variation, description */
+const I = (code,theme,nom,scale,dec,unit,short,better,delta,du,desc) => ({code,theme,nom,scale,dec,unit,short,better,delta,du,desc});
+const IND = [
+  I("SP.POP.TOTL","pop","Population totale","M",1,"millions d’habitants","\u00a0M",null,"rel",null,"Nombre d’habitants du pays."),
+  I("SP.POP.GROW","pop","Croissance démographique","1",1,"% par an",P,null,"pts","pts","Augmentation annuelle de la population."),
+  I("SP.URB.TOTL.IN.ZS","pop","Population urbaine","1",1,"% de la population",P,null,"pts","pts","Part des habitants qui vivent en ville."),
+  I("SP.POP.0014.TO.ZS","pop","Moins de 15 ans","1",1,"% de la population",P,null,"pts","pts","Part des enfants et adolescents dans la population."),
+
+  I("NY.GDP.MKTP.CD","eco","PIB (richesse produite)","Md",1,"milliards de dollars","\u00a0Md\u00a0$","up","rel",null,"Valeur de tout ce que le pays produit en un an, en dollars courants."),
+  I("NY.GDP.PCAP.CD","eco","PIB par habitant","1",0,"dollars par habitant","\u00a0$","up","rel",null,"Richesse produite par habitant, en moyenne."),
+  I("NY.GDP.MKTP.KD.ZG","eco","Croissance économique","1",1,"% par an",P,null,"pts","pts","Évolution annuelle du PIB, hors inflation."),
+  I("FP.CPI.TOTL.ZG","eco","Inflation","1",1,"% par an",P,"down","pts","pts","Hausse annuelle des prix à la consommation."),
+  I("SL.UEM.TOTL.ZS","eco","Chômage","1",1,"% de la population active",P,"down","pts","pts","Part des actifs sans emploi (estimation de l’OIT)."),
+
+  I("SP.DYN.LE00.IN","sante","Espérance de vie","1",1,"ans","\u00a0ans","up","pts","ans","Durée de vie moyenne à la naissance."),
+  I("SP.DYN.IMRT.IN","sante","Mortalité infantile","1",1,"décès pour 1 000 naissances","\u00a0‰","down","pts","‰","Enfants qui meurent avant l’âge d’un an."),
+  I("SH.H2O.BASW.ZS","sante","Accès à l’eau potable","1",1,"% de la population",P,"up","pts","pts","Part des habitants ayant accès à un service d’eau de base."),
+  I("SH.XPD.CHEX.GD.ZS","sante","Dépenses de santé","1",1,"% du PIB",P,null,"pts","pts","Part de la richesse nationale consacrée à la santé."),
+
+  I("SE.ADT.LITR.ZS","edu","Alphabétisation des adultes","1",1,"% des 15 ans et plus",P,"up","pts","pts","Part des adultes qui savent lire et écrire."),
+  I("SE.PRM.ENRR","edu","Scolarisation au primaire","1",1,"% (taux brut)",P,"up","pts","pts","Élèves inscrits au primaire, tous âges confondus, rapportés à la population en âge d’y être. Peut dépasser 100 %."),
+  I("SE.SEC.ENRR","edu","Scolarisation au secondaire","1",1,"% (taux brut)",P,"up","pts","pts","Même calcul pour le secondaire."),
+
+  I("EG.ELC.ACCS.ZS","num","Accès à l’électricité","1",1,"% de la population",P,"up","pts","pts","Part des habitants raccordés à l’électricité."),
+  I("IT.NET.USER.ZS","num","Utilisateurs d’internet","1",1,"% de la population",P,"up","pts","pts","Part de la population qui utilise internet."),
+  I("IT.CEL.SETS.P2","num","Abonnements mobiles","1",1,"pour 100 habitants","\u00a0/100","up","pts","pts","Lignes mobiles pour 100 habitants (une personne peut en avoir plusieurs)."),
+
+  I("AG.LND.AGRI.ZS","terr","Terres agricoles","1",1,"% du territoire",P,null,"pts","pts","Part du territoire utilisée pour l’agriculture et l’élevage."),
+  I("AG.LND.FRST.ZS","terr","Forêts","1",1,"% du territoire",P,"up","pts","pts","Part du territoire couverte par des forêts."),
+  I("EN.ATM.CO2E.PC","terr","Émissions de CO₂","1",2,"tonnes par habitant","\u00a0t",null,"pts","t","Émissions de dioxyde de carbone par habitant.")
+];
+const COUNTRIES = [
+  { iso:"GIN", nom:"Guinée", color:"#009460", w:3.4 },
+  { iso:"SEN", nom:"Sénégal", color:"#2563EB", w:2.2 },
+  { iso:"MLI", nom:"Mali", color:"#F5820A", w:2.2 },
+  { iso:"CIV", nom:"Côte d’Ivoire", color:"#8B5CF6", w:2.2 },
+  { iso:"SLE", nom:"Sierra Leone", color:"#D9060C", w:2.2 },
+  { iso:"LBR", nom:"Libéria", color:"#B45309", w:2.2 },
+  { iso:"GNB", nom:"Guinée-Bissau", color:"#DB2777", w:2.2 },
+  { iso:"SSF", nom:"Afrique subsaharienne", color:"#0F766E", w:2.2, dash:"6 4" },
+  { iso:"WLD", nom:"Monde", color:"#6B7280", w:2.2, dash:"6 4" }
+];
+const ID_FIX = { GN:"GIN", SN:"SEN", ML:"MLI", CI:"CIV", SL:"SLE", LR:"LBR", GW:"GNB", ZG:"SSF", "1W":"WLD" };
+const ALL_ISO = COUNTRIES.map(c => c.iso);
+
+/* ---------- Utilitaires ---------- */
+const $ = s => document.querySelector(s);
+const LS = {
+  get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+const nf = (n,d=0) => new Intl.NumberFormat("fr-FR",{minimumFractionDigits:0,maximumFractionDigits:d}).format(n);
+const DIV = { M:1e6, Md:1e9, "1":1 };
+const sc = (ind,v) => v / DIV[ind.scale];
+const lab = (ind,v) => nf(sc(ind,v), ind.dec) + ind.short;
+const indOf = code => IND.find(i => i.code === code);
+const sign = n => n < 0 ? "−" : "+";
+
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme", t);
+  $("#themeBtn").textContent = t === "dark" ? "☀️" : "🌙";
+  try{ localStorage.setItem("cre-theme", t); }catch(e){}
+  if(S.ready) draw();
+}
+$("#themeBtn").onclick = () => applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+
+/* ---------- État et cache ---------- */
+const CK = "cre-gn-v1", TTL = 7*24*3600*1000;
+const S = { data:{}, ind:"SP.POP.TOTL", view:"line", theme:"pop", isos:new Set(["GIN","SEN","MLI","CIV","SLE"]), t:Date.now(), ready:false };
+(function loadCache(){
+  const c = LS.get(CK);
+  if(c && c.data && Date.now() - c.t < TTL){ S.data = c.data; S.t = c.t; }
+})();
+const saveCache = () => LS.set(CK, { t:S.t, data:S.data });
+
+/* ---------- API Banque mondiale ---------- */
+async function wb(code, isos){
+  const url = `https://api.worldbank.org/v2/country/${isos.join(";")}/indicator/${code}?format=json&per_page=2000&date=1990:${new Date().getFullYear()}`;
+  const r = await fetch(url);
+  if(!r.ok) throw new Error("http " + r.status);
+  const j = await r.json();
+  const rows = Array.isArray(j) && Array.isArray(j[1]) ? j[1] : [];
+  const out = {}; isos.forEach(i => out[i] = []);
+  rows.forEach(x => {
+    if(x.value === null || x.value === undefined) return;
+    const k = x.countryiso3code || ID_FIX[x.country && x.country.id];
+    if(out[k]) out[k].push([+x.date, +x.value]);
+  });
+  Object.values(out).forEach(a => a.sort((p,q) => p[0] - q[0]));
+  return out;
+}
+const pend = {};
+function ensure(code, isos){
+  const have = S.data[code] || {};
+  const miss = isos.filter(i => !have[i]);
+  if(!miss.length) return Promise.resolve();
+  const key = code + "|" + miss.join();
+  if(!pend[key]){
+    pend[key] = wb(code, miss).then(o => { S.data[code] = Object.assign(S.data[code] || {}, o); saveCache(); })
+                              .finally(() => { delete pend[key]; });
+  }
+  return pend[key];
+}
+
+/* ---------- Cartes par thème ---------- */
+function spark(a){
+  if(a.length < 3) return "";
+  const min = Math.min(...a), max = Math.max(...a), w = 84, h = 26;
+  const pts = a.map((v,i) => `${(i/(a.length-1)*w).toFixed(1)},${(max===min ? h/2 : h-2-(v-min)/(max-min)*(h-4)).toFixed(1)}`).join(" ");
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+function baseline(arr){
+  const last = arr[arr.length-1];
+  const old = arr.filter(p => p[0] <= last[0] - 10);
+  if(old.length) return old[old.length-1];
+  const first = arr[0];
+  return last[0] - first[0] >= 5 ? first : null;
+}
+function changeHTML(ind, arr){
+  const last = arr[arr.length-1], base = baseline(arr);
+  if(!base) return '<span class="chg none">Évolution indisponible</span>';
+  let d, txt;
+  if(ind.delta === "rel"){
+    d = (last[1]/base[1] - 1) * 100;
+    txt = `${sign(d)}${nf(Math.abs(d),1)}\u202f% depuis ${base[0]}`;
+  }else{
+    d = last[1] - base[1];
+    txt = `${sign(d)}${nf(Math.abs(d), ind.dec)}\u00a0${ind.du} depuis ${base[0]}`;
+  }
+  if(Math.abs(d) < 0.005) return `<span class="chg neu">Stable depuis ${base[0]}</span>`;
+  const arrow = d > 0 ? "▲" : "▼";
+  let cls = "neu";
+  if(ind.better === "up") cls = d > 0 ? "good" : "bad";
+  if(ind.better === "down") cls = d < 0 ? "good" : "bad";
+  return `<span class="chg ${cls}">${arrow} ${txt}</span>`;
+}
+function cardShell(ind){
+  return `<article class="card" role="button" tabindex="0" data-code="${ind.code}" aria-label="${ind.nom} : comparer avec d’autres pays">
+    <div class="nm">${ind.nom}</div>
+    <div class="val"><span class="skel">0000</span></div>
+    <div class="unit">Chargement…</div>
+  </article>`;
+}
+function fillCard(ind){
+  const el = document.querySelector(`.card[data-code="${ind.code}"]`);
+  if(!el) return;
+  const arr = (S.data[ind.code] || {}).GIN;
+  if(!arr || !arr.length){
+    el.innerHTML = `<div class="nm">${ind.nom}</div><div class="val">—</div><div class="unit">${arr ? "Donnée non disponible pour la Guinée" : "Chargement impossible"}</div><div class="hint">Appuie pour comparer avec d’autres pays</div>`;
+    return;
+  }
+  const last = arr[arr.length-1];
+  el.innerHTML = `<div class="nm">${ind.nom}</div>
+    <div class="val">${nf(sc(ind,last[1]), ind.dec)}</div>
+    <div class="unit">${ind.unit} · ${last[0]}</div>
+    <div class="foot">${changeHTML(ind, arr)}${spark(arr.slice(-25).map(p => p[1]))}</div>
+    <div class="hint">Appuie pour comparer avec d’autres pays</div>`;
+}
+function showTheme(id){
+  S.theme = id;
+  document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.t === id ? "true" : "false"));
+  const list = IND.filter(i => i.theme === id);
+  $("#cards").innerHTML = list.map(cardShell).join("");
+  list.forEach(ind => ensure(ind.code, ["GIN"]).catch(() => {}).then(() => fillCard(ind)));
+}
+$("#tabs").innerHTML = THEMES.map(t => `<button type="button" class="tab" role="tab" data-t="${t.id}" aria-selected="false">${t.ico} ${t.nom}</button>`).join("");
+$("#tabs").addEventListener("click", e => { const b = e.target.closest(".tab"); if(b) showTheme(b.dataset.t); });
+function pickCard(e){
+  const c = e.target.closest(".card"); if(!c) return;
+  if(e.type === "keydown" && e.key !== "Enter" && e.key !== " ") return;
+  e.preventDefault();
+  S.ind = c.dataset.code; $("#indSel").value = S.ind; draw();
+  $("#comparateur").scrollIntoView({ behavior:"smooth", block:"start" });
+}
+$("#cards").addEventListener("click", pickCard);
+$("#cards").addEventListener("keydown", pickCard);
+
+/* ---------- Comparateur ---------- */
+function niceStep(r){
+  const p = Math.pow(10, Math.floor(Math.log10(r))), f = r / p;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p;
+}
+function seriesFor(ind){
+  const d = S.data[ind.code] || {};
+  return COUNTRIES.filter(c => S.isos.has(c.iso))
+    .map(c => ({ ...c, pts:(d[c.iso] || []).map(p => [p[0], sc(ind,p[1])]) }))
+    .filter(s => s.pts.length);
+}
+function drawLines(series, ind, box){
+  const W = Math.max(280, Math.floor(box.clientWidth)), H = W < 520 ? 290 : 350;
+  const m = { l:46, r:14, t:14, b:30 };
+  const xs = series.flatMap(s => s.pts.map(p => p[0])), ys = series.flatMap(s => s.pts.map(p => p[1]));
+  let x0 = Math.min(...xs), x1 = Math.max(...xs); if(x0 === x1) x0 -= 1;
+  let lo = Math.min(...ys), hi = Math.max(...ys);
+  if(lo >= 0 && lo < hi * 0.5) lo = 0;
+  if(hi === lo) hi = lo + 1;
+  const step = niceStep((hi - lo) / 4);
+  lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  const X = v => m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r);
+  const Y = v => H - m.b - (v - lo) / (hi - lo) * (H - m.t - m.b);
+  const yd = step >= 1 ? 0 : Math.ceil(-Math.log10(step));
+  let g = "";
+  for(let t = lo; t <= hi + step/2; t += step){
+    const v = Math.round(t/step) * step;
+    g += `<line class="gl" x1="${m.l}" x2="${W-m.r}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${m.l-8}" y="${Y(v)+4}" text-anchor="end">${nf(v, yd)}</text>`;
+  }
+  const span = x1 - x0, sx = span > 25 ? 10 : span > 12 ? 5 : span > 6 ? 2 : 1;
+  for(let y = Math.ceil(x0/sx)*sx; y <= x1; y += sx){
+    g += `<text x="${X(y)}" y="${H-8}" text-anchor="middle">${y}</text>`;
+  }
+  let lines = "";
+  series.forEach(s => {
+    const d = s.pts.map((p,i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1)).join(" ");
+    lines += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.w}" stroke-linejoin="round" stroke-linecap="round"${s.dash ? ` stroke-dasharray="${s.dash}"` : ""}/>`;
+    if(s.pts.length <= 15) s.pts.forEach(p => { lines += `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="3.4" fill="${s.color}"/>`; });
+  });
+  box.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${ind.nom}, évolution par pays"><g class="ax">${g}</g>${lines}<line class="cross" id="cross" y1="${m.t}" y2="${H-m.b}" x1="0" x2="0" style="display:none"/><rect id="hit" x="${m.l}" y="${m.t}" width="${W-m.l-m.r}" height="${H-m.t-m.b}" fill="transparent"/></svg><div class="tip" id="tip" hidden></div>`;
+  const years = [...new Set(xs)].sort((a,b) => a - b);
+  const hit = $("#hit"), cross = $("#cross"), tip = $("#tip");
+  const move = e => {
+    const r = box.getBoundingClientRect();
+    const px = e.clientX - r.left;
+    const yr = x0 + (px - m.l) / (W - m.l - m.r) * (x1 - x0);
+    const near = years.reduce((a,b) => Math.abs(b - yr) < Math.abs(a - yr) ? b : a, years[0]);
+    cross.setAttribute("x1", X(near)); cross.setAttribute("x2", X(near)); cross.style.display = "";
+    const rows = series.map(s => { const p = s.pts.find(q => q[0] === near); return `<div><i style="background:${s.color}"></i>${s.nom} : <b style="display:inline;margin:0">${p ? nf(p[1], ind.dec) + ind.short : "—"}</b></div>`; }).join("");
+    tip.innerHTML = `<b>${near}</b>${rows}`; tip.hidden = false;
+    const tw = tip.offsetWidth, left = X(near) + 12 + tw > W ? X(near) - tw - 12 : X(near) + 12;
+    tip.style.left = Math.max(0, left) + "px"; tip.style.top = (m.t + 6) + "px";
+  };
+  const leave = () => { cross.style.display = "none"; tip.hidden = true; };
+  hit.addEventListener("pointermove", move); hit.addEventListener("pointerdown", move); hit.addEventListener("pointerleave", leave);
+}
+function drawBars(series, ind, box){
+  const rows = series.map(s => ({ s, p:s.pts[s.pts.length-1] })).sort((a,b) => b.p[1] - a.p[1]);
+  const max = Math.max(...rows.map(r => Math.abs(r.p[1]))) || 1;
+  box.innerHTML = '<div class="bars">' + rows.map(r => `<div class="brow">
+    <div class="bname"><i style="background:${r.s.color}"></i><span>${r.s.nom}</span></div>
+    <div class="btrack"><div class="bfill${r.p[1] < 0 ? " neg" : ""}" style="width:${(Math.abs(r.p[1])/max*100).toFixed(1)}%;background:${r.s.color}"></div></div>
+    <div class="bval">${nf(r.p[1], ind.dec)}${ind.short}<span class="yr">${r.p[0]}</span></div></div>`).join("") + "</div>";
+}
+function draw(){
+  const ind = indOf(S.ind), box = $("#chart");
+  $("#chTitle").textContent = ind.nom;
+  $("#chSub").textContent = ind.desc + " Unité : " + ind.unit + ".";
+  const series = seriesFor(ind);
+  if(!series.length){
+    box.innerHTML = '<div class="empty">Aucune donnée disponible pour cette sélection. Ajoute d’autres pays ci-dessus.</div>';
+    return;
+  }
+  S.view === "bar" ? drawBars(series, ind, box) : drawLines(series, ind, box);
+}
+async function refresh(){
+  const ind = indOf(S.ind), box = $("#chart");
+  const isos = ALL_ISO.filter(i => S.isos.has(i));
+  const miss = isos.filter(i => !((S.data[ind.code] || {})[i]));
+  if(miss.length) box.innerHTML = '<div class="empty">Chargement des données…</div>';
+  try{
+    await ensure(ind.code, isos);
+    if(S.ind === ind.code) draw();
+  }catch(e){
+    box.innerHTML = '<div class="empty">Impossible de charger les données pour le moment. Vérifie ta connexion, puis <button type="button" class="btn" id="retry">réessayer</button>.</div>';
+    const b = $("#retry"); if(b) b.onclick = refresh;
+  }
+}
+
+/* Contrôles */
+$("#indSel").innerHTML = THEMES.map(t => `<optgroup label="${t.ico} ${t.nom}">` + IND.filter(i => i.theme === t.id).map(i => `<option value="${i.code}">${i.nom}</option>`).join("") + "</optgroup>").join("");
+$("#indSel").value = S.ind;
+$("#indSel").onchange = e => { S.ind = e.target.value; refresh(); };
+$("#chips").innerHTML = COUNTRIES.map(c => `<button type="button" class="chip" data-iso="${c.iso}" aria-pressed="${S.isos.has(c.iso)}"><i style="background:${c.color}"></i>${c.nom}</button>`).join("");
+$("#chips").addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if(!b) return;
+  const iso = b.dataset.iso;
+  if(S.isos.has(iso)){ if(S.isos.size === 1) return; S.isos.delete(iso); } else S.isos.add(iso);
+  b.setAttribute("aria-pressed", S.isos.has(iso));
+  refresh();
+});
+function setView(v){
+  S.view = v;
+  $("#vLine").setAttribute("aria-pressed", v === "line");
+  $("#vBar").setAttribute("aria-pressed", v === "bar");
+  draw();
+}
+$("#vLine").onclick = () => setView("line");
+$("#vBar").onclick = () => setView("bar");
+
+/* Export CSV */
+$("#csvBtn").onclick = () => {
+  const ind = indOf(S.ind), d = S.data[ind.code] || {};
+  const cs = COUNTRIES.filter(c => S.isos.has(c.iso) && (d[c.iso] || []).length);
+  if(!cs.length) return;
+  const yrs = [...new Set(cs.flatMap(c => d[c.iso].map(p => p[0])))].sort((a,b) => a - b);
+  const q = s => '"' + String(s).replace(/"/g, '""') + '"';
+  const rows = [["Année", ...cs.map(c => c.nom)].map(q).join(";")];
+  yrs.forEach(y => rows.push([y, ...cs.map(c => { const p = d[c.iso].find(x => x[0] === y); return p ? String(p[1]).replace(".", ",") : ""; })].join(";")));
+  const blob = new Blob(["\ufeff" + rows.join("\r\n")], { type:"text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "guinee-" + ind.code.toLowerCase().replace(/\./g, "-") + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+
+/* Redimensionnement du graphique */
+let rz = 0;
+new ResizeObserver(() => { if(!S.ready || S.view !== "line") return; cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { const b = $("#chart"); if(b.querySelector("svg") && Math.abs(b.clientWidth - b.querySelector("svg").width.baseVal.value) > 4) draw(); }); }).observe($("#chart"));
+
+/* Démarrage */
+applyTheme((() => { try{ return localStorage.getItem("cre-theme") || "light"; }catch(e){ return "light"; } })());
+S.ready = true;
+showTheme("pop");
+refresh();
+</script>
+</body>
+</html>
