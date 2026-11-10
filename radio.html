@@ -655,6 +655,15 @@ window.addEventListener('online',()=>{
   if(src!=='fav'&&offlineNote)fetchPage(0);
 });
 
+/* ── Lecture en arrière-plan : reprise au retour sur la page, état sur l'écran verrouillé ── */
+let playingAtHide=false;
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden)playingAtHide=!a.paused;
+  else if(cur&&playingAtHide&&a.paused&&!gaveUp)a.play().catch(()=>{});
+});
+a.addEventListener('playing',()=>{try{navigator.mediaSession.playbackState='playing'}catch(e){}});
+a.addEventListener('pause',()=>{try{navigator.mediaSession.playbackState='paused'}catch(e){}});
+
 /* ── Recherche et pagination ── */
 let qT=null;
 $('q').addEventListener('input',()=>{

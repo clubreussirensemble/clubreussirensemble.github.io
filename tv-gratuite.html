@@ -138,6 +138,14 @@ details form .btn{padding:0 20px;white-space:nowrap}
 .ribbon .bar{width:70%;margin:8px auto 0}
 .note{margin-top:14px;font-size:12.5px;color:var(--ink2)}
 
+/* ── Barre Image dans l'image / Audio seul ── */
+.pipbar{display:flex;gap:8px;padding:10px 14px;background:var(--navy-deep);flex-wrap:wrap}
+.pipbar button{padding:8px 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font:600 13px 'Work Sans',sans-serif;cursor:pointer}
+.pipbar button:hover{background:rgba(255,255,255,.18)}
+.pipbar button[aria-pressed=true]{background:var(--blue);border-color:var(--blue)}
+.pipbar button[hidden]{display:none}
+.player.audio-only video{height:0;max-height:0;aspect-ratio:auto}
+
 /* ── Pied de page ── */
 .site-footer{background:var(--navy-deep);color:#C7D2E6;padding:40px 0 0;margin-top:10px}
 .foot-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:30px;padding-bottom:28px}
@@ -200,6 +208,10 @@ details form .btn{padding:0 20px;white-space:nowrap}
     <section class="player" aria-label="Lecteur">
       <video id="v" controls playsinline></video>
       <div class="now"><i class="dot" id="dot"></i><b id="title">Choisissez une chaîne</b><span id="state"></span></div>
+      <div class="pipbar">
+        <button type="button" id="pipBtn">🖼️ Image dans l’image</button>
+        <button type="button" id="audBtn" aria-pressed="false">🎧 Audio seul</button>
+      </div>
     </section>
   </div>
 
@@ -534,6 +546,39 @@ window.addEventListener('online',()=>{
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
   window.addEventListener('load',()=>{navigator.serviceWorker.register('sw-tv.js',{scope:'./tv-gratuite.html'}).catch(()=>{});});
 }
+/* ── Image dans l'image, audio seul, contrôles écran verrouillé ── */
+const pipBtn=$('pipBtn'),audBtn=$('audBtn');
+const canPip=!!(document.pictureInPictureEnabled&&v.requestPictureInPicture)||typeof v.webkitSetPresentationMode==='function';
+if(!canPip)pipBtn.hidden=true;
+pipBtn.onclick=async()=>{
+  if(!cur){status('Choisissez d’abord une chaîne',false);return;}
+  try{
+    if(document.pictureInPictureElement)await document.exitPictureInPicture();
+    else if(v.requestPictureInPicture)await v.requestPictureInPicture();
+    else v.webkitSetPresentationMode(v.webkitPresentationMode==='picture-in-picture'?'inline':'picture-in-picture');
+  }catch(e){status('Image dans l’image indisponible pour cette chaîne',false);}
+};
+audBtn.onclick=()=>{
+  const on=document.querySelector('.player').classList.toggle('audio-only');
+  audBtn.setAttribute('aria-pressed',on);
+  audBtn.textContent=on?'📺 Afficher la vidéo':'🎧 Audio seul';
+};
+function setMedia(c){
+  if(!('mediaSession' in navigator))return;
+  try{navigator.mediaSession.metadata=new MediaMetadata({title:c.name,artist:'TV gratuite — Club Réussir Ensemble',artwork:c.logo?[{src:c.logo,sizes:'256x256'}]:[]});}catch(e){}
+}
+if('mediaSession' in navigator){
+  try{navigator.mediaSession.setActionHandler('play',()=>v.play());}catch(e){}
+  try{navigator.mediaSession.setActionHandler('pause',()=>v.pause());}catch(e){}
+  try{navigator.mediaSession.setActionHandler('enterpictureinpicture',()=>{if(v.requestPictureInPicture)v.requestPictureInPicture().catch(()=>{});});}catch(e){}
+}
+v.addEventListener('playing',()=>{if(cur)setMedia(cur);try{navigator.mediaSession.playbackState='playing'}catch(e){}});
+v.addEventListener('pause',()=>{try{navigator.mediaSession.playbackState='paused'}catch(e){}});
+let playingAtHide=false;
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden)playingAtHide=!v.paused;
+  else if(cur&&playingAtHide&&v.paused&&!gaveUp)v.play().catch(()=>{});
+});
 $('q').addEventListener('input',()=>{shown=60;render();});
 $('more').onclick=()=>{shown+=60;render();};
 $('addf').onsubmit=e=>{
