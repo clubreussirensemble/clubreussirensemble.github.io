@@ -362,6 +362,7 @@ function jouer(i, debut = 0, lancer = true){
   if (lancer) a.play().catch(() => {});
   [...$("chapitres").children].forEach((li, k) => li.classList.toggle("cours", k === i));
   $("chapEnCours").textContent = "Chapitre " + (i + 1) + " sur " + courant.chap.length;
+  setMedia(courant.titre, courant.auteur, "Chapitre " + (i + 1) + " sur " + courant.chap.length);
   sauver();
 }
 function sauver(){
@@ -376,6 +377,30 @@ let derniere = 0;
 $("audio").ontimeupdate = () => { const n = Date.now(); if (n - derniere > 5000) { derniere = n; sauver(); } };
 $("audio").onerror = () => { if ($("audio").getAttribute("src")) $("chapEnCours").textContent = "Ce chapitre ne se charge pas. Essaie le suivant."; };
 $("btnRetour").onclick = () => { $("audio").pause(); sauver(); $("vueLecteur").classList.add("cache"); $("vueListe").classList.remove("cache"); afficherReprise(); };
+
+/* Lecture en arrière-plan : écran verrouillé + reprise au retour */
+function setMedia(titre, artiste, album){
+  if (!("mediaSession" in navigator)) return;
+  try { navigator.mediaSession.metadata = new MediaMetadata({ title: titre || "Livre audio", artist: artiste || "", album: album || "Club Réussir Ensemble", artwork: ($("cover") && $("cover").src) ? [{ src: $("cover").src, sizes: "256x256" }] : [] }); } catch (e) {}
+}
+(function(){
+  const a = $("audio");
+  const ms = (k, f) => { try { navigator.mediaSession.setActionHandler(k, f); } catch (e) {} };
+  if ("mediaSession" in navigator) {
+    ms("play", () => a.play()); ms("pause", () => a.pause());
+    ms("previoustrack", () => { if (courant && courant.i > 0) jouer(courant.i - 1); });
+    ms("nexttrack", () => { if (courant && courant.i + 1 < courant.chap.length) jouer(courant.i + 1); });
+    ms("seekbackward", () => { a.currentTime = Math.max(0, a.currentTime - 15); });
+    ms("seekforward", () => { a.currentTime = Math.min(a.duration || 1e9, a.currentTime + 15); });
+  }
+  a.addEventListener("playing", () => { try { navigator.mediaSession.playbackState = "playing"; } catch (e) {} });
+  a.addEventListener("pause", () => { try { navigator.mediaSession.playbackState = "paused"; } catch (e) {} });
+  let was = false;
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) was = !a.paused;
+    else if (was && a.paused && courant && a.getAttribute("src")) a.play().catch(() => {});
+  });
+})();
 
 afficherReprise(); chercher();
 </script>

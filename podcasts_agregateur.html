@@ -568,9 +568,31 @@ function play(id){
   a.play().catch(()=>{});
   $("nowTitle").textContent=v.title;$("nowAuthor").textContent=v.show;$("nowLink").href=v.link||"#";
   $("player").hidden=false;
+  setMedia(v.title,v.show);
   document.querySelectorAll(".v").forEach(c=>c.removeAttribute("aria-current"));
   const c=document.querySelector('.v[data-id="'+CSS.escape(id)+'"]');if(c)c.setAttribute("aria-current","true");
 }
+/* Lecture en arrière-plan : écran verrouillé + reprise au retour */
+function setMedia(titre,artiste){
+  if(!("mediaSession" in navigator))return;
+  try{navigator.mediaSession.metadata=new MediaMetadata({title:titre||"Podcast",artist:artiste||"",album:"Podcasts — Club Réussir Ensemble"});}catch(e){}
+}
+(function(){
+  const a=$("aud");
+  const ms=(k,f)=>{try{navigator.mediaSession.setActionHandler(k,f)}catch(e){}};
+  if("mediaSession" in navigator){
+    ms("play",()=>a.play());ms("pause",()=>a.pause());
+    ms("seekbackward",()=>{a.currentTime=Math.max(0,a.currentTime-15)});
+    ms("seekforward",()=>{a.currentTime=Math.min(a.duration||1e9,a.currentTime+30)});
+  }
+  a.addEventListener("playing",()=>{try{navigator.mediaSession.playbackState="playing"}catch(e){}});
+  a.addEventListener("pause",()=>{try{navigator.mediaSession.playbackState="paused"}catch(e){}});
+  let was=false;
+  document.addEventListener("visibilitychange",()=>{
+    if(document.hidden)was=!a.paused;
+    else if(was&&a.paused&&a.getAttribute("src"))a.play().catch(()=>{});
+  });
+})();
 $("aud").onerror=()=>{$("nowAuthor").textContent="Lecture impossible ici — utilise le lien « Apple Podcasts »."};
 $("close").onclick=()=>{$("aud").pause();$("player").hidden=true};
 $("more").onclick=()=>{shown+=PAGE;render()};
