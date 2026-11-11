@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intelligence artificielle — Club Réussir Ensemble</title>
+<meta name="description" content="Apprendre et travailler avec l’intelligence artificielle : bonnes règles d’usage, générateur de consignes, consignes prêtes à copier, assistants, traduction, vérification et limites à connaître.">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0A2A57; --navy-deep:#071A38; --blue:#2563EB; --gold:#FAB202;
+  --gn-green:#009460; --gn-yellow:#FCD116; --gn-red:#CE1126;
+  --ink:#0F172A; --ink2:#5B6B85; --paper:#F5F8FC; --paper2:#EEF2F8; --line:#E3E9F2; --card:#FFFFFF;
+  --good:#117A3A; --bad:#C0070C; --warn-bg:#FFF6DA;
+  --radius:16px; --shadow:0 6px 24px rgba(10,42,87,.08); --ease:cubic-bezier(.4,0,.2,1);
+}
+:root[data-theme="dark"]{
+  --ink:#EAF0FA; --ink2:#9FB0C8; --paper:#0B1626; --paper2:#111F35; --line:#22314A; --card:#101E33;
+  --navy-deep:#050D1A; --good:#4ADE80; --bad:#FF6B6B; --warn-bg:#2A2410; --shadow:0 6px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:'Work Sans',sans-serif;background:var(--paper);color:var(--ink);transition:background .25s var(--ease),color .25s var(--ease)}
+h1,h2,h3{font-family:'Poppins',sans-serif;color:var(--ink);line-height:1.15;margin:0}
+a{color:var(--blue)}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 18px}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* En-tête */
+.site-nav{position:sticky;top:0;z-index:50;background:var(--navy-deep)}
+.nav-row{display:flex;align-items:center;gap:14px;min-height:62px}
+.brand{color:#fff;font-family:'Poppins',sans-serif;font-weight:800;font-size:18px;line-height:1.15;flex:1;min-width:0}
+.brand span{display:block;color:var(--gold);font-size:11px;font-weight:700;letter-spacing:.06em}
+.nav-link,.theme-btn{color:#fff;background:rgba(255,255,255,.1);border:0;border-radius:999px;padding:9px 14px;font:600 14px 'Work Sans',sans-serif;text-decoration:none;cursor:pointer}
+.nav-link:hover,.theme-btn:hover{background:rgba(255,255,255,.2)}
+
+/* Haut de page */
+.hero{background:linear-gradient(180deg,var(--navy) 0%,var(--navy-deep) 100%);padding:34px 0 92px;color:#fff;position:relative}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background:linear-gradient(90deg,var(--gn-red) 0 33.3%,var(--gn-yellow) 33.3% 66.6%,var(--gn-green) 66.6%)}
+.hero h1{color:#fff;font-size:clamp(26px,5vw,40px);font-weight:800}
+.hero p{margin:12px 0 0;max-width:60ch;color:#C9D6EC;font-size:16px;line-height:1.55}
+.jump{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.jump a{color:#fff;background:rgba(255,255,255,.12);border-radius:999px;padding:8px 14px;font:600 13.5px 'Work Sans',sans-serif;text-decoration:none}
+.jump a:hover{background:rgba(255,255,255,.22)}
+
+/* Recherche */
+.comp{margin-top:-62px;background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:20px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+.field input{width:100%;height:46px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);font:500 15px 'Work Sans',sans-serif;padding:0 14px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:14px 0 4px;scrollbar-width:thin}
+.tab{flex:none;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:8px 14px;font:600 13.5px 'Work Sans',sans-serif;cursor:pointer;white-space:nowrap}
+.tab[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+:root[data-theme="dark"] .tab[aria-pressed="true"]{background:var(--blue);border-color:var(--blue)}
+.count{margin:10px 0 0;font-size:13px;color:var(--ink2)}
+
+/* Sections */
+section{padding:38px 0 6px}
+.sec-head{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+.sec-head h2{font-size:clamp(21px,3.6vw,28px);font-weight:800}
+.sec-head p{margin:0;color:var(--ink2);font-size:14px;line-height:1.5;max-width:62ch}
+#ressources{padding-top:26px}
+
+/* Cartes de ressources */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.res{display:flex;flex-direction:column;gap:6px;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;text-decoration:none;color:var(--ink)}
+.res:hover{border-color:var(--blue)}
+.rt{font:700 15.5px 'Poppins',sans-serif;line-height:1.25}
+.rd{font-size:13.5px;line-height:1.5;color:var(--ink2);flex:1}
+.rm{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:12.5px;color:var(--ink2);min-width:0}
+.rm em{font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg{flex:none;font:700 11.5px 'Work Sans',sans-serif;border-radius:6px;padding:2px 7px}
+.lg.fr{background:#DDF3E8;color:#0B6B3A}
+.lg.en{background:#E3ECFD;color:#1D4ED8}
+:root[data-theme="dark"] .lg.fr{background:#12392A;color:#7BE0A8}
+:root[data-theme="dark"] .lg.en{background:#14284F;color:#9DBBFF}
+.empty{padding:22px;border:1.5px dashed var(--line);border-radius:var(--radius);color:var(--ink2);text-align:center;line-height:1.55}
+.legend{margin:14px 0 0;font-size:13px;color:var(--ink2);line-height:1.55}
+
+/* Calculateurs */
+.calcs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.calc{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;min-width:0}
+.calc h3{font-size:17px;font-weight:700}
+.calc .help{margin:6px 0 12px;font-size:13px;color:var(--ink2);line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cf label{display:block;font-size:12.5px;font-weight:600;color:var(--ink2);margin-bottom:4px}
+.cf input,.cf select{width:100%;height:42px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font:500 15px 'Work Sans',sans-serif;padding:0 10px}
+.cf input.out{background:var(--paper2);border-color:var(--blue);font-weight:700}
+.res-box{margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--paper2);font-size:14px;line-height:1.6;min-height:48px}
+.res-box b{font-family:'Poppins',sans-serif}
+.res-box.err{color:var(--bad)}
+.btn{margin-top:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 14px;font:600 13px 'Work Sans',sans-serif;cursor:pointer}
+.btn:hover{border-color:var(--blue);color:var(--blue)}
+.resistor{display:block;width:100%;max-width:260px;height:auto;margin:6px auto 10px}
+
+/* Sécurité */
+.safe{background:var(--warn-bg);border:1px solid var(--line);border-left:6px solid var(--gold);border-radius:var(--radius);padding:18px 20px}
+.safe h2{font-size:clamp(19px,3vw,24px);margin-bottom:8px}
+.safe ul{margin:0;padding-left:20px;line-height:1.65;font-size:14.5px}
+.safe li+li{margin-top:5px}
+
+/* Voir aussi */
+.pills{display:flex;flex-wrap:wrap;gap:10px}
+.pills a{display:inline-block;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:9px 16px;font:600 14px 'Work Sans',sans-serif;text-decoration:none}
+.pills a:hover{border-color:var(--blue);color:var(--blue)}
+
+.note{margin:30px 0 0;padding:16px 18px;border-radius:14px;background:var(--paper2);font-size:13.5px;line-height:1.6;color:var(--ink2)}
+footer{margin-top:34px;background:var(--navy-deep);color:#C9D6EC;padding:22px 0;font-size:14px}
+footer a{color:var(--gold)}
+
+@media (max-width:640px){
+  .brand{font-size:15px}
+  .calcs{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+.hero{padding-bottom:48px}
+.lg.mu{background:#FFF0CC;color:#8A5A00}
+:root[data-theme="dark"] .lg.mu{background:#3A2C0B;color:#FFD27A}
+/* Règles */
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:0;padding:0;list-style:none}
+.rules li{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);font-size:14.5px;line-height:1.55}
+.rules b{display:block;font:700 15px 'Poppins',sans-serif;margin-bottom:4px}
+/* Générateur */
+.builder{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.builder .cf{margin-bottom:10px}
+.cf textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font:500 15px 'Work Sans',sans-serif;padding:10px;resize:vertical;min-height:64px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:14px;line-height:1.45;margin:4px 0 0}
+.chk input{margin-top:3px;width:18px;height:18px;flex:none}
+.outbox{background:var(--paper2);border:1.5px solid var(--blue);border-radius:12px;padding:14px;white-space:pre-wrap;font-size:14.5px;line-height:1.6;min-height:160px}
+.outbox.empty-state{color:var(--ink2);border-style:dashed;border-color:var(--line)}
+/* Consignes prêtes */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.pcard h3{font-size:16px;font-weight:700}
+.ptop{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ptag{font:700 11.5px 'Work Sans',sans-serif;border-radius:6px;padding:3px 8px;background:var(--paper2);color:var(--ink2)}
+.ptxt{margin:0;font-size:13.5px;line-height:1.6;color:var(--ink2);flex:1}
+.pcard .btn{margin:0;padding:6px 12px}
+/* Limites */
+.faq{display:grid;gap:10px}
+.faq details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0 16px}
+.faq summary{cursor:pointer;list-style:none;padding:14px 0;font:700 15px 'Poppins',sans-serif;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-size:20px;color:var(--ink2);flex:none}
+.faq details[open] summary::after{content:"−"}
+.faq details p,.faq details ul{margin:0 0 14px;font-size:14.5px;line-height:1.6;color:var(--ink2)}
+.faq details ul{padding-left:20px}
+@media (max-width:760px){.builder{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="site-nav">
+  <div class="wrap nav-row">
+    <div class="brand">Club Réussir Ensemble<span>GUINÉE · FONDÉ À MAMOU</span></div>
+    <a class="nav-link" href="index.html">🏠 Accueil</a>
+    <button type="button" class="theme-btn" id="themeBtn" aria-label="Changer de thème">🌙</button>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <h1>Intelligence artificielle</h1>
+    <p>Apprendre, enseigner et travailler avec l’IA sans se faire piéger : des règles simples, un générateur de consignes, des consignes prêtes à copier, une sélection d’outils et les limites à connaître.</p>
+    <nav class="jump" aria-label="Aller à une partie de la page">
+      <a href="#regles">Bien l’utiliser</a>
+      <a href="#generateur">Générateur</a>
+      <a href="#consignes">Consignes prêtes</a>
+      <a href="#ressources">Outils</a>
+      <a href="#limites">Limites</a>
+    </nav>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section id="regles" style="padding-top:26px">
+    <div class="sec-head">
+      <h2>Cinq règles pour bien utiliser l’IA</h2>
+      <p>Une IA est un assistant, pas une autorité : elle t’aide à aller plus vite, mais la responsabilité du résultat reste la tienne.</p>
+    </div>
+    <ul class="rules">
+      <li><b>1. Donne du contexte</b>Indique qui tu es, ton niveau, ton but et le format voulu. Une consigne précise donne une meilleure réponse qu’une question vague.</li>
+      <li><b>2. Vérifie</b>Une IA peut se tromper avec beaucoup d’assurance. Contrôle les faits, les chiffres et les sources dans un manuel ou un site officiel.</li>
+      <li><b>3. Protège tes données</b>Ne partage jamais de mots de passe, de codes, de pièces d’identité ni d’informations privées sur des élèves ou des collègues.</li>
+      <li><b>4. Apprends, ne copie pas</b>Demande des explications, des exemples et des questions d’entraînement. Si tu recopies sans comprendre, tu n’apprends rien.</li>
+      <li><b>5. Sois honnête</b>Dis quand l’IA t’a aidé dans un devoir ou un document, et respecte les règles de ton établissement.</li>
+    </ul>
+  </section>
+
+  <section id="generateur">
+    <div class="sec-head">
+      <h2>Générateur de consigne</h2>
+      <p>Remplis les cases : la consigne se compose toute seule. Copie-la ensuite dans l’assistant de ton choix.</p>
+    </div>
+    <div class="chips" aria-label="Exemples">
+      <button type="button" class="btn" data-ex="exo">Exemple : exercice de physique</button>
+      <button type="button" class="btn" data-ex="rev">Exemple : réviser une notion</button>
+      <button type="button" class="btn" data-ex="lettre">Exemple : lettre formelle</button>
+    </div>
+    <div class="builder">
+      <div>
+        <div class="cf"><label for="g-role">Qui doit être l’IA ? (rôle)</label><input id="g-role" type="text" placeholder="professeur de mathématiques en Guinée" autocomplete="off"></div>
+        <div class="cf"><label for="g-task">Que doit-elle faire ? (tâche)</label><textarea id="g-task" placeholder="Créer un exercice sur la loi d’Ohm avec corrigé"></textarea></div>
+        <div class="cf"><label for="g-ctx">Contexte (niveau, public, matériel…)</label><textarea id="g-ctx" placeholder="Classe de 3e, 40 élèves, pas de calculatrice"></textarea></div>
+        <div class="cf"><label for="g-fmt">Format de la réponse</label><input id="g-fmt" type="text" placeholder="Tableau, liste numérotée, 200 mots…" autocomplete="off"></div>
+        <div class="cf"><label for="g-rules">Contraintes</label><input id="g-rules" type="text" placeholder="Langage simple, exemples guinéens" autocomplete="off"></div>
+        <label class="chk"><input id="g-doubt" type="checkbox" checked> Demander à l’IA de signaler ce dont elle n’est pas sûre</label>
+        <button type="button" class="btn" id="g-reset">Effacer</button>
+      </div>
+      <div>
+        <div class="outbox empty-state" id="g-out" aria-live="polite">Ta consigne apparaîtra ici.</div>
+        <button type="button" class="btn" id="g-copy">Copier la consigne</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="consignes">
+    <div class="sec-head">
+      <h2>Consignes prêtes à copier</h2>
+      <p>Remplace ce qui est entre [crochets] par tes propres informations.</p>
+    </div>
+    <div class="pgrid">
+      <div class="pcard" data-tag="Enseignant">
+        <div class="ptop"><span class="ptag">Enseignant</span><button type="button" class="btn copy">Copier</button></div>
+        <h3>Exercice avec corrigé</h3>
+        <p class="ptxt">Tu es professeur de physique-chimie en Guinée. Crée un exercice de niveau [Terminale SM] sur [notion], avec des données réalistes, un barème sur 20 et un corrigé détaillé étape par étape. Indique les formules utilisées. Si tu n’es pas sûr d’un résultat, dis-le.</p>
+      </div>
+      <div class="pcard" data-tag="Enseignant">
+        <div class="ptop"><span class="ptag">Enseignant</span><button type="button" class="btn copy">Copier</button></div>
+        <h3>Plan de séance</h3>
+        <p class="ptxt">Prépare un plan de séance de [55 minutes] sur [notion] pour une classe de [niveau] de [effectif] élèves, avec peu de matériel. Propose : objectifs, activité d’accroche, explication, exercices d’application et évaluation rapide. Présente le résultat sous forme de tableau.</p>
+      </div>
+      <div class="pcard" data-tag="Enseignant">
+        <div class="ptop"><span class="ptag">Enseignant</span><button type="button" class="btn copy">Copier</button></div>
+        <h3>Questions à choix multiples</h3>
+        <p class="ptxt">Crée [10] questions à choix multiples sur [chapitre], niveau [classe], avec 4 propositions et une seule bonne réponse. Donne le corrigé avec une phrase d’explication pour chaque question.</p>
+      </div>
+      <div class="pcard" data-tag="Élève">
+        <div class="ptop"><span class="ptag">Élève</span><button type="button" class="btn copy">Copier</button></div>
+        <h3>Comprendre une notion</h3>
+        <p class="ptxt">Explique-moi [notion] comme si j’avais [15] ans, avec un exemple de la vie quotidienne en Guinée. Ensuite, pose-moi 3 questions pour vérifier que j’ai compris, une à la fois, et attends ma réponse avant de continuer.</p>
+      </div>
+      <div class="pcard" data-tag="Élève">
+        <div class="ptop"><span class="ptag">Élève</span><button type="button" class="btn copy">Copier</button></div>
+        <h3>Corriger sans réécrire</h3>
+        <p class="ptxt">Voici mon texte : [colle ton texte]. Corrige l’orthographe et la grammaire, mais ne réécris pas à ma place. Liste mes erreurs par type et explique chaque règle en une phrase.</p>
+      </div>
+      <div class="pcard" data-tag="Élève">
+        <div class="ptop"><span class="ptag">Élève</span><button type="button" class="btn copy">Copier</button></div>
+        <h3>Réviser un chapitre</h3>
+        <p class="ptxt">Aide-moi à réviser [chapitre]. Pose-moi des questions une par une, corrige mes réponses, puis dis-moi ce que je dois retravailler.</p>
+      </div>
+      <div class="pcard" data-tag="Travail">
+        <div class="ptop"><span class="ptag">Travail</span><button type="button" class="btn copy">Copier</button></div>
+        <h3>Lettre ou demande</h3>
+        <p class="ptxt">Rédige une lettre formelle en français : [type de lettre : demande d’autorisation, candidature…], adressée à [destinataire]. Contexte : [détails]. Ton respectueux et clair, 200 mots maximum, avec formule d’appel et formule de politesse.</p>
+      </div>
+      <div class="pcard" data-tag="Travail">
+        <div class="ptop"><span class="ptag">Travail</span><button type="button" class="btn copy">Copier</button></div>
+        <h3>Résumer un texte</h3>
+        <p class="ptxt">Résume le texte ci-dessous en 5 points, puis liste les chiffres et les dates importants. N’ajoute aucune information absente du texte. Texte : [colle le texte]</p>
+      </div>
+      <div class="pcard" data-tag="Vérification">
+        <div class="ptop"><span class="ptag">Vérification</span><button type="button" class="btn copy">Copier</button></div>
+        <h3>Faire le point sur ses doutes</h3>
+        <p class="ptxt">Relis ta réponse précédente. Indique ce dont tu n’es pas sûr, ce qui pourrait être faux, et ce que je dois vérifier dans une source fiable.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="comp" style="margin-top:38px">
+    <div class="field">
+      <label for="q">Chercher un outil ou une ressource</label>
+      <input id="q" type="search" placeholder="traduction, assistant, cours, vérifier…" autocomplete="off">
+    </div>
+    <div class="tabs" id="tabs" role="group" aria-label="Catégories">
+      <button type="button" class="tab" data-cat="all" aria-pressed="true">Tout</button>
+      <button type="button" class="tab" data-cat="assist" aria-pressed="false">Assistants</button>
+      <button type="button" class="tab" data-cat="etude" aria-pressed="false">Étudier & rechercher</button>
+      <button type="button" class="tab" data-cat="trad" aria-pressed="false">Traduire & langues</button>
+      <button type="button" class="tab" data-cat="creer" aria-pressed="false">Créer</button>
+      <button type="button" class="tab" data-cat="cours" aria-pressed="false">Apprendre l’IA</button>
+      <button type="button" class="tab" data-cat="prompt" aria-pressed="false">Écrire ses consignes</button>
+      <button type="button" class="tab" data-cat="verif" aria-pressed="false">Vérifier & éthique</button>
+      <button type="button" class="tab" data-cat="loin" aria-pressed="false">Aller plus loin</button>
+    </div>
+    <p class="count" id="count" aria-live="polite">41 ressources</p>
+  </div>
+
+  <section id="ressources" style="padding-top:20px">
+    <div class="grid" id="grid">
+    <a class="res" href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer" data-cat="assist" data-q="chatgpt assistant d’openai : redaction, explications, analyse de documents, images. chatgpt.com assistants">
+      <span class="rt">ChatGPT</span>
+      <span class="rd">Assistant d’OpenAI : rédaction, explications, analyse de documents, images.</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>chatgpt.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://claude.ai/" target="_blank" rel="noopener noreferrer" data-cat="assist" data-q="claude assistant d’anthropic : redaction, analyse de documents, programmation. claude.ai assistants">
+      <span class="rt">Claude</span>
+      <span class="rd">Assistant d’Anthropic : rédaction, analyse de documents, programmation.</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>claude.ai</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer" data-cat="assist" data-q="gemini assistant de google, relie aux services google (gmail, drive, docs). gemini.google.com assistants">
+      <span class="rt">Gemini</span>
+      <span class="rd">Assistant de Google, relié aux services Google (Gmail, Drive, Docs).</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>gemini.google.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://copilot.microsoft.com/" target="_blank" rel="noopener noreferrer" data-cat="assist" data-q="microsoft copilot assistant de microsoft, present aussi dans windows, edge et office. copilot.microsoft.com assistants">
+      <span class="rt">Microsoft Copilot</span>
+      <span class="rd">Assistant de Microsoft, présent aussi dans Windows, Edge et Office.</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>copilot.microsoft.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://chat.mistral.ai/" target="_blank" rel="noopener noreferrer" data-cat="assist" data-q="mistral vibe (ex-le chat) assistant de l’entreprise francaise mistral ai, renomme vibe en mai 2026. chat.mistral.ai assistants">
+      <span class="rt">Mistral Vibe (ex-Le Chat)</span>
+      <span class="rd">Assistant de l’entreprise française Mistral AI, renommé Vibe en mai 2026.</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>chat.mistral.ai</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.perplexity.ai/" target="_blank" rel="noopener noreferrer" data-cat="assist" data-q="perplexity moteur de reponses qui cite ses sources : pratique pour savoir d’ou vient une information. perplexity.ai assistants">
+      <span class="rt">Perplexity</span>
+      <span class="rd">Moteur de réponses qui cite ses sources : pratique pour savoir d’où vient une information.</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>perplexity.ai</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://notebooklm.google.com/" target="_blank" rel="noopener noreferrer" data-cat="etude" data-q="notebooklm pose des questions a tes propres documents (cours, pdf) et obtiens des resumes qui renvoient aux passages. notebooklm.google.com etudier &amp; rechercher">
+      <span class="rt">NotebookLM</span>
+      <span class="rd">Pose des questions à tes propres documents (cours, PDF) et obtiens des résumés qui renvoient aux passages.</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>notebooklm.google.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.wolframalpha.com/" target="_blank" rel="noopener noreferrer" data-cat="etude" data-q="wolframalpha calcul formel, equations, unites, physique : des resultats calcules plutot que devines. wolframalpha.com etudier &amp; rechercher">
+      <span class="rt">WolframAlpha</span>
+      <span class="rd">Calcul formel, équations, unités, physique : des résultats calculés plutôt que devinés.</span>
+      <span class="rm"><b class="lg en">EN</b><em>wolframalpha.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.geogebra.org/" target="_blank" rel="noopener noreferrer" data-cat="etude" data-q="geogebra mathematiques dynamiques : courbes, geometrie, tableur. geogebra.org etudier &amp; rechercher">
+      <span class="rt">GeoGebra</span>
+      <span class="rd">Mathématiques dynamiques : courbes, géométrie, tableur.</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>geogebra.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://phet.colorado.edu/" target="_blank" rel="noopener noreferrer" data-cat="etude" data-q="phet simulations simulations interactives de physique, chimie et mathematiques, disponibles en francais. phet.colorado.edu etudier &amp; rechercher">
+      <span class="rt">PhET Simulations</span>
+      <span class="rd">Simulations interactives de physique, chimie et mathématiques, disponibles en français.</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>phet.colorado.edu</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://fr.khanacademy.org/" target="_blank" rel="noopener noreferrer" data-cat="etude" data-q="khan academy cours et exercices gratuits pour revoir les bases avant de demander de l’aide a une ia. fr.khanacademy.org etudier &amp; rechercher">
+      <span class="rt">Khan Academy</span>
+      <span class="rd">Cours et exercices gratuits pour revoir les bases avant de demander de l’aide à une IA.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>fr.khanacademy.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://elicit.com/" target="_blank" rel="noopener noreferrer" data-cat="etude" data-q="elicit aide a chercher et a resumer des articles scientifiques. elicit.com etudier &amp; rechercher">
+      <span class="rt">Elicit</span>
+      <span class="rd">Aide à chercher et à résumer des articles scientifiques.</span>
+      <span class="rm"><b class="lg en">EN</b><em>elicit.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://translate.google.com/" target="_blank" rel="noopener noreferrer" data-cat="trad" data-q="google traduction traduction de textes, de pages web et de photos, dans un tres grand nombre de langues. translate.google.com traduire &amp; langues">
+      <span class="rt">Google Traduction</span>
+      <span class="rd">Traduction de textes, de pages web et de photos, dans un très grand nombre de langues.</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>translate.google.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.deepl.com/translator" target="_blank" rel="noopener noreferrer" data-cat="trad" data-q="deepl traduction connue pour la qualite de ses phrases, surtout pour les langues europeennes. deepl.com traduire &amp; langues">
+      <span class="rt">DeepL</span>
+      <span class="rd">Traduction connue pour la qualité de ses phrases, surtout pour les langues européennes.</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>deepl.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.reverso.net/" target="_blank" rel="noopener noreferrer" data-cat="trad" data-q="reverso traduction, conjugaison et exemples en contexte. reverso.net traduire &amp; langues">
+      <span class="rt">Reverso</span>
+      <span class="rd">Traduction, conjugaison et exemples en contexte.</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>reverso.net</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.linguee.fr/" target="_blank" rel="noopener noreferrer" data-cat="trad" data-q="linguee dictionnaire avec des exemples reels de phrases traduites. linguee.fr traduire &amp; langues">
+      <span class="rt">Linguee</span>
+      <span class="rd">Dictionnaire avec des exemples réels de phrases traduites.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>linguee.fr</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.masakhane.io/" target="_blank" rel="noopener noreferrer" data-cat="trad" data-q="masakhane communaute de chercheurs africains qui travaille sur les langues africaines et l’ia. masakhane.io traduire &amp; langues">
+      <span class="rt">Masakhane</span>
+      <span class="rd">Communauté de chercheurs africains qui travaille sur les langues africaines et l’IA.</span>
+      <span class="rm"><b class="lg en">EN</b><em>masakhane.io</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://commonvoice.mozilla.org/fr" target="_blank" rel="noopener noreferrer" data-cat="trad" data-q="common voice projet ouvert de mozilla ou chacun peut donner sa voix pour construire des donnees vocales, y compris pour des langues peu representees. commonvoice.mozilla.org traduire &amp; langues">
+      <span class="rt">Common Voice</span>
+      <span class="rd">Projet ouvert de Mozilla où chacun peut donner sa voix pour construire des données vocales, y compris pour des langues peu représentées.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>commonvoice.mozilla.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.canva.com/" target="_blank" rel="noopener noreferrer" data-cat="creer" data-q="canva affiches, presentations et documents avec des modeles et des outils d’ia. canva.com creer">
+      <span class="rt">Canva</span>
+      <span class="rd">Affiches, présentations et documents avec des modèles et des outils d’IA.</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>canva.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://firefly.adobe.com/" target="_blank" rel="noopener noreferrer" data-cat="creer" data-q="adobe firefly creation d’images a partir d’une description ecrite. firefly.adobe.com creer">
+      <span class="rt">Adobe Firefly</span>
+      <span class="rd">Création d’images à partir d’une description écrite.</span>
+      <span class="rm"><b class="lg en">EN</b><em>firefly.adobe.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://designer.microsoft.com/" target="_blank" rel="noopener noreferrer" data-cat="creer" data-q="microsoft designer creation de visuels et d’affiches a partir d’une description. designer.microsoft.com creer">
+      <span class="rt">Microsoft Designer</span>
+      <span class="rd">Création de visuels et d’affiches à partir d’une description.</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>designer.microsoft.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://gamma.app/" target="_blank" rel="noopener noreferrer" data-cat="creer" data-q="gamma generation de presentations et de pages a partir d’un texte. gamma.app creer">
+      <span class="rt">Gamma</span>
+      <span class="rd">Génération de présentations et de pages à partir d’un texte.</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>gamma.app</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.elementsofai.com/" target="_blank" rel="noopener noreferrer" data-cat="cours" data-q="elements of ai cours gratuit de l’universite d’helsinki pour comprendre l’ia sans prerequis ; plusieurs langues. elementsofai.com apprendre l’ia">
+      <span class="rt">Elements of AI</span>
+      <span class="rd">Cours gratuit de l’université d’Helsinki pour comprendre l’IA sans prérequis ; plusieurs langues.</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>elementsofai.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.coursera.org/learn/ai-for-everyone" target="_blank" rel="noopener noreferrer" data-cat="cours" data-q="ai for everyone (coursera) cours d’introduction a l’ia, sans programmation. coursera.org apprendre l’ia">
+      <span class="rt">AI for Everyone (Coursera)</span>
+      <span class="rd">Cours d’introduction à l’IA, sans programmation.</span>
+      <span class="rm"><b class="lg en">EN</b><em>coursera.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.fun-mooc.fr/" target="_blank" rel="noopener noreferrer" data-cat="cours" data-q="fun mooc cours ouverts d’universites francophones ; cherche « intelligence artificielle ». fun-mooc.fr apprendre l’ia">
+      <span class="rt">FUN MOOC</span>
+      <span class="rd">Cours ouverts d’universités francophones ; cherche « intelligence artificielle ».</span>
+      <span class="rm"><b class="lg fr">FR</b><em>fun-mooc.fr</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://huggingface.co/learn" target="_blank" rel="noopener noreferrer" data-cat="cours" data-q="hugging face learn cours pratiques sur les modeles d’ia, pour qui sait deja un peu programmer. huggingface.co apprendre l’ia">
+      <span class="rt">Hugging Face Learn</span>
+      <span class="rd">Cours pratiques sur les modèles d’IA, pour qui sait déjà un peu programmer.</span>
+      <span class="rm"><b class="lg en">EN</b><em>huggingface.co</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.kaggle.com/learn" target="_blank" rel="noopener noreferrer" data-cat="cours" data-q="kaggle learn mini-cours pratiques : python, apprentissage automatique, analyse de donnees. kaggle.com apprendre l’ia">
+      <span class="rt">Kaggle Learn</span>
+      <span class="rd">Mini-cours pratiques : Python, apprentissage automatique, analyse de données.</span>
+      <span class="rm"><b class="lg en">EN</b><em>kaggle.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.youtube.com/@3blue1brown" target="_blank" rel="noopener noreferrer" data-cat="cours" data-q="3blue1brown videos de mathematiques tres visuelles ; la serie sur les reseaux de neurones est une reference. youtube.com apprendre l’ia">
+      <span class="rt">3Blue1Brown</span>
+      <span class="rd">Vidéos de mathématiques très visuelles ; la série sur les réseaux de neurones est une référence.</span>
+      <span class="rm"><b class="lg en">EN</b><em>youtube.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.promptingguide.ai/" target="_blank" rel="noopener noreferrer" data-cat="prompt" data-q="prompting guide guide libre sur les techniques pour bien ecrire ses consignes. promptingguide.ai ecrire ses consignes">
+      <span class="rt">Prompting Guide</span>
+      <span class="rd">Guide libre sur les techniques pour bien écrire ses consignes.</span>
+      <span class="rm"><b class="lg mu">FR/EN</b><em>promptingguide.ai</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://learnprompting.org/" target="_blank" rel="noopener noreferrer" data-cat="prompt" data-q="learn prompting cours gratuit pour apprendre a formuler des consignes efficaces. learnprompting.org ecrire ses consignes">
+      <span class="rt">Learn Prompting</span>
+      <span class="rd">Cours gratuit pour apprendre à formuler des consignes efficaces.</span>
+      <span class="rm"><b class="lg en">EN</b><em>learnprompting.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/overview" target="_blank" rel="noopener noreferrer" data-cat="prompt" data-q="guide de consignes d’anthropic conseils officiels pour ecrire des consignes claires et obtenir de meilleures reponses. docs.claude.com ecrire ses consignes">
+      <span class="rt">Guide de consignes d’Anthropic</span>
+      <span class="rd">Conseils officiels pour écrire des consignes claires et obtenir de meilleures réponses.</span>
+      <span class="rm"><b class="lg en">EN</b><em>docs.claude.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://platform.openai.com/docs/guides/prompt-engineering" target="_blank" rel="noopener noreferrer" data-cat="prompt" data-q="guide de consignes d’openai bonnes pratiques officielles pour rediger des consignes. platform.openai.com ecrire ses consignes">
+      <span class="rt">Guide de consignes d’OpenAI</span>
+      <span class="rd">Bonnes pratiques officielles pour rédiger des consignes.</span>
+      <span class="rm"><b class="lg en">EN</b><em>platform.openai.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://africacheck.org/fr" target="_blank" rel="noopener noreferrer" data-cat="verif" data-q="africa check verification de faits en afrique, avec une edition en francais. africacheck.org verifier &amp; ethique">
+      <span class="rt">Africa Check</span>
+      <span class="rd">Vérification de faits en Afrique, avec une édition en français.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>africacheck.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://factuel.afp.com/" target="_blank" rel="noopener noreferrer" data-cat="verif" data-q="afp factuel verification d’informations et de rumeurs par l’afp, en francais. factuel.afp.com verifier &amp; ethique">
+      <span class="rt">AFP Factuel</span>
+      <span class="rd">Vérification d’informations et de rumeurs par l’AFP, en français.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>factuel.afp.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://tineye.com/" target="_blank" rel="noopener noreferrer" data-cat="verif" data-q="tineye recherche inversee d’image : retrouver l’origine d’une photo ou reperer un montage. tineye.com verifier &amp; ethique">
+      <span class="rt">TinEye</span>
+      <span class="rd">Recherche inversée d’image : retrouver l’origine d’une photo ou repérer un montage.</span>
+      <span class="rm"><b class="lg en">EN</b><em>tineye.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://toolbox.google.com/factcheck/explorer" target="_blank" rel="noopener noreferrer" data-cat="verif" data-q="google fact check explorer cherche si une affirmation a deja ete verifiee par des medias specialises. toolbox.google.com verifier &amp; ethique">
+      <span class="rt">Google Fact Check Explorer</span>
+      <span class="rd">Cherche si une affirmation a déjà été vérifiée par des médias spécialisés.</span>
+      <span class="rm"><b class="lg en">EN</b><em>toolbox.google.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://www.unesco.org/fr/articles/recommandation-sur-lethique-de-lintelligence-artificielle" target="_blank" rel="noopener noreferrer" data-cat="verif" data-q="unesco : ethique de l’ia le cadre mondial adopte en 2021 par les etats membres de l’unesco sur l’usage ethique de l’ia. unesco.org verifier &amp; ethique">
+      <span class="rt">UNESCO : éthique de l’IA</span>
+      <span class="rd">Le cadre mondial adopté en 2021 par les États membres de l’UNESCO sur l’usage éthique de l’IA.</span>
+      <span class="rm"><b class="lg fr">FR</b><em>unesco.org</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://huggingface.co/" target="_blank" rel="noopener noreferrer" data-cat="loin" data-q="hugging face bibliotheque ouverte de modeles d’ia, de donnees et de petites applications a essayer. huggingface.co aller plus loin">
+      <span class="rt">Hugging Face</span>
+      <span class="rd">Bibliothèque ouverte de modèles d’IA, de données et de petites applications à essayer.</span>
+      <span class="rm"><b class="lg en">EN</b><em>huggingface.co</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://colab.research.google.com/" target="_blank" rel="noopener noreferrer" data-cat="loin" data-q="google colab ecrire et executer du code python dans le navigateur, sans rien installer. colab.research.google.com aller plus loin">
+      <span class="rt">Google Colab</span>
+      <span class="rd">Écrire et exécuter du code Python dans le navigateur, sans rien installer.</span>
+      <span class="rm"><b class="lg en">EN</b><em>colab.research.google.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://ollama.com/" target="_blank" rel="noopener noreferrer" data-cat="loin" data-q="ollama faire tourner des modeles d’ia sur son propre ordinateur, sans connexion une fois le modele telecharge. demande un ordinateur assez puissant. ollama.com aller plus loin">
+      <span class="rt">Ollama</span>
+      <span class="rd">Faire tourner des modèles d’IA sur son propre ordinateur, sans connexion une fois le modèle téléchargé. Demande un ordinateur assez puissant.</span>
+      <span class="rm"><b class="lg en">EN</b><em>ollama.com</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    <a class="res" href="https://lmstudio.ai/" target="_blank" rel="noopener noreferrer" data-cat="loin" data-q="lm studio application pour telecharger et utiliser des modeles d’ia en local, avec une interface simple. lmstudio.ai aller plus loin">
+      <span class="rt">LM Studio</span>
+      <span class="rd">Application pour télécharger et utiliser des modèles d’IA en local, avec une interface simple.</span>
+      <span class="rm"><b class="lg en">EN</b><em>lmstudio.ai</em><span class="sr"> (s’ouvre dans un nouvel onglet)</span></span>
+    </a>
+    </div>
+    <div class="empty" id="empty" hidden>Aucune ressource ne correspond à cette recherche. Essaie un autre mot ou choisis « Tout ».</div>
+    <p class="legend"><b>FR</b> : en français. <b>EN</b> : en anglais. <b>FR/EN</b> : interface disponible en français et en anglais. Les offres gratuites, les limites d’usage et même les noms des services changent souvent : vérifie les conditions sur le site avant de t’inscrire. Pour vérifier une information ou une image, vois aussi la page <a href="verification.html">Vérification</a>.</p>
+  </section>
+
+  <section id="limites">
+    <div class="sec-head">
+      <h2>Les limites à connaître</h2>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>L’IA peut se tromper avec assurance</summary>
+        <ul>
+          <li>Elle produit un texte plausible, pas une vérité garantie : elle peut inventer des chiffres, des citations, des sources et même des adresses de sites.</li>
+          <li>Ouvre toi-même les sources citées et vérifie-les dans un manuel ou un site officiel avant de t’en servir.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>Mathématiques, physique et calculs</summary>
+        <ul>
+          <li>Un assistant peut se tromper dans un calcul, une conversion d’unités ou un ordre de grandeur, même quand l’explication paraît claire.</li>
+          <li>Refais le calcul, vérifie les unités et le résultat avec une calculatrice ou un outil de calcul comme WolframAlpha.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>Langues africaines et contexte guinéen</summary>
+        <ul>
+          <li>Les langues africaines sont en général moins bien couvertes que le français ou l’anglais : une traduction en pular, en malinké ou en soussou peut être approximative, il faut la faire relire par un locuteur.</li>
+          <li>Les informations locales (lois, prix, adresses, noms de responsables) peuvent être fausses ou dépassées : vérifie-les auprès d’une source officielle.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>École, devoirs et honnêteté</summary>
+        <ul>
+          <li>Utilise l’IA pour comprendre et t’entraîner, pas pour remplacer ton effort : à l’examen, tu seras seul.</li>
+          <li>Indique quand l’IA t’a aidé, et respecte les règles de ton établissement.</li>
+          <li>Pour les enseignants : les « détecteurs d’IA » se trompent souvent et ne doivent pas servir de preuve. Un échange oral sur le devoir est plus fiable.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>Connexion, données mobiles et coût</summary>
+        <ul>
+          <li>Écris ta consigne complète avant de l’envoyer, pour limiter les échanges et la consommation de données.</li>
+          <li>Garde les réponses utiles dans un fichier : tu n’auras pas besoin de les redemander.</li>
+          <li>Les offres gratuites sont limitées et changent. Pour travailler sans connexion, des outils comme Ollama ou LM Studio permettent d’utiliser un modèle sur son ordinateur, à condition qu’il soit assez puissant.</li>
+        </ul>
+      </details>
+    </div>
+  </section>
+
+  <section id="confidentialite">
+    <div class="safe">
+      <h2>Ce qu’il ne faut jamais envoyer à une IA</h2>
+      <ul>
+        <li>Mots de passe, codes reçus par SMS, codes de mobile money, numéros de carte ou de compte.</li>
+        <li>Pièces d’identité, photos privées, adresses personnelles.</li>
+        <li>Informations privées sur des élèves ou des collègues : noms, notes, dossiers disciplinaires.</li>
+        <li>Documents confidentiels de ton établissement ou de ton employeur.</li>
+        <li>Selon les réglages du service, tes conversations peuvent être conservées et servir à améliorer les modèles : vérifie les paramètres de confidentialité, et remplace les vrais noms par des exemples quand tu peux.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="voir-aussi">
+    <div class="sec-head"><h2>Voir aussi sur le site</h2></div>
+    <div class="pills">
+      <a href="informatique.html">Informatique</a>
+      <a href="veille-technologique.html">Veille technologique</a>
+      <a href="verification.html">Vérification</a>
+      <a href="langues.html">Langues</a>
+      <a href="cours-libres.html">Cours libres</a>
+      <a href="outils.html">Outils</a>
+      <a href="technologie.html">Technologie</a>
+    </div>
+  </section>
+
+  <p class="note">
+    Les liens de cette page mènent vers des sites externes, qui ne dépendent pas du Club Réussir Ensemble : leur contenu, leurs conditions et leurs prix peuvent changer. Si un lien ne s’ouvre plus, signale-le au club depuis la page Contact. Cette page présente des outils sans les classer et ne remplace ni un enseignant ni une source officielle.
+  </p>
+</main>
+
+<footer>
+  <div class="wrap">Club Réussir Ensemble · <a href="index.html">Retour à l’accueil</a></div>
+</footer>
+
+<script>
+
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+/* ---------- Thème ---------- */
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme", t);
+  $("#themeBtn").textContent = t === "dark" ? "☀️" : "🌙";
+  try{ localStorage.setItem("cre-theme", t); }catch(e){}
+}
+$("#themeBtn").onclick = () => applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+applyTheme((() => { try{ return localStorage.getItem("cre-theme") || "light"; }catch(e){ return "light"; } })());
+
+/* ---------- Filtre des ressources ---------- */
+const norm = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+let curCat = "all";
+function filtre(){
+  const q = norm($("#q").value);
+  const mots = q ? q.split(/\s+/) : [];
+  let n = 0;
+  $$("#grid .res").forEach(a => {
+    const okCat = curCat === "all" || a.dataset.cat === curCat;
+    const okQ = mots.every(m => a.dataset.q.includes(m));
+    const show = okCat && okQ;
+    a.hidden = !show;
+    if(show) n++;
+  });
+  $("#count").textContent = n + (n > 1 ? " ressources" : " ressource");
+  $("#empty").hidden = n > 0;
+}
+$("#q").addEventListener("input", filtre);
+$$("#tabs .tab").forEach(b => b.addEventListener("click", () => {
+  curCat = b.dataset.cat;
+  $$("#tabs .tab").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  filtre();
+}));
+
+/* ---------- Copier dans le presse-papiers ---------- */
+function copyText(txt, btn, label){
+  const old = label || btn.textContent;
+  const done = () => { btn.textContent = "Copié ✓"; setTimeout(() => btn.textContent = old, 1600); };
+  const fallback = () => {
+    const t = document.createElement("textarea");
+    t.value = txt; t.style.position = "fixed"; t.style.opacity = "0";
+    document.body.appendChild(t); t.select();
+    try{ document.execCommand("copy"); done(); }catch(e){ btn.textContent = "Sélectionne et copie"; }
+    t.remove();
+  };
+  if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(txt).then(done, fallback); }
+  else fallback();
+}
+$$(".pcard .copy").forEach(b => b.addEventListener("click", () => copyText($(".ptxt", b.closest(".pcard")).textContent.trim(), b, "Copier")));
+
+/* ---------- Générateur de consigne ---------- */
+(function(){
+  const F = {role:$("#g-role"), task:$("#g-task"), ctx:$("#g-ctx"), fmt:$("#g-fmt"), rules:$("#g-rules")};
+  const doubt = $("#g-doubt"), out = $("#g-out");
+  const DOUBT = "Si tu n’es pas sûr d’une information, dis-le clairement au lieu d’inventer.";
+  function build(){
+    const v = k => F[k].value.trim();
+    const lines = [];
+    if(v("role")) lines.push("Tu es " + v("role") + ".");
+    if(v("task")) lines.push("Tâche : " + v("task"));
+    if(v("ctx")) lines.push("Contexte : " + v("ctx"));
+    if(v("fmt")) lines.push("Format de la réponse : " + v("fmt"));
+    if(v("rules")) lines.push("Contraintes : " + v("rules"));
+    if(!lines.length){ out.textContent = "Ta consigne apparaîtra ici."; out.classList.add("empty-state"); return ""; }
+    if(doubt.checked) lines.push(DOUBT);
+    const txt = lines.join("\n");
+    out.textContent = txt; out.classList.remove("empty-state");
+    return txt;
+  }
+  Object.values(F).forEach(el => el.addEventListener("input", build));
+  doubt.addEventListener("change", build);
+  $("#g-copy").addEventListener("click", e => { const t = build(); if(t) copyText(t, e.target, "Copier la consigne"); });
+  $("#g-reset").addEventListener("click", () => { Object.values(F).forEach(el => el.value = ""); doubt.checked = true; build(); });
+  const EX = {
+    exo:{role:"professeur de physique en Guinée", task:"Créer un exercice sur la loi d’Ohm avec un corrigé détaillé étape par étape", ctx:"Classe de 3e, 40 élèves, sans calculatrice", fmt:"Énoncé, puis corrigé, avec un barème sur 20", rules:"Langage simple, valeurs faciles à calculer, exemple tiré de la vie courante"},
+    rev:{role:"tuteur patient", task:"M’expliquer la notion de [notion] puis me poser 3 questions, une à la fois, en attendant ma réponse", ctx:"Je suis élève en [classe] et je prépare un devoir", fmt:"Explication courte, puis questions", rules:"Exemples de la vie quotidienne en Guinée, pas de jargon"},
+    lettre:{role:"assistant de rédaction administrative", task:"Rédiger une lettre de demande d’autorisation adressée à [destinataire]", ctx:"[objet de la demande, dates, raisons]", fmt:"Lettre formelle de 200 mots maximum", rules:"Ton respectueux et clair, avec formule d’appel et formule de politesse"}
+  };
+  $$("[data-ex]").forEach(b => b.addEventListener("click", () => {
+    const e = EX[b.dataset.ex];
+    for(const k in F) F[k].value = e[k];
+    doubt.checked = true; build();
+  }));
+  build();
+})();
+
+</script>
+</body>
+</html>
