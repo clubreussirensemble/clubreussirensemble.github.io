@@ -1109,6 +1109,25 @@ async function validerCompteEleve(uid, e){
 
 let eleves = [], evaluations = [], matieres = [];
 
+// Contact rapide d'un élève : WhatsApp / SMS (message pré-rempli)
+function elvTelNum(tel){
+  let d = (tel||'').replace(/[^0-9]/g, '');
+  if(!d) return '';
+  if(d.startsWith('00')) d = d.slice(2);
+  if(d.startsWith('224')) return d;
+  if(d.startsWith('0')) d = d.slice(1);
+  return '224' + d;
+}
+function elvContactBtns(e){
+  const d = elvTelNum(e.telephone);
+  if(!d) return '';
+  const msg = 'Bonjour ' + (e.prenom||'') + ', ici le Club Réussir Ensemble de Mamou.';
+  const q = encodeURIComponent(msg);
+  return '<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">' +
+    '<a class="small-btn" style="background:#25D366;display:inline-block;text-decoration:none" href="https://wa.me/' + d + '?text=' + q + '" target="_blank" rel="noopener">WhatsApp</a>' +
+    '<a class="small-btn" style="background:var(--navy);display:inline-block;text-decoration:none" href="sms:+' + d + '?body=' + q + '">SMS</a></div>';
+}
+
 const loginView = document.getElementById('loginView');
 const adminView = document.getElementById('adminView');
 
@@ -1502,7 +1521,7 @@ function startListeners(){
   onSnapshot(collection(fbDB, C_ELEVES), snap=>{
     eleves = snap.docs.map(d=>({uid:d.id, ...d.data()}));
     document.getElementById('elevesBody').innerHTML = eleves.length ? eleves.map(e=>
-      `<tr><td>${e.prenom||''} ${e.nom||''}</td><td>${e.classe||'—'}</td><td>${e.telephone||'—'}</td><td>${e.email||'—'}</td>
+      `<tr><td>${e.prenom||''} ${e.nom||''}</td><td>${e.classe||'—'}</td><td>${e.telephone||'—'}${elvContactBtns(e)}</td><td>${e.email||'—'}</td>
        <td><span class="pill ${e.statut==='valide'?'ok':'attente'}">${e.statut==='valide'?'Validé':'En attente'}</span></td>
        <td>${e.statut!=='valide' ? `<button class="small-btn" data-valel="${e.uid}">Valider</button>` : ''}
        <button class="small-btn" data-delel="${e.uid}" style="background:var(--red)">🗑 Supprimer le compte</button></td></tr>`
