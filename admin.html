@@ -389,9 +389,10 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px">
           <div class="field"><label>Mot de passe Directeur</label><input id="gsPwDir" value="admin1234"></div>
           <div class="field"><label>Mot de passe Caissier</label><input id="gsPwCai" value="caisse123"></div>
+          <div class="field"><label>Mot de passe Gestion école</label><input id="gsPwEco" placeholder="mot de passe par défaut de Gestion école"></div>
           <div class="field"><label>Lien de connexion</label><input id="gsPwLink" type="url"></div>
         </div>
-        <div class="field" style="margin-top:10px"><label>Message (variables : {nom} {email} {lien} {mdp_directeur} {mdp_caissier})</label>
+        <div class="field" style="margin-top:10px"><label>Message (variables : {nom} {email} {lien} {mdp_directeur} {mdp_caissier} {mdp_ecole})</label>
           <textarea id="gsPwMsg" rows="7" style="padding:9px 11px;border:1.5px solid var(--line);border-radius:7px;font:inherit;font-size:13.5px;width:100%"></textarea></div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center">
           <button type="button" class="small-btn" id="gsPwSave" style="background:var(--navy)">💾 Enregistrer</button>
@@ -1228,18 +1229,19 @@ function renderBoutiques(){
 }
 
 // ── Abonnés Gestion scolaire (gestion-ecole-abonne.html + gestion-financiere-abonne.html) ──
-const GS_PW_KEY = 'gsPwConfig';
-const GS_PW_TPL = "Bonjour {nom},\nVotre accès à Gestion scolaire est prêt.\n\n🔗 Lien : {lien}\n👤 Identifiant : {email}\n\nMots de passe par défaut des espaces :\n• Directeur : {mdp_directeur}\n• Caissier : {mdp_caissier}\n\nPensez à les changer dès la première connexion (bouton 🔑 MDP).";
+const GS_PW_KEY = 'gsPwConfig2';
+const GS_PW_TPL = "Bonjour {nom},\nVotre accès à Gestion financière et à Gestion école est prêt.\n\n🔗 Lien : {lien}\n👤 Identifiant : {email}\n\nMots de passe par défaut :\n💰 Gestion financière\n• Directeur : {mdp_directeur}\n• Caissier : {mdp_caissier}\n🏫 Gestion école : {mdp_ecole}\n\n⚠️ Ce sont des mots de passe provisoires. À votre première connexion, vous devez créer vous-même votre propre mot de passe (bouton 🔑 MDP) pour la Gestion financière et pour la Gestion école.";
 function gsPwLoad(){
   let c = {};
   try{ c = JSON.parse(localStorage.getItem(GS_PW_KEY)||'{}'); }catch(e){}
   document.getElementById('gsPwDir').value = c.dir || 'admin1234';
   document.getElementById('gsPwCai').value = c.cai || 'caisse123';
+  document.getElementById('gsPwEco').value = c.eco || '';
   document.getElementById('gsPwLink').value = c.link || new URL('accueil-gestion.html', location.href).href;
   document.getElementById('gsPwMsg').value = c.msg || GS_PW_TPL;
 }
 function gsPwSave(){
-  const c = { dir: document.getElementById('gsPwDir').value.trim(), cai: document.getElementById('gsPwCai').value.trim(),
+  const c = { dir: document.getElementById('gsPwDir').value.trim(), cai: document.getElementById('gsPwCai').value.trim(), eco: document.getElementById('gsPwEco').value.trim(),
               link: document.getElementById('gsPwLink').value.trim(), msg: document.getElementById('gsPwMsg').value };
   try{ localStorage.setItem(GS_PW_KEY, JSON.stringify(c)); }catch(e){}
   const i = document.getElementById('gsPwInfo'); i.textContent = 'Enregistré ✓'; setTimeout(()=>{ i.textContent=''; }, 2000);
@@ -1247,9 +1249,11 @@ function gsPwSave(){
 function gsPwText(g, nom){
   const v = {
     nom: nom(g), email: g.email || '', lien: document.getElementById('gsPwLink').value.trim(),
-    mdp_directeur: document.getElementById('gsPwDir').value.trim(), mdp_caissier: document.getElementById('gsPwCai').value.trim()
+    mdp_directeur: document.getElementById('gsPwDir').value.trim(), mdp_caissier: document.getElementById('gsPwCai').value.trim(), mdp_ecole: document.getElementById('gsPwEco').value.trim()
   };
-  return document.getElementById('gsPwMsg').value.replace(/\{(\w+)\}/g, (m,k)=> k in v ? v[k] : m);
+  let tpl = document.getElementById('gsPwMsg').value;
+  if(!v.mdp_ecole) tpl = tpl.split('\n').filter(l=>!l.includes('{mdp_ecole}')).join('\n');
+  return tpl.replace(/\{(\w+)\}/g, (m,k)=> k in v ? v[k] : m);
 }
 function gsPwSend(g, canal, nom, tel){
   const d = bqWa(tel(g)); if(!d){ alert('Aucun numéro de téléphone pour cet abonné.'); return false; }
