@@ -212,6 +212,19 @@ tbody tr:hover{background:#F5F8FC}
 .cre-hero-logo{background:#fff!important;padding:6px!important;object-fit:contain!important;box-shadow:0 0 0 3px #FAB202,0 10px 28px rgba(0,0,0,.3)!important}
 #loginLogo{background:#fff!important;padding:4px!important;object-fit:contain!important;box-shadow:0 8px 24px rgba(10,42,87,.25)!important;border:1px solid #E3E9F2}
 .cre-foot-brand img{background:#fff;padding:3px;object-fit:contain;border-radius:50%}
+
+/* ===== Verrouillage par mot de passe ===== */
+#lockScreen{display:none;position:fixed;inset:0;z-index:1000;background:var(--ink);align-items:center;justify-content:center;padding:20px;}
+#lockScreen .box{background:var(--white);border-radius:12px;padding:26px 24px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px;text-align:center;}
+#lockScreen h2{font-family:'Poppins',sans-serif;margin:0;color:var(--ink);font-size:20px;}
+#lockScreen p{margin:0;font-size:12.5px;color:var(--muted);}
+#lockScreen .pw{position:relative;}
+#lockScreen input{width:100%;box-sizing:border-box;padding:11px 44px 11px 12px;border:1px solid var(--paper-line);border-radius:8px;font-size:15px;font-family:inherit;}
+#lockScreen .eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;font-size:18px;padding:4px;}
+#lockScreen button.b1{padding:11px;border-radius:8px;border:0;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;background:var(--ink);color:#fff;}
+#lockScreen button.b2{padding:9px;border-radius:8px;border:1px solid var(--paper-line);font-size:13px;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink);}
+#lockScreen .err{color:var(--red);font-size:12.5px;min-height:16px;}
+@media print{ #lockScreen{display:none !important;} }
 </style>
 </head>
 <body>
@@ -229,6 +242,20 @@ tbody tr:hover{background:#F5F8FC}
     <button class="b2 installBtn" style="display:none" onclick="installApp()">📲 Installer l'application</button>
     <p class="iosHint" style="display:none">Sur iPhone : touchez Partager puis « Sur l'écran d'accueil ».</p>
     <button class="b2" id="authSkip" style="display:none" onclick="appStartLocal()">Continuer sans connexion</button>
+  </div>
+</div>
+
+<div id="lockScreen">
+  <div class="box">
+    <div style="font-size:38px">🔐</div>
+    <h2 id="lockTitle">Application verrouillée</h2>
+    <p id="lockSub">Entrez votre mot de passe pour accéder au registre.</p>
+    <div class="pw"><input type="password" id="lockPwd" placeholder="Mot de passe" autocomplete="off" onkeydown="if(event.key==='Enter')lockSubmit()"><button type="button" class="eye" onclick="lockEye('lockPwd',this)">👁️</button></div>
+    <div class="pw" id="lockConfRow" style="display:none"><input type="password" id="lockPwd2" placeholder="Confirmer le mot de passe" autocomplete="off" onkeydown="if(event.key==='Enter')lockSubmit()"><button type="button" class="eye" onclick="lockEye('lockPwd2',this)">👁️</button></div>
+    <div class="err" id="lockErr"></div>
+    <button class="b1" id="lockBtn" onclick="lockSubmit()">🔓 Déverrouiller</button>
+    <button class="b2" id="lockForgot" onclick="lockForgot()">Mot de passe oublié ?</button>
+    <button class="b2" id="lockCancel" style="display:none" onclick="lockHide()">Annuler</button>
   </div>
 </div>
 
@@ -250,6 +277,8 @@ tbody tr:hover{background:#F5F8FC}
       <input type="file" id="logoImport" accept="image/*">
       <div id="userBox" style="display:none;font-size:11.5px;color:#B9C0D8;text-align:center;word-break:break-all;"></div>
       <button class="btn-mini installBtn" style="display:none;color:#FFF3DC;border-color:var(--gold);width:100%;" onclick="installApp()">📲 Installer l'application</button>
+      <button class="btn-mini" style="color:#D7DBEA;border-color:#5a6488;width:100%;" onclick="lockNow()">🔒 Verrouiller</button>
+      <button class="btn-mini" style="color:#D7DBEA;border-color:#5a6488;width:100%;" onclick="lockChange()">🔑 Changer le mot de passe</button>
       <button id="logoutBtn" class="btn-mini" style="display:none;color:#D7DBEA;border-color:#5a6488;width:100%;" onclick="authLogout()">⎋ Se déconnecter</button>
       <button class="btn-mini" style="color:#E7A9A9;border-color:#7a4646;width:100%;" onclick="wipeAll()">🗑 Tout effacer</button>
     </div>
@@ -420,6 +449,75 @@ async function authLogout(){
   if(CLOUD.ready) await cloudPush();
   await window.fbAuthAction('logout');
 }
+
+/* ---- Verrouillage par mot de passe ---- */
+let LOCK = {mode:'enter', uid:null, fails:0, until:0, unlocked:false};
+function lockKey(){ return 'app_lock_'+(LOCK.uid||'local'); }
+async function lockHash(pw){
+  const str = 'ecole|'+(LOCK.uid||'local')+'|'+pw;
+  try{
+    if(window.crypto && crypto.subtle){
+      const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return 'h2:'+Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
+    }
+  }catch(e){}
+  let h=5381; for(let i=0;i<str.length;i++) h=((h<<5)+h+str.charCodeAt(i))|0;
+  return 'h1:'+h;
+}
+function lockEye(id,btn){ const i=document.getElementById(id); if(i.type==='password'){i.type='text';btn.textContent='🙈';}else{i.type='password';btn.textContent='👁️';} }
+function lockErr(m){ document.getElementById('lockErr').textContent=m||''; }
+function lockShow(mode){
+  LOCK.mode=mode;
+  const T=document.getElementById('lockTitle'), S=document.getElementById('lockSub'), B=document.getElementById('lockBtn');
+  document.getElementById('lockPwd').value=''; document.getElementById('lockPwd2').value=''; lockErr('');
+  document.getElementById('lockConfRow').style.display = mode==='enter' ? 'none' : '';
+  document.getElementById('lockForgot').style.display = mode==='enter' ? '' : 'none';
+  document.getElementById('lockCancel').style.display = mode==='change' ? '' : 'none';
+  if(mode==='enter'){ T.textContent='Application verrouillée'; S.textContent='Entrez votre mot de passe pour accéder au registre.'; B.textContent='🔓 Déverrouiller'; document.getElementById('lockPwd').placeholder='Mot de passe'; }
+  else if(mode==='create'){ T.textContent='Créez votre mot de passe'; S.textContent='Ce mot de passe protège l\'accès au registre (6 caractères minimum).'; B.textContent='💾 Enregistrer et entrer'; document.getElementById('lockPwd').placeholder='Nouveau mot de passe'; }
+  else { T.textContent='Changer le mot de passe'; S.textContent='Choisissez un nouveau mot de passe (6 caractères minimum).'; B.textContent='💾 Enregistrer'; document.getElementById('lockPwd').placeholder='Nouveau mot de passe'; }
+  document.getElementById('lockScreen').style.display='flex';
+  setTimeout(()=>{ try{document.getElementById('lockPwd').focus();}catch(e){} },50);
+}
+function lockHide(){ document.getElementById('lockScreen').style.display='none'; LOCK.unlocked=true; }
+function lockStart(uid){        // appelé à l'ouverture de l'application
+  LOCK.uid = uid||null; LOCK.unlocked=false; LOCK.fails=0; LOCK.until=0;
+  let has=null; try{ has=localStorage.getItem(lockKey()); }catch(e){}
+  lockShow(has ? 'enter' : 'create');
+}
+function lockNow(){ lockStart(LOCK.uid); }
+function lockChange(){
+  if(!LOCK.unlocked){ return; }
+  lockShow('change');
+}
+async function lockSubmit(){
+  const pw=document.getElementById('lockPwd').value;
+  if(LOCK.mode==='enter'){
+    if(Date.now()<LOCK.until){ lockErr('Trop d\'essais. Patientez '+Math.ceil((LOCK.until-Date.now())/1000)+' s.'); return; }
+    let saved=null; try{ saved=localStorage.getItem(lockKey()); }catch(e){}
+    if(saved && await lockHash(pw)===saved){ LOCK.fails=0; lockHide(); }
+    else{
+      LOCK.fails++; document.getElementById('lockPwd').value='';
+      if(LOCK.fails>=5){ LOCK.until=Date.now()+30000; LOCK.fails=0; lockErr('Trop d\'essais. Réessayez dans 30 secondes.'); }
+      else lockErr('❌ Mot de passe incorrect');
+    }
+    return;
+  }
+  const pw2=document.getElementById('lockPwd2').value;
+  if(pw.length<6){ lockErr('Le mot de passe doit avoir au moins 6 caractères.'); return; }
+  if(pw!==pw2){ lockErr('Les mots de passe ne correspondent pas.'); return; }
+  try{ localStorage.setItem(lockKey(), await lockHash(pw)); }catch(e){ lockErr('Impossible d\'enregistrer le mot de passe sur cet appareil.'); return; }
+  lockHide(); toast('Mot de passe enregistré ✓');
+}
+async function lockForgot(){
+  const email=(document.getElementById('userBox').textContent||'').trim();
+  if(!LOCK.uid || !email){ lockErr('Mot de passe oublié : reconnexion impossible hors connexion. Connectez-vous à votre compte pour le réinitialiser.'); return; }
+  const acc=prompt('Pour réinitialiser, saisissez le mot de passe de votre COMPTE ('+email+') :');
+  if(!acc) return;
+  try{ await window.fbAuthAction('login', email, acc); }
+  catch(e){ lockErr(authFriendly(e)); return; }
+  lockShow('create'); toast('Compte vérifié : choisissez un nouveau mot de passe');
+}
 /* ---- Installation (PWA) ---- */
 let deferredInstall = null;
 window.addEventListener('beforeinstallprompt', e=>{
@@ -464,6 +562,7 @@ function appStartLocal(){          // accès sans connexion (comme avant, hors l
   document.getElementById('authGate').style.display = 'none';
   document.getElementById('app').style.display = '';
   boot();
+  lockStart(null);
 }
 async function appOnAuth(user){
   const gate = document.getElementById('authGate'), app = document.getElementById('app');
@@ -471,6 +570,7 @@ async function appOnAuth(user){
     authMsg('');
     CLOUD.uid = null; CLOUD.ready = false; CLOUD.last = {};
     app.style.display = 'none'; gate.style.display = 'flex';
+    document.getElementById('lockScreen').style.display = 'none'; LOCK.unlocked=false;
     document.getElementById('authPass').value = '';
     return;
   }
@@ -483,6 +583,7 @@ async function appOnAuth(user){
   document.getElementById('userBox').textContent = user.email || '';
   document.getElementById('logoutBtn').style.display = 'block';
   boot();
+  if(!(LOCK.uid===user.uid && LOCK.unlocked)) lockStart(user.uid);   // pas de re-verrouillage si le compte est déjà déverrouillé
   await cloudSync();
 }
 /* ---- Orientation d'impression (portrait / paysage), mémorisée ---- */
