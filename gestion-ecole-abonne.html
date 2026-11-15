@@ -267,7 +267,13 @@ tbody tr:hover{background:#F5F8FC}
         <select id="yearSelect"></select>
         <button class="btn-mini" onclick="promptNewYear()">+ Nouvelle</button>
       </div>
-      <button class="btn-mini no-print" onclick="window.print()">🖶 Imprimer (A4)</button>
+      <div class="no-print" style="display:flex;align-items:center;gap:6px;">
+        <select id="orientSelect" onchange="setPrintOrientation(this.value)" title="Orientation de l'impression" style="border:1px solid var(--paper-line);border-radius:999px;padding:5px 10px;font-size:12.5px;background:#fff;">
+          <option value="portrait">A4 portrait</option>
+          <option value="landscape">A4 paysage</option>
+        </select>
+        <button class="btn-mini" onclick="window.print()">🖶 Imprimer</button>
+      </div>
     </div>
     <div class="content" id="content"></div>
   </div>
@@ -479,6 +485,16 @@ async function appOnAuth(user){
   boot();
   await cloudSync();
 }
+/* ---- Orientation d'impression (portrait / paysage), mémorisée ---- */
+function setPrintOrientation(v){
+  if(v!=='landscape') v='portrait';
+  let st=document.getElementById('printOrientStyle');
+  if(!st){ st=document.createElement('style'); st.id='printOrientStyle'; document.head.appendChild(st); }
+  st.textContent='@media print{ @page{ size: A4 '+v+'; margin: 14mm 12mm; } }';
+  try{ localStorage.setItem('print_orientation', v); }catch(e){}
+  const sel=document.getElementById('orientSelect'); if(sel) sel.value=v;
+}
+(function(){ let v='portrait'; try{ v=localStorage.getItem('print_orientation')||'portrait'; }catch(e){} setPrintOrientation(v); })();
 function uid(){
   return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,9);
 }
@@ -949,6 +965,50 @@ const MODULES = [
      {key:'observation', label:'Observation', type:'text'},
    ]},
 
+  {key:'congesPersonnel', group:"Vie de l'établissement", label:'Congés et permissions du personnel',
+   desc:"Suivi des congés, maladies et permissions accordés au personnel.",
+   fields:[
+     {key:'personnelId', label:'Personnel', type:'personnel', required:true},
+     {key:'type', label:'Type', type:'select', options:['Congé annuel','Maladie','Maternité / paternité','Permission','Autre']},
+     {key:'dateDebut', label:'Date de début', type:'date'},
+     {key:'dateFin', label:'Date de fin', type:'date'},
+     {key:'nombreJours', label:'Nombre de jours', type:'number'},
+     {key:'autorisePar', label:'Autorisé par', type:'text'},
+     {key:'observation', label:'Observation', type:'textarea'},
+   ]},
+  {key:'caisseEcole', group:'Gestion matérielle', label:"Caisse de l'école (recettes et dépenses)",
+   desc:"Entrées et sorties d'argent de l'école. Les paiements, dépenses et salaires de la gestion financière s'ajoutent automatiquement ; vous pouvez aussi saisir des lignes à la main.",
+   fields:[
+     {key:'date', label:'Date', type:'date'},
+     {key:'nature', label:'Nature', type:'select', options:['Recette','Dépense'], required:true},
+     {key:'libelle', label:'Libellé', type:'text', required:true},
+     {key:'montant', label:'Montant', type:'number'},
+     {key:'piece', label:'N° de pièce / reçu', type:'text'},
+     {key:'observation', label:'Observation', type:'text'},
+   ]},
+  {key:'absencesEleves', group:'Vie scolaire', label:"Registre d'appel — absences et retards des élèves",
+   desc:"Suivi des absences et retards des élèves, avec motif et justificatif.",
+   fields:[
+     {key:'date', label:'Date', type:'date'},
+     {key:'eleveId', label:'Élève', type:'eleve', required:true},
+     {key:'classe', label:'Classe', type:'text'},
+     {key:'type', label:'Type', type:'select', options:['Absence','Retard']},
+     {key:'motif', label:'Motif', type:'text'},
+     {key:'justifie', label:'Justifié ?', type:'select', options:['Oui','Non']},
+     {key:'observation', label:'Observation', type:'text'},
+   ]},
+  {key:'registreDisciplinaire', group:'Vie scolaire', label:'Registre disciplinaire',
+   desc:"Fautes commises par les élèves, sanctions appliquées et information des parents.",
+   fields:[
+     {key:'date', label:'Date', type:'date'},
+     {key:'eleveId', label:'Élève', type:'eleve', required:true},
+     {key:'classe', label:'Classe', type:'text'},
+     {key:'faute', label:'Faute commise', type:'textarea'},
+     {key:'sanction', label:'Sanction appliquée', type:'text'},
+     {key:'parentInforme', label:'Parent informé ?', type:'select', options:['Oui','Non']},
+     {key:'observation', label:'Observation', type:'text'},
+   ]},
+
   // ---- Rapport de rentrée scolaire ----
   {key:'previsionEffectifsRentree', group:'Rapport de rentrée scolaire', label:'Prévision des effectifs pour la rentrée prochaine',
    desc:"Redoublants, promus et total prévus par niveau, avec nombre de groupes pédagogiques.",
@@ -1390,7 +1450,7 @@ function renderDashboard(){
     <div style="margin-top:26px;" class="panel">
       <div class="panel-head">
         <div>
-          <h2>28 rubriques du cahier de charges</h2>
+          <h2>${MODULES.length} rubriques du cahier de charges</h2>
           <p>Toutes les données sont stockées uniquement sur cet appareil, sans connexion internet. Pensez à exporter une sauvegarde régulièrement (menu de gauche) pour ne rien perdre.</p>
         </div>
       </div>
@@ -1447,6 +1507,9 @@ function renderTable(m){
       <button class="btn-mini" style="margin-top:10px;" onclick="promptNewYear()">+ Créer l'année scolaire</button></div></div></div>`;
     return;
   }
+  if(m.key==='eleves') return renderEleves(m);
+  if(m.key==='caisseEcole') return renderCaisse(m);
+  if(CLASS_FILTER_MODULES.includes(m.key)) return renderByClass(m);
   const rows = rowsOf(m);
   c.innerHTML = `
     ${printHeaderHTML(m.label)}
@@ -1473,6 +1536,242 @@ function renderTable(m){
           </tbody>
         </table>
       </div>
+    </div>`;
+}
+
+
+/* ---------- Registre matricule : filtre et impression par classe ---------- */
+let eleveClassFilter = '';
+function escH(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function setEleveClass(v){ eleveClassFilter = v; renderCurrentModule(); }
+function printEleveClass(){ window.print(); }
+
+function renderEleves(m){
+  const c = document.getElementById('content');
+  const all = rowsOf(m);
+  const norm = r => ((r.classeActuelle||'').trim() || '(Sans classe)');
+  const classes = [...new Set(all.map(norm))].sort((a,b)=>a.localeCompare(b,'fr',{numeric:true}));
+  if(eleveClassFilter && eleveClassFilter!=='__ALL__' && !classes.includes(eleveClassFilter)) eleveClassFilter = '';
+  const byName = (a,b)=>((a.nom||'')+' '+(a.prenom||'')).localeCompare((b.nom||'')+' '+(b.prenom||''),'fr');
+
+  const tableHTML = (rows, withActions)=>`
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th style="width:36px;">N°</th>${m.fields.map(f=>`<th>${f.label}</th>`).join('')}${withActions?'<th class="no-print" style="width:80px;">Actions</th>':''}</tr></thead>
+        <tbody>
+          ${rows.length===0
+            ? `<tr class="empty-row"><td colspan="${m.fields.length+2}">Aucun élève pour le moment. Cliquez sur « + Ajouter ».</td></tr>`
+            : rows.map((row,i)=>`
+              <tr>
+                <td>${i+1}</td>
+                ${m.fields.map(f=>`<td>${fieldDisplay(f,row)}</td>`).join('')}
+                ${withActions?`<td class="row-actions no-print">
+                  <button class="icon-btn" title="Modifier" onclick='openForm(${JSON.stringify(m.key)}, ${JSON.stringify(row.id)})'>✎</button>
+                  <button class="icon-btn del" title="Supprimer" onclick='deleteRow(${JSON.stringify(m.key)}, ${JSON.stringify(row.id)})'>✕</button>
+                </td>`:''}
+              </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  const toolbar = `
+    <div class="no-print" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--paper-line);background:#FAFBFD;">
+      <label style="font-size:12px;color:var(--muted);font-weight:600;">Classe</label>
+      <select onchange="setEleveClass(this.value)" style="border:1px solid var(--paper-line);border-radius:7px;padding:7px 10px;font-size:13.5px;">
+        <option value="">Toutes les classes (liste unique)</option>
+        <option value="__ALL__" ${eleveClassFilter==='__ALL__'?'selected':''}>Toutes — une page par classe</option>
+        ${classes.map(k=>`<option value="${escH(k)}" ${eleveClassFilter===k?'selected':''}>${escH(k)} (${all.filter(r=>norm(r)===k).length})</option>`).join('')}
+      </select>
+      <button class="btn" onclick="printEleveClass()">🖶 Imprimer ${eleveClassFilter==='__ALL__'?'toutes les classes':(eleveClassFilter?'la classe '+escH(eleveClassFilter):'la liste')}</button>
+    </div>`;
+
+  let body;
+  if(eleveClassFilter==='__ALL__'){
+    body = classes.map((k,idx)=>{
+      const rows = all.filter(r=>norm(r)===k).sort(byName);
+      return `<section style="${idx>0?'break-before:page;page-break-before:always;':''}">
+        ${idx>0 ? printHeaderHTML(m.label+' — Classe : '+k) : ''}
+        <div style="padding:12px 20px 4px;font-family:'Poppins',sans-serif;font-weight:700;color:var(--ink);">Classe : ${escH(k)} <span style="font-weight:500;color:var(--muted);font-size:12.5px;">— Effectif : ${rows.length}</span></div>
+        ${tableHTML(rows,true)}
+      </section>`;
+    }).join('') || tableHTML([],true);
+  } else {
+    const rows = eleveClassFilter ? all.filter(r=>norm(r)===eleveClassFilter).sort(byName) : all;
+    body = (eleveClassFilter?`<div style="padding:12px 20px 4px;font-family:'Poppins',sans-serif;font-weight:700;color:var(--ink);">Classe : ${escH(eleveClassFilter)} <span style="font-weight:500;color:var(--muted);font-size:12.5px;">— Effectif : ${rows.length}</span></div>`:'') + tableHTML(rows,true);
+  }
+
+  const headLabel = eleveClassFilter && eleveClassFilter!=='__ALL__' ? m.label+' — Classe : '+eleveClassFilter : (eleveClassFilter==='__ALL__' ? m.label+' — Classe : '+(classes[0]||'') : m.label);
+  c.innerHTML = `
+    ${printHeaderHTML(headLabel)}
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>${m.label}</h2><p>${m.desc||''}</p></div>
+        <button class="btn gold no-print" onclick="openForm('${m.key}')">+ Ajouter</button>
+      </div>
+      ${toolbar}
+      ${body}
+    </div>`;
+}
+
+
+/* ---------- Caisse de l'école : saisie manuelle + données reçues de la gestion financière ---------- */
+let CAISSE_FIN = [];
+let caisseMois = '';
+function setCaisseFin(a){ CAISSE_FIN = Array.isArray(a)?a:[]; if(currentModuleKey==='caisseEcole') renderCurrentModule(); }
+function setCaisseMois(v){ caisseMois = v; renderCurrentModule(); }
+function fmtGNF(n){ return (Number(n)||0).toLocaleString('fr-FR') + ' GNF'; }
+function moisLabel(k){
+  const d = new Date(k+'-01T00:00:00');
+  const t = d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  return t.charAt(0).toUpperCase()+t.slice(1);
+}
+function renderCaisse(m){
+  const c = document.getElementById('content');
+  const manual = rowsOf(m).map(r=>Object.assign({},r,{_src:'manuel'}));
+  const sync = CAISSE_FIN.map(r=>Object.assign({},r,{_src:'compta'}));
+  const all = manual.concat(sync);
+  const mois = [...new Set(all.map(r=>(r.date||'').slice(0,7)).filter(Boolean))].sort().reverse();
+  if(caisseMois && !mois.includes(caisseMois)) caisseMois = '';
+  const list = all.filter(r=>!caisseMois || (r.date||'').slice(0,7)===caisseMois)
+                  .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  let rec=0, dep=0;
+  list.forEach(r=>{ const v=Number(r.montant)||0; if(r.nature==='Recette') rec+=v; else if(r.nature==='Dépense') dep+=v; });
+  const solde = rec-dep;
+  const headLabel = m.label + (caisseMois? ' — '+moisLabel(caisseMois) : '');
+
+  const toolbar = `
+    <div class="no-print" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--paper-line);background:#FAFBFD;">
+      <label style="font-size:12px;color:var(--muted);font-weight:600;">Mois</label>
+      <select onchange="setCaisseMois(this.value)" style="border:1px solid var(--paper-line);border-radius:7px;padding:7px 10px;font-size:13.5px;">
+        <option value="">Tous les mois</option>
+        ${mois.map(k=>`<option value="${k}" ${caisseMois===k?'selected':''}>${moisLabel(k)}</option>`).join('')}
+      </select>
+      <button class="btn" onclick="window.print()">🖶 Imprimer</button>
+      <span style="font-size:12px;color:var(--muted);">🔗 ${sync.length} écriture(s) reçue(s) de la gestion financière (mise à jour automatique, lecture seule)</span>
+    </div>`;
+
+  const stats = `
+    <div class="grid-cards" style="margin:14px 20px;">
+      <div class="stat-card"><div class="lbl">Total recettes</div><div class="num" style="font-size:20px;color:var(--green);">${fmtGNF(rec)}</div></div>
+      <div class="stat-card"><div class="lbl">Total dépenses</div><div class="num" style="font-size:20px;color:var(--red);">${fmtGNF(dep)}</div></div>
+      <div class="stat-card"><div class="lbl">Solde</div><div class="num" style="font-size:20px;color:${solde>=0?'var(--green)':'var(--red)'};">${fmtGNF(solde)}</div></div>
+    </div>`;
+
+  const rowsHTML = list.length===0
+    ? `<tr class="empty-row"><td colspan="9">Aucune écriture. Cliquez sur « + Ajouter » ou enregistrez des opérations dans la gestion financière.</td></tr>`
+    : list.map((r,i)=>`
+      <tr>
+        <td>${i+1}</td>
+        <td>${escH(r.date||'—')}</td>
+        <td>${r._src==='compta'?'Comptabilité':'Saisie manuelle'}</td>
+        <td style="color:${r.nature==='Recette'?'var(--green)':'var(--red)'};font-weight:600;">${escH(r.nature||'—')}</td>
+        <td style="white-space:normal;min-width:200px;">${escH(r.libelle||'—')}</td>
+        <td style="text-align:right;">${fmtGNF(r.montant)}</td>
+        <td>${escH(r.piece||'—')}</td>
+        <td>${escH(r.observation||r.categorie||'—')}</td>
+        <td class="row-actions no-print">${r._src==='manuel'?`
+          <button class="icon-btn" title="Modifier" onclick='openForm(${JSON.stringify(m.key)}, ${JSON.stringify(r.id)})'>✎</button>
+          <button class="icon-btn del" title="Supprimer" onclick='deleteRow(${JSON.stringify(m.key)}, ${JSON.stringify(r.id)})'>✕</button>`:'<span style="color:var(--muted);font-size:11px;">auto</span>'}</td>
+      </tr>`).join('');
+
+  c.innerHTML = `
+    ${printHeaderHTML(headLabel)}
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>${m.label}</h2><p>${m.desc||''}</p></div>
+        <button class="btn gold no-print" onclick="openForm('${m.key}')">+ Ajouter</button>
+      </div>
+      ${toolbar}
+      ${stats}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th style="width:36px;">N°</th><th>Date</th><th>Source</th><th>Nature</th><th>Libellé</th><th>Montant</th><th>N° pièce</th><th>Observation / catégorie</th><th class="no-print" style="width:80px;">Actions</th></tr></thead>
+          <tbody>${rowsHTML}</tbody>
+          <tfoot><tr style="font-weight:700;background:#F5F8FC;">
+            <td colspan="5" style="text-align:right;">Recettes ${fmtGNF(rec)} — Dépenses ${fmtGNF(dep)} — Solde</td>
+            <td style="text-align:right;">${fmtGNF(solde)}</td><td colspan="3"></td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>`;
+}
+
+
+/* ---------- Filtre et impression par classe (absences, registre disciplinaire) ---------- */
+const CLASS_FILTER_MODULES = ['absencesEleves','registreDisciplinaire'];
+let moduleClassFilter = {};
+function rowClasse(r){
+  const e = DB.eleves.find(x=>x.id===r.eleveId);
+  return ((r.classe||'').trim() || (e && (e.classeActuelle||'').trim()) || '(Sans classe)');
+}
+function setModuleClass(key, v){ moduleClassFilter[key] = v; renderCurrentModule(); }
+
+function renderByClass(m){
+  const c = document.getElementById('content');
+  const all = rowsOf(m);
+  const classes = [...new Set(all.map(rowClasse))].sort((a,b)=>a.localeCompare(b,'fr',{numeric:true}));
+  let f = moduleClassFilter[m.key] || '';
+  if(f && f!=='__ALL__' && !classes.includes(f)) f = moduleClassFilter[m.key] = '';
+  const byDate = (a,b)=>(a.date||'').localeCompare(b.date||'');
+
+  const tableHTML = (rows)=>`
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th style="width:36px;">N°</th>${m.fields.map(x=>`<th>${x.label}</th>`).join('')}<th class="no-print" style="width:80px;">Actions</th></tr></thead>
+        <tbody>
+          ${rows.length===0
+            ? `<tr class="empty-row"><td colspan="${m.fields.length+2}">Aucune ligne pour le moment. Cliquez sur « + Ajouter ».</td></tr>`
+            : rows.map((row,i)=>`
+              <tr>
+                <td>${i+1}</td>
+                ${m.fields.map(x=>`<td>${fieldDisplay(x,row)}</td>`).join('')}
+                <td class="row-actions no-print">
+                  <button class="icon-btn" title="Modifier" onclick='openForm(${JSON.stringify(m.key)}, ${JSON.stringify(row.id)})'>✎</button>
+                  <button class="icon-btn del" title="Supprimer" onclick='deleteRow(${JSON.stringify(m.key)}, ${JSON.stringify(row.id)})'>✕</button>
+                </td>
+              </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  const title = (k,n)=>`<div style="padding:12px 20px 4px;font-family:'Poppins',sans-serif;font-weight:700;color:var(--ink);">Classe : ${escH(k)} <span style="font-weight:500;color:var(--muted);font-size:12.5px;">— ${n} ligne(s)</span></div>`;
+
+  const toolbar = `
+    <div class="no-print" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--paper-line);background:#FAFBFD;">
+      <label style="font-size:12px;color:var(--muted);font-weight:600;">Classe</label>
+      <select onchange="setModuleClass('${m.key}', this.value)" style="border:1px solid var(--paper-line);border-radius:7px;padding:7px 10px;font-size:13.5px;">
+        <option value="">Toutes les classes (liste unique)</option>
+        <option value="__ALL__" ${f==='__ALL__'?'selected':''}>Toutes — une page par classe</option>
+        ${classes.map(k=>`<option value="${escH(k)}" ${f===k?'selected':''}>${escH(k)} (${all.filter(r=>rowClasse(r)===k).length})</option>`).join('')}
+      </select>
+      <button class="btn" onclick="window.print()">🖶 Imprimer ${f==='__ALL__'?'toutes les classes':(f?'la classe '+escH(f):'la liste')}</button>
+    </div>`;
+
+  let body;
+  if(f==='__ALL__'){
+    body = classes.map((k,idx)=>{
+      const rows = all.filter(r=>rowClasse(r)===k).sort(byDate);
+      return `<section style="${idx>0?'break-before:page;page-break-before:always;':''}">
+        ${idx>0 ? printHeaderHTML(m.label+' — Classe : '+k) : ''}
+        ${title(k,rows.length)}
+        ${tableHTML(rows)}
+      </section>`;
+    }).join('') || tableHTML([]);
+  } else {
+    const rows = f ? all.filter(r=>rowClasse(r)===f).sort(byDate) : all;
+    body = (f?title(f,rows.length):'') + tableHTML(rows);
+  }
+
+  const headLabel = f && f!=='__ALL__' ? m.label+' — Classe : '+f : (f==='__ALL__' ? m.label+' — Classe : '+(classes[0]||'') : m.label);
+  c.innerHTML = `
+    ${printHeaderHTML(headLabel)}
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>${m.label}</h2><p>${m.desc||''}</p></div>
+        <button class="btn gold no-print" onclick="openForm('${m.key}')">+ Ajouter</button>
+      </div>
+      ${toolbar}
+      ${body}
     </div>`;
 }
 
@@ -1615,6 +1914,15 @@ function liaison(uid0){
     ldocs=snap.docs.map(d=>{const v=d.data();v._t=v.majLe||Date.now();return v});appliquer();
   },e=>console.warn("Liaison :",e));
   setInterval(appliquer,15000); /* ré-applique si la base locale a été rechargée depuis le cloud */
+  /* Caisse reçue de la gestion financière (même compte) */
+  try{window.setCaisseFin(JSON.parse(localStorage.getItem("caisse_fin_"+uid0)||"[]"))}catch(e){}
+  onSnapshot(collection(db,"site_gestscol",uid0,"caisse"),snap=>{
+    if(snap.empty&&snap.metadata.fromCache)return;
+    const out=[];
+    snap.forEach(d=>{try{JSON.parse(d.data().lignes||"[]").forEach(x=>out.push(x))}catch(e){}});
+    try{localStorage.setItem("caisse_fin_"+uid0,JSON.stringify(out))}catch(e){}
+    window.setCaisseFin(out);
+  },e=>console.warn("Caisse :",e));
 }
 onAuthStateChanged(auth,async u=>{
   if(!u)return location.replace(HUB);

@@ -2850,6 +2850,7 @@ function LSK() { return 'gestionScolarite_' + ((window.__CLOUD && window.__CLOUD
 // ============================================================
 function saveState(skipCloud) {
   try { localStorage.setItem(LSK(), JSON.stringify(state)); } catch(e) {}
+  if (window.__caissePush) window.__caissePush();
   if (!skipCloud && !_fbApplyingRemote) fbPushState();
 }
 function loadState() {
@@ -8085,10 +8086,43 @@ window.__liaisonAll=()=>{
   if(typeof state==="undefined"||!state.eleves)return;
   state.eleves.forEach(e=>{const cl=(state.classes||[]).find(x=>x.id===e.classeId);window.__liaisonSet(e,cl?cl.nom:"")});
 };
+/* Caisse : recettes (paiements), dépenses et salaires publiés par mois vers site_gestscol/{uid}/caisse, lus par Gestion école (rubrique « Caisse de l'école ») */
+let cmap={},ctimer=null;
+const csave=()=>{try{localStorage.setItem("caisse_h_"+window.__CLOUD.uid,JSON.stringify(cmap))}catch(e){}};
+window.__caissePush=()=>{clearTimeout(ctimer);ctimer=setTimeout(caisseDo,2500)};
+function caisseDo(){
+  if(!window.__CLOUD||typeof state==="undefined"||!state)return;
+  const L=[],eleves=state.eleves||[],classes=state.classes||[];
+  (state.paiements||[]).forEach(p=>{
+    if(!p.date)return;
+    const e=eleves.find(x=>x.id===p.eleveId),cl=e?classes.find(c=>c.id===e.classeId):null;
+    const tn=p.tranche?((state.tranches&&state.tranches[p.tranche]&&state.tranches[p.tranche].nom)||p.tranche):"Paiement libre";
+    L.push({id:p.id,date:p.date,nature:"Recette",categorie:"Scolarité",libelle:e?("Scolarité — "+(e.prenom||"")+" "+(e.nom||"")+" ("+(cl?cl.nom:"?")+") · "+tn):"Paiement scolarité",montant:Number(p.montant)||0,piece:p.ref||""});
+  });
+  (state.depenses||[]).forEach(d=>{
+    if(!d.date)return;
+    L.push({id:d.id,date:d.date,nature:"Dépense",categorie:d.categorie||"Autre",libelle:d.libelle||d.description||"Dépense",montant:Number(d.montant)||0,piece:d.ref||""});
+  });
+  (state.paieSalaires||[]).forEach(x=>{
+    if(!x.date)return;
+    const emp=(state.employes||[]).find(e=>e.id===x.employeId);
+    L.push({id:x.id,date:x.date,nature:"Dépense",categorie:"Salaires",libelle:"Salaire — "+(emp?(emp.prenom||"")+" "+(emp.nom||""):"?")+(x.mois?" · "+x.mois:""),montant:Number(x.montant)||0,piece:x.ref||""});
+  });
+  const g={};
+  L.forEach(l=>{const k=l.date.slice(0,7);(g[k]=g[k]||[]).push(l)});
+  const col=collection(db,"site_gestscol",window.__CLOUD.uid,"caisse");
+  for(const k in g){
+    const j=JSON.stringify(g[k]);
+    if(cmap[k]!==j)setDoc(doc(col,"m_"+k),{lignes:j,majLe:Date.now()}).then(()=>{cmap[k]=j;csave()}).catch(e=>console.warn("Caisse :",e));
+  }
+  for(const k in cmap){
+    if(!(k in g))deleteDoc(doc(col,"m_"+k)).then(()=>{delete cmap[k];csave()}).catch(e=>console.warn("Caisse :",e));
+  }
+}
 onAuthStateChanged(auth,async u=>{
   if(!u)return location.replace(HUB);
   try{if((await getDoc(doc(db,"admins",u.uid))).exists())return location.replace("admin.html")}catch(e){}
-  const go=()=>{if(started)return;started=true;window.__CLOUD={uid:u.uid};try{lmap=JSON.parse(localStorage.getItem("liaison_h_"+u.uid)||"{}")}catch(e){lmap={}}window.__finBind(mkRef(u.uid));document.getElementById("gsGate").remove();window.__finStart();setTimeout(window.__liaisonAll,4000)};
+  const go=()=>{if(started)return;started=true;window.__CLOUD={uid:u.uid};try{lmap=JSON.parse(localStorage.getItem("liaison_h_"+u.uid)||"{}")}catch(e){lmap={}}window.__finBind(mkRef(u.uid));document.getElementById("gsGate").remove();try{cmap=JSON.parse(localStorage.getItem("caisse_h_"+u.uid)||"{}")}catch(e){cmap={}}window.__finStart();setTimeout(()=>{window.__liaisonAll();window.__caissePush()},4000)};
   onSnapshot(doc(db,"site_gestscol",u.uid),d=>{
     const s=d.exists()&&d.data();
     if(!s){if(d.metadata.fromCache)return;return location.replace(HUB)}
