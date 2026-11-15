@@ -50,6 +50,24 @@ a:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .help a{color:var(--blue);font-weight:600;text-decoration:underline}
 @media(max-width:600px){.brand{font-size:16px}.logo-mark{width:44px;height:44px}.nav-home{display:none}}
 .btn-outline-white{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.7)}
+.btn{justify-content:center}
+.btn-green{background:#25D366;color:#fff}
+.btn-outline-white{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.7)}
+.btn-ghost{background:var(--paper2);color:var(--ink);border:1px solid var(--line)}
+.btn-block{width:100%}
+.hero-ctas{display:flex;flex-wrap:wrap;gap:14px;margin-top:22px}
+#acces{scroll-margin-top:90px;padding:34px 0 8px}
+.box{max-width:460px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px}
+.box h2{font-size:20px}
+.box p{color:var(--ink2);font-size:13.5px;margin:6px 0 14px}
+.box label{display:block;font-size:12.5px;font-weight:700;color:var(--ink2);margin:10px 0 4px}
+.box input{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);font:inherit}
+.box input:focus{outline:2px solid var(--blue);border-color:transparent}
+.box .btn{margin-top:16px}
+.box .alt{display:block;text-align:center;margin-top:14px;font-size:13.5px;font-weight:600;color:var(--blue)}
+.err{color:#D9060C;font-size:13px;min-height:18px;margin-top:8px}
+.tag{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;background:#FFF6DA;color:#8a5a00}
+.tag.x{background:#fdecea;color:#D9060C}
 #installBtn{display:none;margin-top:20px}
 .ios-hint{display:none;margin-top:16px;max-width:560px;font-size:14px;color:#DCE6F5}
 </style>
@@ -91,13 +109,18 @@ a:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
     <h1>Gestion scolaire<br><span class="hero-pill">· Mamou</span></h1>
     <p class="hero-lead">Le registre de l'école et la comptabilité, au même endroit, sur téléphone comme sur ordinateur.</p>
     <div class="hero-all">Les deux espaces sont liés : un élève inscrit en <b>Gestion financière</b> apparaît automatiquement dans <b>Gestion école</b>.</div>
+    <div class="hero-ctas" id="heroCtas">
+      <a href="#acces" class="btn btn-blue" id="ctaReg">🏫 Créer mon espace</a>
+      <a href="#acces" class="btn btn-outline-white" id="ctaLog">Se connecter</a>
+    </div>
     <button type="button" class="btn btn-blue" id="installBtn">📲 Installer l'application</button>
     <p class="ios-hint" id="iosHint">Sur iPhone : touche Partager, puis « Sur l'écran d'accueil ».</p>
   </div>
 </section>
 
 <main class="wrap">
-  <div class="spaces">
+  <section id="acces"><div class="box" id="box"><p>Chargement…</p></div></section>
+  <div class="spaces" id="spaces" style="display:none">
     <section class="space" aria-labelledby="t-ecole">
       <div class="ico" aria-hidden="true">🏫</div>
       <h2 id="t-ecole">Gestion école</h2>
@@ -111,7 +134,6 @@ a:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
       <a class="btn btn-blue" href="gestion-financiere-abonne.html">Ouvrir Gestion financière</a>
     </section>
   </div>
-  <p class="help">Un problème d'accès ? <a href="gestion-scolaire.html">Retour à Mes espaces</a></p>
 </main>
 
 <footer class="cre-site-footer">
@@ -214,6 +236,92 @@ a:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
   window.addEventListener('appinstalled',function(){dp=null;btn.style.display='none'});
   if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!standalone)document.getElementById('iosHint').style.display='block';
 })();
+</script>
+<script type="module">
+import{fbAuth as auth,fbDB as db,doc,getDoc,setDoc,onSnapshot,signInWithEmailAndPassword,signOut,onAuthStateChanged}from"./firebase.js";
+import{createUserWithEmailAndPassword}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const ADMIN_WHATSAPP="224625655839"; /* numéro WhatsApp de l'administrateur, sans le + */
+
+const $=s=>document.querySelector(s),box=$("#box"),spaces=$("#spaces"),ctas=$("#heroCtas");
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const dstr=t=>new Date(t).toLocaleDateString("fr-FR");
+let reg=false,registering=false,unsub=null;
+const showSpaces=v=>{spaces.style.display=v?"grid":"none"};
+$("#ctaReg").onclick=()=>{reg=true;if(!auth.currentUser)authView()};
+$("#ctaLog").onclick=()=>{reg=false;if(!auth.currentUser)authView()};
+
+function authView(){
+ showSpaces(false);
+ box.innerHTML=`<h2>${reg?"Créer mon espace":"Connexion"}</h2><p>${reg?"Inscrivez-vous, puis l'administrateur active votre abonnement.":"Accédez à vos espaces de gestion."}</p>
+ ${reg?`<label for="sn">Nom de l'école</label><input id="sn" autocomplete="organization"><label for="ph">Téléphone (WhatsApp)</label><input id="ph" type="tel" autocomplete="tel">`:""}
+ <label for="em">Adresse e-mail</label><input id="em" type="email" autocomplete="email">
+ <label for="pw">Mot de passe (6 caractères minimum)</label><input id="pw" type="password" autocomplete="${reg?"new-password":"current-password"}">
+ <div class="err" id="err"></div>
+ <button class="btn btn-blue btn-block" id="go">${reg?"Créer mon espace":"Se connecter"}</button>
+ <a href="#" class="alt" id="tg">${reg?"J'ai déjà un compte":"Pas encore d'espace ? Créer mon espace"}</a>`;
+ $("#tg").onclick=e=>{e.preventDefault();reg=!reg;authView()};
+ $("#go").onclick=go;
+ box.querySelectorAll("input").forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")go()}));
+}
+async function saveSchool(uid,name,phone,email){
+ await setDoc(doc(db,"site_gestscol",uid),{name,phone,email,activeUntil:0,blocked:false,createdAt:Date.now()});
+}
+async function go(){
+ const em=$("#em").value.trim(),pw=$("#pw").value,err=$("#err");err.textContent="";
+ const msg=e=>({"auth/email-already-in-use":"Cet e-mail a déjà un compte : connectez-vous.","auth/weak-password":"Mot de passe trop court (6 caractères minimum).","auth/invalid-email":"Adresse e-mail invalide."}[e.code]||"Échec de la connexion : vérifiez vos informations.");
+ if(reg){
+  const sn=$("#sn").value.trim();if(!sn){err.textContent="Entrez le nom de l'école.";return}
+  let c;registering=true;
+  try{c=await createUserWithEmailAndPassword(auth,em,pw)}catch(e){registering=false;err.textContent=msg(e);return}
+  try{await saveSchool(c.user.uid,sn,$("#ph").value.trim(),em)}
+  catch(e){registering=false;err.textContent="Compte créé, mais l'école n'a pas pu être enregistrée ("+(e.code||"erreur")+"). Reconnectez-vous pour réessayer.";return}
+  registering=false;
+ }else{
+  try{await signInWithEmailAndPassword(auth,em,pw)}catch(e){err.textContent=msg(e)}
+ }
+}
+function createView(u){
+ showSpaces(false);
+ box.innerHTML=`<h2>Créer votre espace</h2><p>Ce compte (${esc(u.email)}) n'a pas encore d'espace de gestion.</p>
+ <label for="sn">Nom de l'école</label><input id="sn"><label for="ph">Téléphone (WhatsApp)</label><input id="ph" type="tel">
+ <div class="err" id="err"></div><button class="btn btn-blue btn-block" id="mk">Créer mon espace</button><a href="#" class="alt" id="lo">Se déconnecter</a>`;
+ $("#lo").onclick=e=>{e.preventDefault();signOut(auth)};
+ $("#mk").onclick=async()=>{const sn=$("#sn").value.trim();if(!sn){$("#err").textContent="Entrez le nom de l'école.";return}
+  try{await saveSchool(u.uid,sn,$("#ph").value.trim(),u.email)}catch(e){$("#err").textContent="Création impossible ("+(e.code||"erreur")+")."}};
+}
+function activeView(u,s){
+ box.innerHTML=`<h2>🏫 ${esc(s.name)}</h2><p>Abonnement actif jusqu'au <b>${dstr(s.activeUntil)}</b><br>${esc(u.email)}</p>
+ <button class="btn btn-ghost btn-block" id="lo">Se déconnecter</button>`;
+ $("#lo").onclick=()=>signOut(auth);
+ showSpaces(true);
+}
+function lockView(s){
+ showSpaces(false);
+ const st=s.blocked?`<span class="tag x">Compte bloqué</span>`:s.activeUntil?`<span class="tag x">Abonnement expiré le ${dstr(s.activeUntil)}</span>`:`<span class="tag">En attente d'activation</span>`;
+ const m=encodeURIComponent(`Bonjour, je souhaite activer/renouveler l'abonnement de l'école « ${s.name} » (${s.email}).`);
+ box.innerHTML=`<h2>🔒 ${esc(s.name)}</h2><p>${st}</p><p>Contactez l'administrateur du club pour activer ou renouveler votre accès mensuel.</p>
+ <a class="btn btn-green btn-block" href="https://wa.me/${ADMIN_WHATSAPP}?text=${m}" target="_blank" rel="noopener">Contacter sur WhatsApp</a>
+ <button class="btn btn-ghost btn-block" id="lo">Se déconnecter</button>`;
+ $("#lo").onclick=()=>signOut(auth);
+}
+
+onAuthStateChanged(auth,async u=>{
+ unsub&&unsub();unsub=null;
+ ctas.style.display=u?"none":"flex";
+ if(!u)return authView();
+ box.innerHTML="<p>Chargement…</p>";
+ try{if((await getDoc(doc(db,"admins",u.uid))).exists()){
+  showSpaces(false);
+  box.innerHTML=`<h2>Compte administrateur</h2><p>${esc(u.email)}</p><a class="btn btn-blue btn-block" href="admin.html">Ouvrir l'administration</a><button class="btn btn-ghost btn-block" id="lo">Se déconnecter</button>`;
+  $("#lo").onclick=()=>signOut(auth);return}}catch(e){}
+ unsub=onSnapshot(doc(db,"site_gestscol",u.uid),d=>{
+  if(!d.exists()){if(!registering)createView(u);return}
+  const s=d.data();
+  if(!s.blocked&&s.activeUntil>Date.now())return activeView(u,s);
+  lockView(s);
+ },()=>{showSpaces(false);box.innerHTML="<p>Accès impossible pour le moment. Réessayez plus tard.</p>"});
+});
 </script>
 </body>
 </html>

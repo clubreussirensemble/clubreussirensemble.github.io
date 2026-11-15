@@ -1577,7 +1577,7 @@ function boot(){
 <script type="module">
 import{fbAuth as auth,fbDB as db,signOut,onAuthStateChanged}from"./firebase.js";
 import{doc,getDoc,onSnapshot,collection,getDocs,setDoc,deleteDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-const HUB="gestion-scolaire.html";let started=false;
+const HUB="accueil-gestion.html";let started=false;
 window.fbAuthAction=async m=>{if(m==="logout"){await signOut(auth);location.replace(HUB)}};
 window.fbPull=async uid=>{
   const snap=await getDocs(collection(db,"site_gestscol",uid,"ecole"));
