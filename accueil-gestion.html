@@ -226,6 +226,7 @@ a:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 <script>(function(){var y=document.getElementById("creYear");if(y)y.textContent=new Date().getFullYear();})();</script>
 <script>
 (function(){
+  setTimeout(function(){if(!window.__gestOk){var b=document.getElementById("box");if(b)b.innerHTML="<h2>Chargement impossible</h2><p>Le fichier firebase.js est introuvable ou bloqué. Vérifiez qu'il est dans le même dossier que cette page, puis rechargez.</p>"}},6000);
   if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
     window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestion.js').catch(function(){})});
   }
@@ -241,6 +242,7 @@ a:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 import{fbAuth as auth,fbDB as db,doc,getDoc,setDoc,onSnapshot,signInWithEmailAndPassword,signOut,onAuthStateChanged}from"./firebase.js";
 import{createUserWithEmailAndPassword}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+window.__gestOk=1; /* le script a bien démarré (firebase.js chargé) */
 const ADMIN_WHATSAPP="224625655839"; /* numéro WhatsApp de l'administrateur, sans le + */
 
 const $=s=>document.querySelector(s),box=$("#box"),spaces=$("#spaces"),ctas=$("#heroCtas");
@@ -248,8 +250,9 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const dstr=t=>new Date(t).toLocaleDateString("fr-FR");
 let reg=false,registering=false,unsub=null;
 const showSpaces=v=>{spaces.style.display=v?"grid":"none"};
-$("#ctaReg").onclick=()=>{reg=true;if(!auth.currentUser)authView()};
-$("#ctaLog").onclick=()=>{reg=false;if(!auth.currentUser)authView()};
+const goForm=()=>setTimeout(()=>{$("#acces").scrollIntoView({behavior:"smooth"});const i=box.querySelector("input");if(i)i.focus({preventScroll:true})},60);
+$("#ctaReg").onclick=e=>{e.preventDefault();reg=true;if(!auth.currentUser)authView();goForm()};
+$("#ctaLog").onclick=e=>{e.preventDefault();reg=false;if(!auth.currentUser)authView();goForm()};
 
 function authView(){
  showSpaces(false);
@@ -268,18 +271,26 @@ async function saveSchool(uid,name,phone,email){
  await setDoc(doc(db,"site_gestscol",uid),{name,phone,email,activeUntil:0,blocked:false,createdAt:Date.now()});
 }
 async function go(){
- const em=$("#em").value.trim(),pw=$("#pw").value,err=$("#err");err.textContent="";
- const msg=e=>({"auth/email-already-in-use":"Cet e-mail a déjà un compte : connectez-vous.","auth/weak-password":"Mot de passe trop court (6 caractères minimum).","auth/invalid-email":"Adresse e-mail invalide."}[e.code]||"Échec de la connexion : vérifiez vos informations.");
- if(reg){
-  const sn=$("#sn").value.trim();if(!sn){err.textContent="Entrez le nom de l'école.";return}
-  let c;registering=true;
-  try{c=await createUserWithEmailAndPassword(auth,em,pw)}catch(e){registering=false;err.textContent=msg(e);return}
-  try{await saveSchool(c.user.uid,sn,$("#ph").value.trim(),em)}
-  catch(e){registering=false;err.textContent="Compte créé, mais l'école n'a pas pu être enregistrée ("+(e.code||"erreur")+"). Reconnectez-vous pour réessayer.";return}
-  registering=false;
- }else{
-  try{await signInWithEmailAndPassword(auth,em,pw)}catch(e){err.textContent=msg(e)}
- }
+ const em=$("#em").value.trim(),pw=$("#pw").value,err=$("#err"),btn=$("#go"),label=btn.textContent;err.textContent="";
+ const msg=e=>({"auth/email-already-in-use":"Cet e-mail a déjà un compte : connectez-vous.","auth/weak-password":"Mot de passe trop court (6 caractères minimum).","auth/invalid-email":"Adresse e-mail invalide.","auth/missing-password":"Entrez un mot de passe.","auth/invalid-credential":"E-mail ou mot de passe incorrect.","auth/user-not-found":"Aucun compte avec cet e-mail.","auth/wrong-password":"Mot de passe incorrect.","auth/network-request-failed":"Pas de connexion internet."}[e.code]||("Échec : "+(e.code||e.message||"erreur inconnue")));
+ btn.disabled=true;btn.textContent="Veuillez patienter…";
+ try{
+  if(reg){
+   const sn=$("#sn").value.trim();
+   if(!sn){err.textContent="Entrez le nom de l'école.";return}
+   if(!em){err.textContent="Entrez votre adresse e-mail.";return}
+   registering=true;
+   let c;
+   try{c=await createUserWithEmailAndPassword(auth,em,pw)}catch(e){registering=false;err.textContent=msg(e);return}
+   try{await saveSchool(c.user.uid,sn,$("#ph").value.trim(),em)}
+   catch(e){registering=false;err.textContent="Compte créé, mais l'école n'a pas pu être enregistrée ("+(e.code||"erreur")+"). Reconnectez-vous pour réessayer.";return}
+   registering=false;
+  }else{
+   if(!em){err.textContent="Entrez votre adresse e-mail.";return}
+   try{await signInWithEmailAndPassword(auth,em,pw)}catch(e){err.textContent=msg(e)}
+  }
+ }catch(e){registering=false;err.textContent="Erreur : "+(e.code||e.message||e)}
+ finally{if(document.body.contains(btn)){btn.disabled=false;btn.textContent=label}}
 }
 function createView(u){
  showSpaces(false);
