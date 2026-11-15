@@ -384,6 +384,21 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
     <div id="tab-gestscol" class="panel" style="display:none">
       <h2>Abonnés Gestion scolaire</h2>
       <p id="gsStats" style="color:var(--ink2);font-size:13px;margin:6px 0 12px">Chargement…</p>
+      <details id="gsPwBox" style="background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+        <summary style="cursor:pointer;font-weight:700">🔑 Mots de passe par défaut à envoyer (WhatsApp / SMS)</summary>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px">
+          <div class="field"><label>Mot de passe Directeur</label><input id="gsPwDir" value="admin1234"></div>
+          <div class="field"><label>Mot de passe Caissier</label><input id="gsPwCai" value="caisse123"></div>
+          <div class="field"><label>Lien de connexion</label><input id="gsPwLink" type="url"></div>
+        </div>
+        <div class="field" style="margin-top:10px"><label>Message (variables : {nom} {email} {lien} {mdp_directeur} {mdp_caissier})</label>
+          <textarea id="gsPwMsg" rows="7" style="padding:9px 11px;border:1.5px solid var(--line);border-radius:7px;font:inherit;font-size:13.5px;width:100%"></textarea></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center">
+          <button type="button" class="small-btn" id="gsPwSave" style="background:var(--navy)">💾 Enregistrer</button>
+          <button type="button" class="small-btn" id="gsPwAll" style="background:#25D366">📤 Envoyer à tous (WhatsApp, un par un)</button>
+          <span id="gsPwInfo" style="font-size:12.5px;color:var(--ink2)"></span>
+        </div>
+      </details>
       <table>
         <thead><tr><th>Abonné</th><th>Contact</th><th>Statut</th><th>Abonnement</th><th>Actions</th></tr></thead>
         <tbody id="gsBody"><tr><td colspan="5">Chargement…</td></tr></tbody>
@@ -1213,8 +1228,40 @@ function renderBoutiques(){
 }
 
 // ── Abonnés Gestion scolaire (gestion-ecole-abonne.html + gestion-financiere-abonne.html) ──
+const GS_PW_KEY = 'gsPwConfig';
+const GS_PW_TPL = "Bonjour {nom},\nVotre accès à Gestion scolaire est prêt.\n\n🔗 Lien : {lien}\n👤 Identifiant : {email}\n\nMots de passe par défaut des espaces :\n• Directeur : {mdp_directeur}\n• Caissier : {mdp_caissier}\n\nPensez à les changer dès la première connexion (bouton 🔑 MDP).";
+function gsPwLoad(){
+  let c = {};
+  try{ c = JSON.parse(localStorage.getItem(GS_PW_KEY)||'{}'); }catch(e){}
+  document.getElementById('gsPwDir').value = c.dir || 'admin1234';
+  document.getElementById('gsPwCai').value = c.cai || 'caisse123';
+  document.getElementById('gsPwLink').value = c.link || new URL('accueil-gestion.html', location.href).href;
+  document.getElementById('gsPwMsg').value = c.msg || GS_PW_TPL;
+}
+function gsPwSave(){
+  const c = { dir: document.getElementById('gsPwDir').value.trim(), cai: document.getElementById('gsPwCai').value.trim(),
+              link: document.getElementById('gsPwLink').value.trim(), msg: document.getElementById('gsPwMsg').value };
+  try{ localStorage.setItem(GS_PW_KEY, JSON.stringify(c)); }catch(e){}
+  const i = document.getElementById('gsPwInfo'); i.textContent = 'Enregistré ✓'; setTimeout(()=>{ i.textContent=''; }, 2000);
+}
+function gsPwText(g, nom){
+  const v = {
+    nom: nom(g), email: g.email || '', lien: document.getElementById('gsPwLink').value.trim(),
+    mdp_directeur: document.getElementById('gsPwDir').value.trim(), mdp_caissier: document.getElementById('gsPwCai').value.trim()
+  };
+  return document.getElementById('gsPwMsg').value.replace(/\{(\w+)\}/g, (m,k)=> k in v ? v[k] : m);
+}
+function gsPwSend(g, canal, nom, tel){
+  const d = bqWa(tel(g)); if(!d){ alert('Aucun numéro de téléphone pour cet abonné.'); return false; }
+  const q = encodeURIComponent(gsPwText(g, nom));
+  if(canal==='sms') location.href = 'sms:+' + d + '?body=' + q;
+  else window.open('https://wa.me/' + d + '?text=' + q, '_blank', 'noopener');
+  return true;
+}
+let gsQueue = [], gsQueuePos = 0;
 let gestscolList = [];
 function startGestScol(){
+  gsPwLoad(); document.getElementById('gsPwSave').onclick = gsPwSave;
   onSnapshot(collection(fbDB, 'site_gestscol'), snap=>{
     gestscolList = snap.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
     renderGestScol();
@@ -1248,10 +1295,30 @@ function renderGestScol(){
         <button class="small-btn" data-gsren="${bqEsc(g.id)}" data-j="360" style="background:var(--navy)">+12 mois</button>
         <button class="small-btn" data-gsblk="${bqEsc(g.id)}" data-v="${g.blocked?'0':'1'}" style="background:${g.blocked?'#017529':'var(--red)'}">${g.blocked?'Débloquer':'Bloquer'}</button>
         ${wa?`<a class="small-btn" style="background:#25D366;display:inline-block" href="https://wa.me/${wa}" target="_blank" rel="noopener">WhatsApp</a>`:''}
+        ${wa?`<button class="small-btn" data-gspw="${bqEsc(g.id)}" data-c="wa" style="background:#128C7E" title="Envoyer les mots de passe par défaut par WhatsApp">🔑 MDP WhatsApp</button>
+        <button class="small-btn" data-gspw="${bqEsc(g.id)}" data-c="sms" style="background:#6a1b9a" title="Envoyer les mots de passe par défaut par SMS">🔑 MDP SMS</button>`:'<span style="font-size:12px;color:var(--ink2)">Pas de téléphone</span>'}
         <button class="small-btn" data-gsdel="${bqEsc(g.id)}" style="background:var(--red)">🗑 Supprimer</button>
       </td>
     </tr>`;
   }).join('') : '<tr><td colspan="5">Aucun abonné pour le moment.</td></tr>';
+  document.querySelectorAll('[data-gspw]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const g = gestscolList.find(x=>x.id===btn.dataset.gspw); if(!g) return;
+      gsPwSend(g, btn.dataset.c, nom, tel);
+    };
+  });
+  const allBtn = document.getElementById('gsPwAll');
+  allBtn.onclick = ()=>{
+    if(!gsQueue.length || gsQueuePos>=gsQueue.length){
+      gsQueue = gestscolList.filter(g=>bqWa(tel(g))); gsQueuePos = 0;
+      if(!gsQueue.length){ alert('Aucun abonné avec un numéro de téléphone.'); return; }
+    }
+    const g = gsQueue[gsQueuePos];
+    if(gsPwSend(g, 'wa', nom, tel)) gsQueuePos++;
+    const left = gsQueue.length - gsQueuePos;
+    allBtn.textContent = left ? '▶ Suivant (' + left + ' restant' + (left>1?'s':'') + ')' : '📤 Envoyer à tous (WhatsApp, un par un)';
+    document.getElementById('gsPwInfo').textContent = left ? 'Envoyé à : ' + nom(g) + '. Reviens ici puis clique « Suivant ».' : 'Terminé ✓ (' + gsQueue.length + ' abonnés)';
+  };
   document.querySelectorAll('[data-gsren]').forEach(btn=>{
     btn.onclick = ()=>{
       const g = gestscolList.find(x=>x.id===btn.dataset.gsren); if(!g) return;
