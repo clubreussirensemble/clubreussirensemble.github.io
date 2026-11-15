@@ -224,6 +224,7 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
       <button data-tab="blog">Blog</button>
       <button data-tab="reseau" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">💬 Réseau</button>
       <button data-tab="boutiques" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">🏬 Boutiques</button>
+      <button data-tab="gestscol" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">🏫 Gestion scolaire</button>
       <button data-tab="transport" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">🛺 Transport</button>
       <button data-tab="ouvriers" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">👷 Ouvriers</button>
       <button data-tab="groupes" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">👥 Groupes</button>
@@ -378,6 +379,16 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
         <tbody id="boutBody"><tr><td colspan="5">Chargement…</td></tr></tbody>
       </table>
       <p style="color:var(--ink2);font-size:12.5px;margin-top:12px">Un commerçant s'inscrit sur boutiques.html. Tant que vous n'ajoutez pas de mois, sa boutique reste « en attente ». Quand l'abonnement expire, il est renvoyé vers la page de renouvellement.</p>
+    </div>
+
+    <div id="tab-gestscol" class="panel" style="display:none">
+      <h2>Abonnés Gestion scolaire</h2>
+      <p id="gsStats" style="color:var(--ink2);font-size:13px;margin:6px 0 12px">Chargement…</p>
+      <table>
+        <thead><tr><th>Abonné</th><th>Contact</th><th>Statut</th><th>Abonnement</th><th>Actions</th></tr></thead>
+        <tbody id="gsBody"><tr><td colspan="5">Chargement…</td></tr></tbody>
+      </table>
+      <p style="color:var(--ink2);font-size:12.5px;margin-top:12px">Un seul abonnement donne accès aux deux applications : Gestion école et Gestion financière. Tant que vous n'ajoutez pas de mois, le compte reste « en attente ». Quand l'abonnement expire ou que le compte est bloqué, l'abonné est renvoyé vers gestion-scolaire.html.</p>
     </div>
 
     <div id="tab-classroom" class="panel" style="display:none;padding:0">
@@ -1201,6 +1212,76 @@ function renderBoutiques(){
   });
 }
 
+// ── Abonnés Gestion scolaire (gestion-ecole-abonne.html + gestion-financiere-abonne.html) ──
+let gestscolList = [];
+function startGestScol(){
+  onSnapshot(collection(fbDB, 'site_gestscol'), snap=>{
+    gestscolList = snap.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    renderGestScol();
+  }, ()=>{
+    document.getElementById('gsBody').innerHTML = '<tr><td colspan="5">Accès refusé : ajoutez les règles Firestore pour « site_gestscol ».</td></tr>';
+    document.getElementById('gsStats').textContent = '';
+  });
+}
+function renderGestScol(){
+  const now = Date.now();
+  const nom = g => g.name || g.nom || g.displayName || g.etablissement || g.email || 'Sans nom';
+  const tel = g => g.phone || g.tel || '';
+  const actives = gestscolList.filter(g=>!g.blocked && g.activeUntil>now).length;
+  const attente = gestscolList.filter(g=>!g.blocked && !g.activeUntil).length;
+  document.getElementById('gsStats').textContent = gestscolList.length+' abonné(s) · '+actives+' actif(s) · '+attente+' en attente';
+  document.querySelector('[data-tab="gestscol"]').textContent = '🏫 Gestion scolaire' + (attente ? ' ('+attente+')' : '');
+  const pill = (t,bg,fg)=>`<span style="display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:${bg};color:${fg}">${t}</span>`;
+  document.getElementById('gsBody').innerHTML = gestscolList.length ? gestscolList.map(g=>{
+    const act = !g.blocked && g.activeUntil>now;
+    const st = g.blocked ? pill('Bloqué','#fdecea','#D9060C') : act ? pill('Actif','#E7F6EC','#017529') : g.activeUntil ? pill('Expiré','#fdecea','#D9060C') : pill('En attente','#FFF6DA','#8a5a00');
+    const abo = g.activeUntil ? (act ? 'Jusqu\'au '+bqDate(g.activeUntil)+' ('+Math.ceil((g.activeUntil-now)/864e5)+' j)' : 'Expiré le '+bqDate(g.activeUntil)) : '—';
+    const wa = bqWa(tel(g));
+    return `<tr>
+      <td><b>${bqEsc(nom(g))}</b></td>
+      <td>${bqEsc(tel(g))||'—'}<br>${bqEsc(g.email)}</td>
+      <td>${st}</td>
+      <td>${abo}</td>
+      <td>
+        <button class="small-btn" data-gsren="${bqEsc(g.id)}" data-j="30" style="background:var(--navy)">+1 mois</button>
+        <button class="small-btn" data-gsren="${bqEsc(g.id)}" data-j="90" style="background:var(--navy)">+3 mois</button>
+        <button class="small-btn" data-gsren="${bqEsc(g.id)}" data-j="360" style="background:var(--navy)">+12 mois</button>
+        <button class="small-btn" data-gsblk="${bqEsc(g.id)}" data-v="${g.blocked?'0':'1'}" style="background:${g.blocked?'#017529':'var(--red)'}">${g.blocked?'Débloquer':'Bloquer'}</button>
+        ${wa?`<a class="small-btn" style="background:#25D366;display:inline-block" href="https://wa.me/${wa}" target="_blank" rel="noopener">WhatsApp</a>`:''}
+        <button class="small-btn" data-gsdel="${bqEsc(g.id)}" style="background:var(--red)">🗑 Supprimer</button>
+      </td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="5">Aucun abonné pour le moment.</td></tr>';
+  document.querySelectorAll('[data-gsren]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const g = gestscolList.find(x=>x.id===btn.dataset.gsren); if(!g) return;
+      const j = Number(btn.dataset.j);
+      if(!confirm('Ajouter '+(j/30)+' mois d\'abonnement à « '+nom(g)+' » ?')) return;
+      updateDoc(doc(fbDB,'site_gestscol',g.id), { activeUntil: Math.max(Date.now(), g.activeUntil||0) + j*864e5, blocked: false });
+    };
+  });
+  document.querySelectorAll('[data-gsblk]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const bloquer = btn.dataset.v==='1';
+      if(bloquer && !confirm('Bloquer ce compte ? Il ne pourra plus ouvrir Gestion école ni Gestion financière.')) return;
+      updateDoc(doc(fbDB,'site_gestscol',btn.dataset.gsblk), { blocked: bloquer });
+    };
+  });
+  document.querySelectorAll('[data-gsdel]').forEach(btn=>{
+    btn.onclick = async ()=>{
+      const g = gestscolList.find(x=>x.id===btn.dataset.gsdel); if(!g) return;
+      if(!confirm('Supprimer DÉFINITIVEMENT l\'abonné « '+nom(g)+' » ?\n\nIl ne pourra plus ouvrir les deux applications. Ses données (élèves, comptabilité) restent enregistrées dans Firebase. Cette action est irréversible.')) return;
+      btn.disabled = true;
+      try{
+        await deleteDoc(doc(fbDB,'site_gestscol',g.id));
+      }catch(e){
+        btn.disabled = false;
+        alert('Suppression impossible : '+(e.message||e)+'\n\nVérifiez que les règles Firestore autorisent « delete » pour l\'admin sur site_gestscol.');
+      }
+    };
+  });
+}
+
 onAuthStateChanged(fbAuth, async user=>{
   if(!user){ loginView.style.display='block'; adminView.style.display='none'; return; }
   const snap = await getDoc(doc(fbDB, 'admins', user.uid));
@@ -1216,6 +1297,7 @@ onAuthStateChanged(fbAuth, async user=>{
   startRP();
   startQuiz();
   startBoutiques();
+  startGestScol();
 });
 
 document.getElementById('loginForm').addEventListener('submit', async e=>{
