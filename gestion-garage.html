@@ -84,7 +84,11 @@
     width:240px; background:var(--acier); border-right:1px solid var(--border);
     height:100vh; position:fixed; top:0; left:0; z-index:100;
     display:flex; flex-direction:column; transition:transform .3s;
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
   }
+  #menuBtn { display:none; position:fixed; top:10px; left:10px; z-index:150; width:42px; height:42px; align-items:center; justify-content:center; background:var(--acier); color:var(--blanc); border:1px solid var(--border); border-radius:10px; font-size:22px; cursor:pointer; }
+  #sidebarOverlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:99; }
+  #sidebarOverlay.show { display:block; }
   .sidebar-header {
     padding:24px 20px; border-bottom:1px solid var(--border);
   }
@@ -94,7 +98,7 @@
   .sidebar-role { margin-top:8px; display:inline-flex; align-items:center; gap:6px; background:rgba(233,69,96,0.1); border:1px solid rgba(233,69,96,0.3); border-radius:20px; padding:4px 10px; font-size:11px; color:var(--rouge); }
   .nav-section { padding:16px 12px 8px; font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--gris); }
   .nav-item {
-    display:flex; align-items:center; gap:12px; padding:11px 20px;
+    flex-shrink:0; display:flex; align-items:center; gap:12px; padding:11px 20px;
     cursor:pointer; border-radius:8px; margin:2px 8px; transition:all .2s;
     font-size:13px; font-weight:500; color:var(--gris2);
     text-decoration:none;
@@ -102,7 +106,7 @@
   .nav-item:hover { background:var(--card2); color:var(--blanc); }
   .nav-item.active { background:rgba(233,69,96,0.15); color:var(--rouge); border-left:2px solid var(--rouge); margin-left:6px; }
   .nav-icon { width:18px; text-align:center; font-size:16px; }
-  .sidebar-footer { margin-top:auto; padding:20px; border-top:1px solid var(--border); }
+  .sidebar-footer { margin-top:auto; flex-shrink:0; padding:20px; border-top:1px solid var(--border); }
   .btn-logout {
     width:100%; padding:10px; background:transparent; border:1px solid var(--border);
     border-radius:8px; color:var(--gris); cursor:pointer; font-family:'Barlow',sans-serif;
@@ -274,7 +278,8 @@
   @media(max-width:768px) {
     .sidebar { transform:translateX(-100%); }
     .sidebar.open { transform:translateX(0); }
-    .main-content { margin-left:0; padding:16px; }
+    #menuBtn { display:flex !important; }
+    .main-content { margin-left:0; padding:16px; padding-top:64px; }
     .form-row { grid-template-columns:1fr; }
   }
 </style>
@@ -306,6 +311,8 @@
 
 <!-- ===== MAIN APP ===== -->
 <div id="app">
+  <button id="menuBtn" onclick="toggleMenu()" aria-label="Menu">☰</button>
+  <div id="sidebarOverlay" onclick="toggleMenu(false)"></div>
   <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
@@ -967,6 +974,13 @@ function doLogout() {
   document.getElementById('loginPass').value = '';
 }
 
+function toggleMenu(force) {
+  const sb = document.getElementById('sidebar');
+  const open = (typeof force === 'boolean') ? force : !sb.classList.contains('open');
+  sb.classList.toggle('open', open);
+  document.getElementById('sidebarOverlay').classList.toggle('show', open);
+}
+
 function applyRoleUI() {
   const isAdmin = currentRole === 'admin';
   document.getElementById('roleLabel').textContent = isAdmin ? 'Admin' : 'Technicien';
@@ -978,6 +992,7 @@ function applyRoleUI() {
 // NAVIGATION
 // ============================================================
 function showPage(p) {
+  if (window.innerWidth <= 768) toggleMenu(false);
   if ((p === 'finance' || p === 'factures' || p === 'parametres') && currentRole !== 'admin') {
     notify('Accès réservé à l\'administrateur', 'error'); return;
   }
