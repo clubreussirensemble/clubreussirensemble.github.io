@@ -1,0 +1,32 @@
+{
+ "name": "Gestion de Garage",
+ "short_name": "Garage",
+ "description": "Gestion de garage : véhicules, personnel, finances, factures",
+ "start_url": "./gestion-garage.html",
+ "scope": "./",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#1a1a2e",
+ "theme_color": "#e94560",
+ "lang": "fr",
+ "icons": [
+  {
+   "src": "icon-garage-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-garage-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-garage-maskable.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}
