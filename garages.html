@@ -86,6 +86,12 @@ a{text-decoration:none;color:inherit}
 <meta name="theme-color" content="#0A2A57">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest-garage.json">
+<meta name="theme-color" content="#e94560">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Garage">
+<link rel="apple-touch-icon" href="icon-garage-192.png">
 </head>
 <body>
 <header class="site-nav">
@@ -152,6 +158,23 @@ a{text-decoration:none;color:inherit}
 
 <script>/* Logo : script classique, indépendant de firebase.js */
 (function(){var s=document.querySelector(".logo-mark");if(!s)return;var L=s.src;Array.prototype.forEach.call(document.querySelectorAll("#footLogo,#boxLogo,#heroLogo"),function(i){i.src=L});var f=document.querySelector('link[rel="icon"]');if(f)f.href=L;var a=document.querySelector('link[rel="apple-touch-icon"]');if(a)a.href=L;})();</script>
+
+<button id="installBtn" style="display:none;position:fixed;right:14px;bottom:14px;z-index:99999;background:#e94560;color:#fff;border:0;border-radius:999px;padding:12px 18px;font:700 14px sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer">📲 Installer l'application</button>
+<script>
+(function(){
+  if('serviceWorker' in navigator) window.addEventListener('load',function(){navigator.serviceWorker.register('sw-garage.js').catch(function(){})});
+  var dp=null,b=document.getElementById('installBtn');
+  var standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e;if(!standalone)b.style.display='block'});
+  window.addEventListener('appinstalled',function(){b.style.display='none';dp=null});
+  if(ios&&!standalone)b.style.display='block';
+  b.onclick=function(){
+    if(dp){dp.prompt();dp.userChoice.finally(function(){dp=null;b.style.display='none'})}
+    else alert("Sur iPhone : touchez le bouton Partager, puis « Sur l'écran d'accueil ». Sur Android : menu ⋮ du navigateur, puis « Installer l'application ».");
+  };
+})();
+</script>
 <script type="module">
 import{fbAuth as auth,fbDB as db,doc,getDoc,setDoc,onSnapshot,signInWithEmailAndPassword,signOut,onAuthStateChanged}from"./firebase.js";
 import{createUserWithEmailAndPassword}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
