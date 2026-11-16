@@ -224,6 +224,7 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
       <button data-tab="blog">Blog</button>
       <button data-tab="reseau" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">💬 Réseau</button>
       <button data-tab="boutiques" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">🏬 Boutiques</button>
+      <button data-tab="garages" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">🔧 Garages</button>
       <button data-tab="gestscol" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">🏫 Gestion scolaire</button>
       <button data-tab="transport" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">🛺 Transport</button>
       <button data-tab="ouvriers" style="background:#E7F6EC;border-color:#017529;color:#0A2A57">👷 Ouvriers</button>
@@ -379,6 +380,31 @@ td{padding:10px;border-bottom:1px solid var(--paper2);vertical-align:top}
         <tbody id="boutBody"><tr><td colspan="5">Chargement…</td></tr></tbody>
       </table>
       <p style="color:var(--ink2);font-size:12.5px;margin-top:12px">Un commerçant s'inscrit sur boutiques.html. Tant que vous n'ajoutez pas de mois, sa boutique reste « en attente ». Quand l'abonnement expire, il est renvoyé vers la page de renouvellement.</p>
+    </div>
+
+    <div id="tab-garages" class="panel" style="display:none">
+      <h2>Garages abonnés</h2>
+      <p id="garStats" style="color:var(--ink2);font-size:13px;margin:6px 0 12px">Chargement…</p>
+      <details id="garPwBox" style="background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+        <summary style="cursor:pointer;font-weight:700">🔑 Mots de passe par défaut à envoyer (WhatsApp / SMS)</summary>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px">
+          <div class="field"><label>Mot de passe Administrateur</label><input id="garPwAdm" value="admin123"></div>
+          <div class="field"><label>Mot de passe Technicien</label><input id="garPwTech" value="tech123"></div>
+          <div class="field"><label>Lien de connexion</label><input id="garPwLink" type="url"></div>
+        </div>
+        <div class="field" style="margin-top:10px"><label>Message (variables : {nom} {email} {lien} {mdp_admin} {mdp_technicien})</label>
+          <textarea id="garPwMsg" rows="7" style="padding:9px 11px;border:1.5px solid var(--line);border-radius:7px;font:inherit;font-size:13.5px;width:100%"></textarea></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center">
+          <button type="button" class="small-btn" id="garPwSave" style="background:var(--navy)">💾 Enregistrer</button>
+          <button type="button" class="small-btn" id="garPwAll" style="background:#25D366">📤 Envoyer à tous (WhatsApp, un par un)</button>
+          <span id="garPwInfo" style="font-size:12.5px;color:var(--ink2)"></span>
+        </div>
+      </details>
+      <table>
+        <thead><tr><th>Garage</th><th>Contact</th><th>Statut</th><th>Abonnement</th><th>Actions</th></tr></thead>
+        <tbody id="garBody"><tr><td colspan="5">Chargement…</td></tr></tbody>
+      </table>
+      <p style="color:var(--ink2);font-size:12.5px;margin-top:12px">Un garagiste s'inscrit sur garages.html. Tant que vous n'ajoutez pas de mois, son garage reste « en attente ». Quand l'abonnement expire, il est renvoyé vers la page de renouvellement.</p>
     </div>
 
     <div id="tab-gestscol" class="panel" style="display:none">
@@ -1228,6 +1254,121 @@ function renderBoutiques(){
   });
 }
 
+// ── Garages abonnés (garages.html / gestion-garage.html) ──
+let garagesList = [];
+const GAR_PW_KEY = 'garPwConfig1';
+const GAR_PW_TPL = "Bonjour {nom},\nVotre accès à Gestion de Garage est prêt.\n\n🔗 Lien : {lien}\n👤 Identifiant : {email}\n\nMots de passe par défaut (à changer dans Paramètres) :\n🔧 Administrateur : {mdp_admin}\n🛠 Technicien : {mdp_technicien}\n\nMerci de votre confiance.";
+function garPwLoad(){
+  let c = {};
+  try{ c = JSON.parse(localStorage.getItem(GAR_PW_KEY)||'{}'); }catch(e){}
+  document.getElementById('garPwAdm').value = c.adm || 'admin123';
+  document.getElementById('garPwTech').value = c.tech || 'tech123';
+  document.getElementById('garPwLink').value = c.link || new URL('garages.html', location.href).href;
+  document.getElementById('garPwMsg').value = c.msg || GAR_PW_TPL;
+  document.getElementById('garPwSave').onclick = garPwSave;
+}
+function garPwSave(){
+  const c = { adm: document.getElementById('garPwAdm').value.trim(), tech: document.getElementById('garPwTech').value.trim(),
+              link: document.getElementById('garPwLink').value.trim(), msg: document.getElementById('garPwMsg').value };
+  try{ localStorage.setItem(GAR_PW_KEY, JSON.stringify(c)); }catch(e){}
+  const i = document.getElementById('garPwInfo'); i.textContent = 'Enregistré ✓'; setTimeout(()=>{ i.textContent=''; }, 2000);
+}
+function garPwText(g){
+  const v = { nom: g.name||'', email: g.email||'', lien: document.getElementById('garPwLink').value.trim(),
+    mdp_admin: document.getElementById('garPwAdm').value.trim(), mdp_technicien: document.getElementById('garPwTech').value.trim() };
+  return document.getElementById('garPwMsg').value.replace(/\{(\w+)\}/g, (m,k)=> k in v ? v[k] : m);
+}
+function garPwSend(g, canal){
+  const d = bqWa(g.phone); if(!d){ alert('Aucun numéro de téléphone pour ce garage.'); return false; }
+  const q = encodeURIComponent(garPwText(g));
+  if(canal==='sms') location.href = 'sms:+' + d + '?body=' + q;
+  else window.open('https://wa.me/' + d + '?text=' + q, '_blank', 'noopener');
+  return true;
+}
+let garQueue = [], garQueuePos = 0;
+function startGarages(){
+  garPwLoad();
+  onSnapshot(collection(fbDB, 'site_garages'), snap=>{
+    garagesList = snap.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    renderGarages();
+  }, ()=>{
+    document.getElementById('garBody').innerHTML = '<tr><td colspan="5">Accès refusé : ajoutez les règles Firestore pour « site_garages ».</td></tr>';
+    document.getElementById('garStats').textContent = '';
+  });
+}
+function renderGarages(){
+  const now = Date.now();
+  const actives = garagesList.filter(b=>!b.blocked && b.activeUntil>now).length;
+  const attente = garagesList.filter(b=>!b.blocked && !b.activeUntil).length;
+  document.getElementById('garStats').textContent = garagesList.length+' garage(s) · '+actives+' active(s) · '+attente+' en attente';
+  document.querySelector('[data-tab="garages"]').textContent = '🔧 Garages' + (attente ? ' ('+attente+')' : '');
+  const pill = (t,bg,fg)=>`<span style="display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:${bg};color:${fg}">${t}</span>`;
+  document.getElementById('garBody').innerHTML = garagesList.length ? garagesList.map(b=>{
+    const act = !b.blocked && b.activeUntil>now;
+    const st = b.blocked ? pill('Bloqué','#fdecea','#D9060C') : act ? pill('Actif','#E7F6EC','#017529') : b.activeUntil ? pill('Expiré','#fdecea','#D9060C') : pill('En attente','#FFF6DA','#8a5a00');
+    const abo = b.activeUntil ? (act ? 'Jusqu\'au '+bqDate(b.activeUntil)+' ('+Math.ceil((b.activeUntil-now)/864e5)+' j)' : 'Expiré le '+bqDate(b.activeUntil)) : '—';
+    const wa = bqWa(b.phone);
+    return `<tr>
+      <td><b>${bqEsc(b.name)}</b></td>
+      <td>${bqEsc(b.phone)||'—'}<br>${bqEsc(b.email)}</td>
+      <td>${st}</td>
+      <td>${abo}</td>
+      <td>
+        <button class="small-btn" data-garren="${b.id}" data-j="30" style="background:var(--navy)">+1 mois</button>
+        <button class="small-btn" data-garren="${b.id}" data-j="90" style="background:var(--navy)">+3 mois</button>
+        <button class="small-btn" data-garblk="${b.id}" data-v="${b.blocked?'0':'1'}" style="background:${b.blocked?'#017529':'var(--red)'}">${b.blocked?'Débloquer':'Bloquer'}</button>
+        ${wa?`<a class="small-btn" style="background:#25D366;display:inline-block" href="https://wa.me/${wa}" target="_blank" rel="noopener">WhatsApp</a>
+        <button class="small-btn" data-garpw="${b.id}" data-c="wa" style="background:#128C7E" title="Envoyer les mots de passe par défaut par WhatsApp">🔑 MDP WhatsApp</button>
+        <button class="small-btn" data-garpw="${b.id}" data-c="sms" style="background:#6a1b9a" title="Envoyer les mots de passe par défaut par SMS">🔑 MDP SMS</button>`:'<span style="font-size:12px;color:var(--ink2)">Pas de téléphone</span>'}
+        <button class="small-btn" data-gardel="${b.id}" style="background:var(--red)">🗑 Supprimer</button>
+      </td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="5">Aucun garage inscrit pour le moment.</td></tr>';
+  document.querySelectorAll('[data-garpw]').forEach(btn=>{
+    btn.onclick = ()=>{ const g = garagesList.find(x=>x.id===btn.dataset.garpw); if(g) garPwSend(g, btn.dataset.c); };
+  });
+  const garAll = document.getElementById('garPwAll');
+  garAll.onclick = ()=>{
+    if(!garQueue.length || garQueuePos>=garQueue.length){
+      garQueue = garagesList.filter(g=>bqWa(g.phone)); garQueuePos = 0;
+      if(!garQueue.length){ alert('Aucun garage avec un numéro de téléphone.'); return; }
+    }
+    const g = garQueue[garQueuePos];
+    if(garPwSend(g, 'wa')) garQueuePos++;
+    const left = garQueue.length - garQueuePos;
+    garAll.textContent = left ? '▶ Suivant (' + left + ' restant' + (left>1?'s':'') + ')' : '📤 Envoyer à tous (WhatsApp, un par un)';
+    document.getElementById('garPwInfo').textContent = left ? 'Envoyé à : ' + (g.name||'') + '. Reviens ici puis clique « Suivant ».' : 'Terminé ✓ (' + garQueue.length + ' garages)';
+  };
+  document.querySelectorAll('[data-garren]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const b = garagesList.find(x=>x.id===btn.dataset.garren); if(!b) return;
+      const j = Number(btn.dataset.j);
+      if(!confirm('Ajouter '+(j/30)+' mois d\'abonnement à « '+(b.name||'ce garage')+' » ?')) return;
+      updateDoc(doc(fbDB,'site_garages',b.id), { activeUntil: Math.max(Date.now(), b.activeUntil||0) + j*864e5, blocked: false });
+    };
+  });
+  document.querySelectorAll('[data-garblk]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const bloquer = btn.dataset.v==='1';
+      if(bloquer && !confirm('Bloquer ce garage ? Son propriétaire ne pourra plus y accéder.')) return;
+      updateDoc(doc(fbDB,'site_garages',btn.dataset.garblk), { blocked: bloquer });
+    };
+  });
+  document.querySelectorAll('[data-gardel]').forEach(btn=>{
+    btn.onclick = async ()=>{
+      const b = garagesList.find(x=>x.id===btn.dataset.gardel); if(!b) return;
+      if(!confirm('Supprimer DÉFINITIVEMENT le garage « '+(b.name||'sans nom')+' » ?\n\nSon compte sera retiré de la liste et son propriétaire ne pourra plus y accéder. Cette action est irréversible.')) return;
+      btn.disabled = true;
+      try{
+        await deleteDoc(doc(fbDB,'site_garages',b.id));
+      }catch(e){
+        btn.disabled = false;
+        alert('Suppression impossible : '+(e.message||e)+'\n\nVérifiez que les règles Firestore autorisent « delete » pour l\'admin sur site_garages.');
+      }
+    };
+  });
+}
+
 // ── Abonnés Gestion scolaire (gestion-ecole-abonne.html + gestion-financiere-abonne.html) ──
 const GS_PW_KEY = 'gsPwConfig2';
 const GS_PW_TPL = "Bonjour {nom},\nVotre accès à Gestion financière et à Gestion école est prêt.\n\n🔗 Lien : {lien}\n👤 Identifiant : {email}\n\nMots de passe par défaut :\n💰 Gestion financière\n• Directeur : {mdp_directeur}\n• Caissier : {mdp_caissier}\n🏫 Gestion école : {mdp_ecole}\n\n⚠️ Ce sont des mots de passe provisoires. À votre première connexion, vous devez créer vous-même votre propre mot de passe (bouton 🔑 MDP) pour la Gestion financière et pour la Gestion école.";
@@ -1368,6 +1509,7 @@ onAuthStateChanged(fbAuth, async user=>{
   startRP();
   startQuiz();
   startBoutiques();
+  startGarages();
   startGestScol();
 });
 

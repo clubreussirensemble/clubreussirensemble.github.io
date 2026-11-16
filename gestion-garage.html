@@ -1,0 +1,1929 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion de Garage</title>
+<link rel="manifest" href="manifest-garage.json">
+<meta name="theme-color" content="#e94560">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Garage">
+<link rel="apple-touch-icon" href="icon-garage-192.png">
+<style id="gate-hide">html{visibility:hidden}</style>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --noir: #0a0a0f;
+    --acier: #1a1a2e;
+    --acier2: #16213e;
+    --bleu: #0f3460;
+    --rouge: #e94560;
+    --orange: #f5a623;
+    --vert: #00d4aa;
+    --gris: #8892a4;
+    --gris2: #b0bec5;
+    --blanc: #f0f4f8;
+    --card: #111827;
+    --card2: #1f2937;
+    --border: rgba(255,255,255,0.07);
+    --shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--noir); color:var(--blanc); font-family:'Barlow',sans-serif; min-height:100vh; overflow-x:hidden; }
+
+  /* ===== LOGIN ===== */
+  #loginScreen {
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background: radial-gradient(ellipse at 30% 50%, #0f3460 0%, #0a0a0f 60%);
+    position:relative; overflow:hidden;
+  }
+  #loginScreen::before {
+    content:''; position:absolute; inset:0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.015) 40px, rgba(255,255,255,0.015) 41px),
+                repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,255,255,0.015) 40px, rgba(255,255,255,0.015) 41px);
+  }
+  .login-box {
+    background: rgba(17,24,39,0.95); border:1px solid var(--border);
+    border-radius:16px; padding:48px 40px; width:420px; max-width:95vw;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(233,69,96,0.15);
+    position:relative; z-index:1; animation: fadeUp 0.6s ease;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+  .login-logo { text-align:center; margin-bottom:32px; }
+  .brand-logo { display:none; max-height:80px; max-width:200px; margin:0 auto 12px; object-fit:contain; }
+  .login-logo .brand { font-family:'Bebas Neue',sans-serif; font-size:44px; word-break:break-word; letter-spacing:4px; color:var(--blanc); line-height:1; }
+  .login-logo .sub { font-size:11px; letter-spacing:6px; color:var(--rouge); text-transform:uppercase; margin-top:4px; }
+  .login-logo .tagline { font-size:12px; color:var(--gris); margin-top:8px; }
+  .role-tabs { display:flex; gap:8px; margin-bottom:28px; }
+  .role-tab {
+    flex:1; padding:10px; text-align:center; border-radius:8px; cursor:pointer;
+    font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase;
+    border:1px solid var(--border); color:var(--gris); transition:all .25s;
+  }
+  .role-tab.active { background:var(--rouge); border-color:var(--rouge); color:#fff; }
+  .form-group { margin-bottom:18px; }
+  .form-group label { display:block; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--gris); margin-bottom:8px; }
+  .form-group input {
+    width:100%; background:var(--acier2); border:1px solid var(--border); border-radius:8px;
+    padding:12px 16px; color:var(--blanc); font-family:'Barlow',sans-serif; font-size:14px;
+    transition:border-color .2s;
+  }
+  .form-group input:focus { outline:none; border-color:var(--rouge); }
+  .btn-login {
+    width:100%; padding:14px; background:var(--rouge); border:none; border-radius:8px;
+    color:#fff; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:3px;
+    cursor:pointer; transition:all .2s; margin-top:8px;
+  }
+  .btn-login:hover { background:#c73652; transform:translateY(-1px); box-shadow:0 8px 24px rgba(233,69,96,0.4); }
+  .login-error { color:var(--rouge); font-size:12px; text-align:center; margin-top:12px; display:none; }
+
+  /* ===== APP LAYOUT ===== */
+  #app { display:none; min-height:100vh; }
+  .sidebar {
+    width:240px; background:var(--acier); border-right:1px solid var(--border);
+    height:100vh; position:fixed; top:0; left:0; z-index:100;
+    display:flex; flex-direction:column; transition:transform .3s;
+  }
+  .sidebar-header {
+    padding:24px 20px; border-bottom:1px solid var(--border);
+  }
+  .sidebar-logo { display:none; max-height:48px; max-width:100%; margin-bottom:8px; object-fit:contain; }
+  .sidebar-brand { font-family:'Bebas Neue',sans-serif; font-size:24px; word-break:break-word; letter-spacing:3px; color:var(--blanc); }
+  .sidebar-sub { font-size:10px; letter-spacing:4px; color:var(--rouge); text-transform:uppercase; }
+  .sidebar-role { margin-top:8px; display:inline-flex; align-items:center; gap:6px; background:rgba(233,69,96,0.1); border:1px solid rgba(233,69,96,0.3); border-radius:20px; padding:4px 10px; font-size:11px; color:var(--rouge); }
+  .nav-section { padding:16px 12px 8px; font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--gris); }
+  .nav-item {
+    display:flex; align-items:center; gap:12px; padding:11px 20px;
+    cursor:pointer; border-radius:8px; margin:2px 8px; transition:all .2s;
+    font-size:13px; font-weight:500; color:var(--gris2);
+    text-decoration:none;
+  }
+  .nav-item:hover { background:var(--card2); color:var(--blanc); }
+  .nav-item.active { background:rgba(233,69,96,0.15); color:var(--rouge); border-left:2px solid var(--rouge); margin-left:6px; }
+  .nav-icon { width:18px; text-align:center; font-size:16px; }
+  .sidebar-footer { margin-top:auto; padding:20px; border-top:1px solid var(--border); }
+  .btn-logout {
+    width:100%; padding:10px; background:transparent; border:1px solid var(--border);
+    border-radius:8px; color:var(--gris); cursor:pointer; font-family:'Barlow',sans-serif;
+    font-size:13px; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-logout:hover { border-color:var(--rouge); color:var(--rouge); }
+
+  .main-content { margin-left:240px; padding:32px; min-height:100vh; }
+  .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:32px; }
+  .page-title { font-family:'Bebas Neue',sans-serif; font-size:36px; letter-spacing:2px; color:var(--blanc); }
+  .page-sub { font-size:13px; color:var(--gris); margin-top:2px; }
+  .topbar-actions { display:flex; gap:10px; }
+
+  /* ===== CARDS & STATS ===== */
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:28px; }
+  .stat-card {
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:20px 24px; position:relative; overflow:hidden;
+  }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+  .stat-card.rouge::before { background:var(--rouge); }
+  .stat-card.vert::before { background:var(--vert); }
+  .stat-card.orange::before { background:var(--orange); }
+  .stat-card.bleu::before { background:#4d9fff; }
+  .stat-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--gris); }
+  .stat-value { font-family:'Bebas Neue',sans-serif; font-size:40px; color:var(--blanc); line-height:1.1; margin:4px 0; }
+  .stat-detail { font-size:12px; color:var(--gris); }
+
+  /* ===== TABLES ===== */
+  .section-card { background:var(--card); border:1px solid var(--border); border-radius:12px; margin-bottom:24px; overflow:hidden; }
+  .section-header { padding:18px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .section-title { font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--blanc); }
+  table { width:100%; border-collapse:collapse; }
+  th { padding:12px 16px; text-align:left; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--gris); border-bottom:1px solid var(--border); font-weight:600; }
+  td { padding:13px 16px; font-size:13px; border-bottom:1px solid rgba(255,255,255,0.04); }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:rgba(255,255,255,0.02); }
+
+  /* ===== BADGES ===== */
+  .badge { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+  .badge-rouge { background:rgba(233,69,96,0.15); color:var(--rouge); border:1px solid rgba(233,69,96,0.3); }
+  .badge-vert { background:rgba(0,212,170,0.15); color:var(--vert); border:1px solid rgba(0,212,170,0.3); }
+  .badge-orange { background:rgba(245,166,35,0.15); color:var(--orange); border:1px solid rgba(245,166,35,0.3); }
+  .badge-bleu { background:rgba(77,159,255,0.15); color:#4d9fff; border:1px solid rgba(77,159,255,0.3); }
+
+  /* ===== BUTTONS ===== */
+  .btn { display:inline-flex; align-items:center; gap:7px; padding:9px 18px; border-radius:8px; font-family:'Barlow',sans-serif; font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all .2s; }
+  .btn-primary { background:var(--rouge); color:#fff; }
+  .btn-primary:hover { background:#c73652; }
+  .btn-secondary { background:var(--card2); color:var(--gris2); border:1px solid var(--border); }
+  .btn-secondary:hover { border-color:var(--gris); color:var(--blanc); }
+  .btn-success { background:rgba(0,212,170,0.15); color:var(--vert); border:1px solid rgba(0,212,170,0.3); }
+  .btn-sm { padding:6px 12px; font-size:12px; }
+
+  /* ===== MODAL ===== */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:500; display:none; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+  .modal-overlay.active { display:flex; }
+  .modal {
+    background:var(--card); border:1px solid var(--border); border-radius:16px;
+    padding:32px; width:640px; max-width:95vw; max-height:90vh; overflow-y:auto;
+    animation:fadeUp .3s ease;
+  }
+  .modal h3 { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:2px; margin-bottom:24px; color:var(--blanc); }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .form-group-modal { margin-bottom:16px; }
+  .form-group-modal label { display:block; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gris); margin-bottom:6px; }
+  .form-group-modal input, .form-group-modal select, .form-group-modal textarea {
+    width:100%; background:var(--acier2); border:1px solid var(--border); border-radius:8px;
+    padding:10px 14px; color:var(--blanc); font-family:'Barlow',sans-serif; font-size:13px;
+    transition:border-color .2s;
+  }
+  .form-group-modal input:focus, .form-group-modal select:focus, .form-group-modal textarea:focus { outline:none; border-color:var(--rouge); }
+  .form-group-modal select option { background:var(--acier2); }
+  .form-group-modal textarea { resize:vertical; min-height:80px; }
+  .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; padding-top:20px; border-top:1px solid var(--border); }
+
+  /* ===== TABS ===== */
+  .tabs { display:flex; gap:4px; background:var(--acier2); padding:4px; border-radius:10px; margin-bottom:24px; width:fit-content; }
+  .tab-btn { padding:9px 20px; border-radius:7px; cursor:pointer; font-size:13px; font-weight:600; color:var(--gris); border:none; background:transparent; transition:all .2s; }
+  .tab-btn.active { background:var(--rouge); color:#fff; }
+
+  /* ===== PAGES ===== */
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* ===== SEARCH BAR ===== */
+  .search-bar { position:relative; }
+  .search-bar input { background:var(--card2); border:1px solid var(--border); border-radius:8px; padding:9px 14px 9px 36px; color:var(--blanc); font-family:'Barlow',sans-serif; font-size:13px; width:220px; }
+  .search-bar::before { content:'🔍'; position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:13px; }
+  .search-bar input:focus { outline:none; border-color:var(--rouge); }
+
+  /* ===== ALERT/REMINDER ===== */
+  .alert-banner { background:rgba(245,166,35,0.1); border:1px solid rgba(245,166,35,0.3); border-radius:10px; padding:12px 18px; margin-bottom:20px; display:flex; align-items:center; gap:12px; font-size:13px; color:var(--orange); }
+
+  /* ===== FACTURE ===== */
+  .facture-preview { background:#fff; color:#000; padding:40px; border-radius:12px; font-family:'Barlow',sans-serif; font-size:13px; }
+  .facture-preview * { color:#000 !important; }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar { width:5px; }
+  ::-webkit-scrollbar-track { background:var(--noir); }
+  ::-webkit-scrollbar-thumb { background:var(--acier2); border-radius:4px; }
+
+  /* ===== EMPTY STATE ===== */
+  .empty { text-align:center; padding:48px; color:var(--gris); }
+  .empty-icon { font-size:48px; margin-bottom:12px; }
+  .empty p { font-size:14px; }
+
+  /* ===== NOTIFICATION ===== */
+  .notif { position:fixed; top:20px; right:20px; z-index:9999; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 20px; font-size:13px; box-shadow:var(--shadow); display:none; animation:slideIn .3s ease; }
+  .notif.success { border-color:rgba(0,212,170,0.5); color:var(--vert); }
+  .notif.error { border-color:rgba(233,69,96,0.5); color:var(--rouge); }
+  @keyframes slideIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+
+  /* ===== MACRO RAPPEL ===== */
+  #macroRappel {
+    position:fixed; top:0; right:0; bottom:0; width:360px; max-width:95vw;
+    background:var(--acier); border-left:1px solid var(--border);
+    z-index:8000; display:none; flex-direction:column;
+    box-shadow:-8px 0 40px rgba(0,0,0,0.6); animation:slideInRight .3s ease;
+  }
+  #macroRappel.open { display:flex; }
+  @keyframes slideInRight { from{transform:translateX(100%)} to{transform:translateX(0)} }
+  .macro-header {
+    padding:20px 20px 16px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .macro-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; color:var(--orange); }
+  .macro-subtitle { font-size:11px; color:var(--gris); margin-top:2px; }
+  .macro-close { background:none; border:none; color:var(--gris); font-size:20px; cursor:pointer; padding:4px; }
+  .macro-close:hover { color:var(--rouge); }
+  .macro-body { flex:1; overflow-y:auto; padding:16px; }
+  .macro-empty { text-align:center; padding:48px 16px; color:var(--gris); font-size:13px; }
+  .macro-card {
+    background:var(--card); border:1px solid rgba(245,166,35,0.3);
+    border-radius:10px; padding:14px 16px; margin-bottom:12px;
+    border-left:3px solid var(--orange);
+  }
+  .macro-card .mc-client { font-weight:700; font-size:14px; color:var(--blanc); }
+  .macro-card .mc-veh { font-size:12px; color:var(--gris); margin-top:2px; }
+  .macro-card .mc-duree { font-size:11px; color:var(--orange); margin-top:6px; font-weight:600; }
+  .macro-card .mc-panne { font-size:11px; color:var(--gris2); margin-top:4px; font-style:italic; }
+  .macro-card .mc-actions { display:flex; gap:8px; margin-top:12px; }
+  .mc-btn-rappel {
+    flex:1; padding:8px; border-radius:7px; border:none; cursor:pointer;
+    background:rgba(245,166,35,0.15); color:var(--orange);
+    border:1px solid rgba(245,166,35,0.3); font-family:'Barlow',sans-serif;
+    font-size:12px; font-weight:600; text-decoration:none; text-align:center;
+    display:flex; align-items:center; justify-content:center; gap:5px;
+  }
+  .mc-btn-rappel:hover { background:rgba(245,166,35,0.3); }
+  .mc-btn-done {
+    padding:8px 12px; border-radius:7px; border:1px solid var(--border);
+    background:transparent; color:var(--gris); cursor:pointer;
+    font-family:'Barlow',sans-serif; font-size:12px;
+  }
+  .mc-btn-done:hover { border-color:var(--vert); color:var(--vert); }
+  .macro-footer { padding:16px; border-top:1px solid var(--border); }
+  .macro-badge {
+    position:fixed; bottom:24px; right:24px; z-index:7999;
+    background:var(--orange); color:#000; border:none; border-radius:50px;
+    padding:12px 18px; font-family:'Bebas Neue',sans-serif; font-size:15px;
+    letter-spacing:1px; cursor:pointer; box-shadow:0 4px 20px rgba(245,166,35,0.5);
+    display:none; align-items:center; gap:8px; animation:pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{box-shadow:0 4px 20px rgba(245,166,35,0.5)} 50%{box-shadow:0 4px 32px rgba(245,166,35,0.9)} }
+  .macro-badge.visible { display:flex; }
+
+  @media(max-width:768px) {
+    .sidebar { transform:translateX(-100%); }
+    .sidebar.open { transform:translateX(0); }
+    .main-content { margin-left:0; padding:16px; }
+    .form-row { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <img class="brand-logo" id="loginLogo" alt="Logo" />
+      <div class="brand" id="loginBrand">Gestion de Garage</div>
+      <div class="tagline">Système de Gestion de Garage</div>
+    </div>
+    <div class="role-tabs">
+      <div class="role-tab active" onclick="selectRole('admin')">Administrateur</div>
+      <div class="role-tab" onclick="selectRole('user')">Technicien</div>
+    </div>
+    <input type="hidden" id="loginUser" value="admin" />
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" />
+    </div>
+    <button class="btn-login" onclick="doLogin()">CONNEXION</button>
+    <div class="login-error" id="loginError">Mot de passe incorrect. Réessayez.</div>
+    <div style="text-align:center;margin-top:14px"><a href="#" onclick="quitterCompte();return false" style="color:#9aa;font-size:.85rem">Changer de compte / se déconnecter</a><br><a href="index.html" style="color:#9aa;font-size:.85rem;display:inline-block;margin-top:8px">🏠 Retour à l'accueil du site</a></div>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <img class="sidebar-logo" id="sidebarLogo" alt="Logo" />
+      <div class="sidebar-brand" id="sidebarBrand">Gestion de Garage</div>
+      <div class="sidebar-role" id="roleLabel">Admin</div>
+    </div>
+    <div class="nav-section">Site</div>
+    <a class="nav-item" href="index.html"><span class="nav-icon">🏠</span> Accueil du site</a>
+    <div class="nav-section">Gestion</div>
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">📊</span> Tableau de bord</div>
+    <div class="nav-item" onclick="showPage('vehicules')"><span class="nav-icon">🚗</span> Véhicules</div>
+    <div class="nav-item" onclick="showPage('personnel')"><span class="nav-icon">👥</span> Personnel</div>
+    <div class="nav-item admin-only" onclick="showPage('finance')"><span class="nav-icon">💰</span> Finance</div>
+    <div class="nav-section">Documents</div>
+    <div class="nav-item admin-only" onclick="showPage('factures')"><span class="nav-icon">🧾</span> Factures</div>
+    <div class="nav-section admin-only-section">Administration</div>
+    <div class="nav-item admin-only" onclick="showPage('parametres')"><span class="nav-icon">⚙️</span> Paramètres</div>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="doLogout()">🚪 Déconnexion</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Tableau de Bord</div>
+          <div class="page-sub" id="dashDate"></div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="showPage('vehicules');openModal('modalVehicule')">+ Nouveau Véhicule</button>
+        </div>
+      </div>
+      <div id="alertesBanner"></div>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">⚡ Réparations en cours</span>
+        </div>
+        <table>
+          <thead><tr><th>Client</th><th>Véhicule</th><th>Panne</th><th>Technicien</th><th>Statut</th><th>Entrée</th></tr></thead>
+          <tbody id="dashRepairs"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VEHICULES -->
+    <div class="page" id="page-vehicules">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Gestion des Véhicules</div>
+          <div class="page-sub">Enregistrement & suivi des réparations</div>
+        </div>
+        <div class="topbar-actions">
+          <div class="search-bar"><input type="text" id="searchVeh" placeholder="Rechercher..." oninput="renderVehicules()"></div>
+          <button class="btn btn-primary" onclick="openModal('modalVehicule')">+ Enregistrer</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="filterVeh('tous',this)">Tous</button>
+        <button class="tab-btn" onclick="filterVeh('en cours',this)">En cours</button>
+        <button class="tab-btn" onclick="filterVeh('terminé',this)">Terminés</button>
+        <button class="tab-btn" onclick="filterVeh('livré',this)">Livrés</button>
+      </div>
+      <div class="section-card">
+        <table>
+          <thead><tr><th>#</th><th>Client</th><th>Marque / Modèle</th><th>Châssis</th><th>Carburant</th><th>Panne</th><th>Technicien</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="tableVehicules"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PERSONNEL -->
+    <div class="page" id="page-personnel">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Personnel</div>
+          <div class="page-sub">Présences et pointage</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="openModal('modalPersonnel')">+ Ajouter</button>
+        </div>
+      </div>
+      <div class="stats-grid" id="statsPersonnel"></div>
+      <div class="section-card">
+        <div class="section-header"><span class="section-title">👥 Équipe</span></div>
+        <table>
+          <thead><tr><th>Nom & Prénom</th><th>Fonction</th><th>Téléphone</th><th>Arrivée</th><th>Départ</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="tablePersonnel"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FINANCE (ADMIN ONLY) -->
+    <div class="page" id="page-finance">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Finance</div>
+          <div class="page-sub">Entrées, sorties & suivi financier</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="openModal('modalFinance')">+ Transaction</button>
+        </div>
+      </div>
+      <div class="stats-grid" id="statsFinance"></div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="filterFin('tous',this)">Toutes</button>
+        <button class="tab-btn" onclick="filterFin('entrée',this)">Entrées</button>
+        <button class="tab-btn" onclick="filterFin('sortie',this)">Sorties</button>
+      </div>
+      <div class="section-card">
+        <table>
+          <thead><tr><th>Date</th><th>Type</th><th>Désignation</th><th>Pièce</th><th>Montant</th><th>Mode</th><th>Commentaire</th><th>Actions</th></tr></thead>
+          <tbody id="tableFinance"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FACTURES (ADMIN ONLY) -->
+    <div class="page" id="page-factures">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Factures & Devis</div>
+          <div class="page-sub">Devis, Facture proforma, Facture définitive</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="openModal('modalFacture')">+ Créer</button>
+        </div>
+      </div>
+      <div class="section-card">
+        <table>
+          <thead><tr><th>N°</th><th>Type</th><th>Client</th><th>Véhicule</th><th>Montant</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="tableFactures"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PARAMETRES (ADMIN ONLY) -->
+    <div class="page" id="page-parametres">
+      <div class="topbar">
+        <div class="page-title">Paramètres</div>
+      </div>
+      <div class="section-card" style="padding:28px; max-width:520px;">
+        <div class="section-title" style="margin-bottom:6px;">🏢 Identité du garage</div>
+        <div style="font-size:12px;color:var(--gris);margin-bottom:20px;">Le nom et le logo apparaissent sur la connexion, le menu et les documents imprimés.</div>
+        <div class="form-group-modal">
+          <label>Nom du garage</label>
+          <input type="text" id="garageNom" placeholder="Ex : Garage Diallo" />
+        </div>
+        <div class="form-group-modal">
+          <label>Ville</label>
+          <input type="text" id="garageVille" placeholder="Saisir la ville" />
+        </div>
+        <div class="form-group-modal">
+          <label>Adresse / Téléphone (facultatif)</label>
+          <input type="text" id="garageContact" placeholder="Ex : Quartier, Tél : 6xx xx xx xx" />
+        </div>
+        <div class="form-group-modal">
+          <label>Logo</label>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <img id="garageLogoPreview" alt="" style="display:none;max-height:64px;max-width:160px;object-fit:contain;background:#fff;border-radius:6px;padding:4px;" />
+            <input type="file" id="garageLogoFile" accept="image/*" onchange="chargerLogo(this)" />
+            <button class="btn btn-secondary btn-sm" type="button" onclick="retirerLogo()">Retirer le logo</button>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveGarage()">💾 Enregistrer l'identité</button>
+
+        <hr style="margin:28px 0;border-color:var(--border);">
+        <div class="section-title" style="margin-bottom:6px;">🔐 Changer les mots de passe</div>
+        <div style="font-size:12px;color:var(--gris);margin-bottom:20px;">Laissez vide pour ne pas modifier un mot de passe.</div>
+
+        <!-- Mot de passe Admin -->
+        <div class="form-group-modal">
+          <label>Nouveau mot de passe Admin</label>
+          <div style="position:relative;">
+            <input type="password" id="newAdminPass" placeholder="Nouveau mot de passe admin" style="padding-right:44px;" />
+            <button onclick="togglePass('newAdminPass','eyeAdmin')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gris);font-size:16px;" title="Afficher/Masquer" id="eyeAdmin">👁</button>
+          </div>
+        </div>
+        <div class="form-group-modal">
+          <label>Confirmer le mot de passe Admin</label>
+          <div style="position:relative;">
+            <input type="password" id="confirmAdminPass" placeholder="Confirmer le mot de passe" style="padding-right:44px;" />
+            <button onclick="togglePass('confirmAdminPass','eyeAdminC')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gris);font-size:16px;" title="Afficher/Masquer" id="eyeAdminC">👁</button>
+          </div>
+        </div>
+
+        <hr style="margin:20px 0;border-color:var(--border);">
+
+        <!-- Mot de passe Technicien -->
+        <div class="form-group-modal">
+          <label>Nouveau mot de passe Technicien</label>
+          <div style="position:relative;">
+            <input type="password" id="newTechPass" placeholder="Nouveau mot de passe technicien" style="padding-right:44px;" />
+            <button onclick="togglePass('newTechPass','eyeTech')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gris);font-size:16px;" title="Afficher/Masquer" id="eyeTech">👁</button>
+          </div>
+        </div>
+        <div class="form-group-modal">
+          <label>Confirmer le mot de passe Technicien</label>
+          <div style="position:relative;">
+            <input type="password" id="confirmTechPass" placeholder="Confirmer le mot de passe" style="padding-right:44px;" />
+            <button onclick="togglePass('confirmTechPass','eyeTechC')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gris);font-size:16px;" title="Afficher/Masquer" id="eyeTechC">👁</button>
+          </div>
+        </div>
+
+        <div id="passError" style="color:var(--rouge);font-size:12px;margin-bottom:12px;display:none;"></div>
+        <button class="btn btn-primary" onclick="savePasswords()">💾 Enregistrer les mots de passe</button>
+
+        <hr style="margin:28px 0;border-color:var(--border);">
+        <div class="section-title" style="margin-bottom:16px;">Données</div>
+        <button class="btn btn-secondary" onclick="exportData()">📤 Exporter les données (JSON)</button>
+        <button class="btn btn-secondary" style="margin-top:8px;" onclick="if(confirm('Effacer TOUTES les données ?'))clearData()">🗑️ Réinitialiser</button>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /app -->
+
+<!-- ===== MODALS ===== -->
+
+<!-- Modal Véhicule -->
+<div class="modal-overlay" id="modalVehicule">
+  <div class="modal">
+    <h3 id="modalVehTitle">🚗 Enregistrer un Véhicule</h3>
+    <input type="hidden" id="vehId">
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>Nom du Client *</label>
+        <input type="text" id="vehClient" placeholder="Ex: Mamadou Diallo" />
+      </div>
+      <div class="form-group-modal">
+        <label>Téléphone Client</label>
+        <input type="text" id="vehTel" placeholder="+224 6XX XXX XXX" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>Marque *</label>
+        <input type="text" id="vehMarque" placeholder="Toyota, Peugeot..." />
+      </div>
+      <div class="form-group-modal">
+        <label>Modèle *</label>
+        <input type="text" id="vehModele" placeholder="Corolla, 307..." />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>N° de Châssis</label>
+        <input type="text" id="vehChassis" placeholder="VIN / Châssis" />
+      </div>
+      <div class="form-group-modal">
+        <label>Année de Fabrication</label>
+        <input type="number" id="vehAnnee" placeholder="2018" min="1980" max="2030" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>Kilométrage</label>
+        <input type="number" id="vehKm" placeholder="85000" />
+      </div>
+      <div class="form-group-modal">
+        <label>Niveau de Carburant</label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button type="button" class="carb-btn" onclick="setNivCarb('Vide',this)" style="padding:7px 14px;border-radius:7px;border:1px solid var(--border);background:var(--acier2);color:var(--gris2);font-family:'Barlow',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;">Vide</button>
+          <button type="button" class="carb-btn" onclick="setNivCarb('Plein',this)" style="padding:7px 14px;border-radius:7px;border:1px solid var(--border);background:var(--acier2);color:var(--gris2);font-family:'Barlow',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;">Plein</button>
+          <input type="text" id="vehNivCarbCustom" placeholder="Ex: 30L, mi-réservoir..." oninput="setNivCarbCustom(this.value)" style="flex:1;min-width:90px;background:var(--acier2);border:1px solid var(--border);border-radius:7px;padding:7px 12px;color:var(--blanc);font-family:'Barlow',sans-serif;font-size:13px;" />
+        </div>
+        <input type="hidden" id="vehNivCarb" value="" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>Type de Carburant</label>
+        <select id="vehTypeCarb">
+          <option value="">-- Sélectionner --</option>
+          <option>Essence</option><option>Diesel</option><option>Hybride</option><option>Électrique</option>
+        </select>
+      </div>
+      <div class="form-group-modal">
+        <label>Technicien en charge *</label>
+        <select id="vehTechnicien"></select>
+      </div>
+    </div>
+    <div class="form-group-modal">
+      <label>Panne Déclarée *</label>
+      <textarea id="vehPanne" placeholder="Description détaillée de la panne..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>Statut</label>
+        <select id="vehStatut">
+          <option value="en cours">En cours de réparation</option>
+          <option value="terminé">Terminé</option>
+          <option value="livré">Livré</option>
+          <option value="en attente">En attente pièces</option>
+        </select>
+      </div>
+      <div class="form-group-modal">
+        <label>Date d'entrée</label>
+        <input type="datetime-local" id="vehDate" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalVehicule')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveVehicule()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Personnel -->
+<div class="modal-overlay" id="modalPersonnel">
+  <div class="modal">
+    <h3>👤 Fiche Personnel</h3>
+    <input type="hidden" id="perId">
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>Prénom *</label>
+        <input type="text" id="perPrenom" />
+      </div>
+      <div class="form-group-modal">
+        <label>Nom *</label>
+        <input type="text" id="perNom" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>Fonction *</label>
+        <select id="perFonction">
+          <option>Mécanicien</option><option>Électricien auto</option><option>Carrossier</option>
+          <option>Soudeur</option><option>Réceptionniste</option><option>Comptable</option><option>Gérant</option>
+        </select>
+      </div>
+      <div class="form-group-modal">
+        <label>Téléphone</label>
+        <input type="text" id="perTel" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>Heure d'arrivée</label>
+        <input type="time" id="perArrivee" />
+      </div>
+      <div class="form-group-modal">
+        <label>Heure de départ</label>
+        <input type="time" id="perDepart" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalPersonnel')">Annuler</button>
+      <button class="btn btn-primary" onclick="savePersonnel()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Finance -->
+<div class="modal-overlay" id="modalFinance">
+  <div class="modal">
+    <h3>💰 Transaction Financière</h3>
+    <input type="hidden" id="finId">
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>Type *</label>
+        <select id="finType">
+          <option value="entrée">Entrée</option>
+          <option value="sortie">Sortie</option>
+        </select>
+      </div>
+      <div class="form-group-modal">
+        <label>Date</label>
+        <input type="datetime-local" id="finDate" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>Diagnostic / Désignation *</label>
+        <input type="text" id="finDesig" placeholder="Réparation moteur, achat pièce..." />
+      </div>
+      <div class="form-group-modal">
+        <label>Nom de la Pièce</label>
+        <input type="text" id="finPiece" placeholder="Filtre à huile, courroie..." />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>Prix de la Pièce (GNF)</label>
+        <input type="number" id="finPrixPiece" placeholder="0" />
+      </div>
+      <div class="form-group-modal">
+        <label>Main d'Œuvre (GNF)</label>
+        <input type="number" id="finMO" placeholder="0" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>Avance reçue (GNF)</label>
+        <input type="number" id="finAvance" placeholder="0" />
+      </div>
+      <div class="form-group-modal">
+        <label>Mode de Paiement</label>
+        <select id="finMode">
+          <option>Espèces</option>
+          <option>Orange Money (OM)</option>
+          <option>Virement Bancaire</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group-modal">
+      <label>Commentaire</label>
+      <textarea id="finComment" placeholder="Notes sur cette transaction..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalFinance')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveFinance()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Facture -->
+<div class="modal-overlay" id="modalFacture">
+  <div class="modal">
+    <h3>🧾 Créer un Document</h3>
+    <input type="hidden" id="facId">
+
+    <!-- Sélecteur auto-remplissage depuis les véhicules enregistrés -->
+    <div class="form-group-modal" id="facVehSelectGroup">
+      <label>🔗 Importer depuis un véhicule enregistré</label>
+      <select id="facVehSelect" onchange="autoFillFacture()" style="border-color:rgba(0,212,170,0.4);background:rgba(0,212,170,0.05);">
+        <option value="">— Sélectionner un véhicule (optionnel) —</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin:-6px 0 16px;"><div style="flex:1;height:1px;background:var(--border);"></div><span style="font-size:11px;color:var(--gris);letter-spacing:1px;">OU SAISIR MANUELLEMENT</span><div style="flex:1;height:1px;background:var(--border);"></div></div>
+
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>Type de Document *</label>
+        <select id="facType">
+          <option value="Devis">Devis</option>
+          <option value="Facture Proforma">Facture Proforma</option>
+          <option value="Facture Définitive">Facture Définitive</option>
+        </select>
+      </div>
+      <div class="form-group-modal">
+        <label>Date</label>
+        <input type="date" id="facDate" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>Client *</label>
+        <input type="text" id="facClient" placeholder="Nom du client" />
+      </div>
+      <div class="form-group-modal">
+        <label>Véhicule</label>
+        <input type="text" id="facVehicule" placeholder="Marque Modèle Immatriculation" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>Pièces (GNF)</label>
+        <input type="number" id="facPieces" placeholder="0" oninput="calcFacture()" />
+      </div>
+      <div class="form-group-modal">
+        <label>Main d'Œuvre (GNF)</label>
+        <input type="number" id="facMO" placeholder="0" oninput="calcFacture()" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group-modal">
+        <label>Avance (GNF)</label>
+        <input type="number" id="facAvance" placeholder="0" oninput="calcFacture()" />
+      </div>
+      <div class="form-group-modal">
+        <label>Reste à payer</label>
+        <input type="text" id="facReste" readonly style="background:var(--acier);color:var(--orange);font-weight:700;" />
+      </div>
+    </div>
+    <div class="form-group-modal">
+      <label>Statut</label>
+      <select id="facStatut">
+        <option value="En attente">En attente</option>
+        <option value="Payé">Payé</option>
+        <option value="Partiellement payé">Partiellement payé</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalFacture')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveFacture()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Détail Véhicule -->
+<div class="modal-overlay" id="modalVehDetail">
+  <div class="modal" style="max-width:720px;">
+    <h3 id="detailTitle">Détail Véhicule</h3>
+    <div id="detailContent"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalVehDetail')">Fermer</button>
+      <button class="btn btn-primary" id="btnImprimerFac" onclick="imprimerFactureRapide()">🖨️ Imprimer fiche</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif"></div>
+
+<!-- MACRO RAPPEL 24H — Panneau latéral -->
+<div id="macroRappel">
+  <div class="macro-header">
+    <div>
+      <div class="macro-title">⏰ Rappels Technicien</div>
+      <div class="macro-subtitle">Véhicules en réparation depuis +24h</div>
+    </div>
+    <button class="macro-close" onclick="fermerMacro()">✕</button>
+  </div>
+  <div class="macro-body" id="macroBody">
+    <div class="macro-empty">Aucun rappel en attente</div>
+  </div>
+  <div class="macro-footer">
+    <button onclick="toutMarquerAppele()" style="width:100%;padding:10px;background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:8px;color:var(--orange);font-family:'Barlow',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">
+      ✅ Tout marquer comme pris en charge
+    </button>
+  </div>
+</div>
+
+<!-- Badge flottant rappel -->
+<button class="macro-badge" id="macroBadge" onclick="ouvrirMacro()">
+  ⏰ <span id="macroBadgeCount">0</span> rappel(s)
+</button>
+
+<script>
+// ============================================================
+// BASE DE DONNÉES (localStorage)
+// ============================================================
+let DB_PREFIX='atms_';
+const DB = {
+  get(k) { try { return JSON.parse(localStorage.getItem(DB_PREFIX+k)) || []; } catch{ return []; } },
+  set(k,v) { localStorage.setItem(DB_PREFIX+k, JSON.stringify(v)); },
+  getObj(k,def={}) { try { return JSON.parse(localStorage.getItem(DB_PREFIX+k)) || def; } catch{ return def; } },
+  setObj(k,v) { localStorage.setItem(DB_PREFIX+k, JSON.stringify(v)); }
+};
+
+// ============================================================
+// IDENTITÉ DU GARAGE (nom + logo définis par l'administrateur)
+// ============================================================
+function getGarage() { return DB.getObj('garage', { nom:'', logo:'', contact:'', ville:'' }); }
+function escH(t) { return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function garageLigne() { const g = getGarage(); return [g.ville, g.contact].filter(x => x && x.trim()).join(' | '); }
+function garageNom() { return (getGarage().nom || '').trim() || 'Gestion de Garage'; }
+function garageLogoHTML(style) {
+  const g = getGarage();
+  return g.logo ? `<img src="${g.logo}" alt="Logo" style="${style||'max-height:70px;max-width:200px;object-fit:contain;'}">` : '';
+}
+let pendingLogo = null;
+function applyBranding() {
+  const g = getGarage(), nom = garageNom();
+  document.title = nom;
+  document.getElementById('loginBrand').textContent = nom;
+  document.getElementById('sidebarBrand').textContent = nom;
+  ['loginLogo','sidebarLogo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (g.logo) { el.src = g.logo; el.style.display = 'block'; } else { el.removeAttribute('src'); el.style.display = 'none'; }
+  });
+}
+function fillGarageForm() {
+  const g = getGarage();
+  pendingLogo = g.logo || '';
+  document.getElementById('garageNom').value = g.nom || '';
+  document.getElementById('garageVille').value = g.ville || '';
+  document.getElementById('garageContact').value = g.contact || '';
+  document.getElementById('garageLogoFile').value = '';
+  majApercuLogo();
+}
+function majApercuLogo() {
+  const el = document.getElementById('garageLogoPreview');
+  if (pendingLogo) { el.src = pendingLogo; el.style.display = 'block'; } else { el.removeAttribute('src'); el.style.display = 'none'; }
+}
+function chargerLogo(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 300, r = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      pendingLogo = c.toDataURL('image/png');
+      majApercuLogo();
+    };
+    img.onerror = () => notify('Image invalide', 'error');
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function retirerLogo() { pendingLogo = ''; document.getElementById('garageLogoFile').value = ''; majApercuLogo(); }
+function saveGarage() {
+  const nom = document.getElementById('garageNom').value.trim();
+  if (!nom) { notify('Veuillez saisir le nom du garage', 'error'); return; }
+  try {
+    DB.setObj('garage', { nom, logo: pendingLogo || '', ville: document.getElementById('garageVille').value.trim(), contact: document.getElementById('garageContact').value.trim() });
+  } catch (e) { notify('Logo trop volumineux, choisissez une image plus petite', 'error'); return; }
+  applyBranding();
+  notify('Identité du garage enregistrée');
+}
+
+// ============================================================
+// AUTHENTIFICATION
+// ============================================================
+let currentRole = null;
+let currentUser = null;
+let vehFilter = 'tous';
+let finFilter = 'tous';
+
+function getCredentials() {
+  return DB.getObj('credentials', { admin: 'admin123', tech: 'tech123' });
+}
+
+function selectRole(r) {
+  currentRole = r;
+  document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('loginUser').value = r === 'admin' ? 'admin' : 'tech';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginPass').focus();
+}
+
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim().toLowerCase();
+  const p = document.getElementById('loginPass').value;
+  const creds = getCredentials();
+  const err = document.getElementById('loginError');
+  if (u === 'admin' && p === creds.admin) {
+    currentRole = 'admin'; currentUser = 'Administrateur';
+  } else if (u === 'tech' && p === creds.tech) {
+    currentRole = 'user'; currentUser = 'Technicien';
+  } else {
+    err.style.display = 'block'; return;
+  }
+  err.style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  applyRoleUI();
+  showPage('dashboard');
+  checkAlertes24h();
+  // Vérification toutes les heures
+  setInterval(checkAlertes24h, 3600000);
+}
+
+function doLogout() {
+  currentRole = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginPass').value = '';
+}
+
+function applyRoleUI() {
+  const isAdmin = currentRole === 'admin';
+  document.getElementById('roleLabel').textContent = isAdmin ? 'Admin' : 'Technicien';
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
+  document.querySelectorAll('.admin-only-section').forEach(el => el.style.display = isAdmin ? '' : 'none');
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(p) {
+  if ((p === 'finance' || p === 'factures' || p === 'parametres') && currentRole !== 'admin') {
+    notify('Accès réservé à l\'administrateur', 'error'); return;
+  }
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(el => {
+    if(el.getAttribute('onclick') && el.getAttribute('onclick').includes("'"+p+"'")) el.classList.add('active');
+  });
+  if(p==='dashboard') renderDashboard();
+  if(p==='vehicules') renderVehicules();
+  if(p==='personnel') renderPersonnel();
+  if(p==='finance') renderFinance();
+  if(p==='factures') renderFactures();
+  if(p==='parametres') fillGarageForm();
+}
+
+// ============================================================
+// UTILITAIRES
+// ============================================================
+function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
+function fmt(n) { return Number(n||0).toLocaleString('fr-FR') + ' GNF'; }
+function fmtDate(d) { if(!d) return '–'; return new Date(d).toLocaleDateString('fr-FR', {day:'2-digit',month:'short',year:'numeric'}); }
+function fmtDateTime(d) { if(!d) return '–'; return new Date(d).toLocaleString('fr-FR', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+function notify(msg, type='success') {
+  const n = document.getElementById('notif');
+  n.textContent = (type==='success'?'✅ ':'❌ ') + msg;
+  n.className = 'notif ' + type;
+  n.style.display = 'block';
+  setTimeout(()=>n.style.display='none', 3000);
+}
+function statutBadge(s) {
+  const map = {'en cours':'badge-rouge','terminé':'badge-vert','livré':'badge-bleu','en attente':'badge-orange'};
+  return `<span class="badge ${map[s]||'badge-orange'}">${s}</span>`;
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard() {
+  document.getElementById('dashDate').textContent = new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const vehs = DB.get('vehicules');
+  const pers = DB.get('personnel');
+  const fins = DB.get('finances');
+  const encours = vehs.filter(v=>v.statut==='en cours').length;
+  const termines = vehs.filter(v=>v.statut==='terminé').length;
+  const totalEntrees = fins.filter(f=>f.type==='entrée').reduce((s,f)=>s+(parseFloat(f.prixPiece)||0)+(parseFloat(f.mo)||0),0);
+  const totalSorties = fins.filter(f=>f.type==='sortie').reduce((s,f)=>s+(parseFloat(f.prixPiece)||0)+(parseFloat(f.mo)||0),0);
+  let statsHTML = `
+    <div class="stat-card rouge"><div class="stat-label">En réparation</div><div class="stat-value">${encours}</div><div class="stat-detail">véhicules actifs</div></div>
+    <div class="stat-card vert"><div class="stat-label">Terminés</div><div class="stat-value">${termines}</div><div class="stat-detail">prêts à livrer</div></div>
+    <div class="stat-card bleu"><div class="stat-label">Personnel</div><div class="stat-value">${pers.length}</div><div class="stat-detail">employés enregistrés</div></div>`;
+  if(currentRole==='admin') statsHTML += `
+    <div class="stat-card orange"><div class="stat-label">Solde</div><div class="stat-value" style="font-size:24px;">${fmt(totalEntrees-totalSorties)}</div><div class="stat-detail">Entrées: ${fmt(totalEntrees)}</div></div>`;
+  document.getElementById('statsGrid').innerHTML = statsHTML;
+  const tbody = document.getElementById('dashRepairs');
+  const actifs = vehs.filter(v=>v.statut==='en cours').slice(0,8);
+  tbody.innerHTML = actifs.length ? actifs.map(v=>`
+    <tr><td><b>${v.client}</b></td><td>${v.marque} ${v.modele}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.panne}</td>
+    <td>${v.technicien||'–'}</td><td>${statutBadge(v.statut)}</td><td>${fmtDateTime(v.date)}</td></tr>`).join('')
+    : `<tr><td colspan="6"><div class="empty"><div class="empty-icon">✅</div><p>Aucun véhicule en réparation</p></div></td></tr>`;
+}
+
+// ============================================================
+// ALERTES 24H + MACRO RAPPEL
+// ============================================================
+function heuresDepuis(date) {
+  return (Date.now() - new Date(date).getTime()) / 3600000;
+}
+function dureeLabel(h) {
+  if(h < 48) return `${Math.floor(h)}h de réparation`;
+  return `${Math.floor(h/24)} jours de réparation`;
+}
+
+function checkAlertes24h() {
+  const vehs = DB.get('vehicules').filter(v=>v.statut==='en cours');
+  const alertes = vehs.filter(v => heuresDepuis(v.date) >= 24);
+  // Bannière dashboard
+  const banner = document.getElementById('alertesBanner');
+  if(alertes.length > 0) {
+    banner.innerHTML = alertes.map(v=>`
+      <div class="alert-banner" style="cursor:pointer;" onclick="ouvrirMacro()">
+        ⏰ <b>${v.client}</b> — ${v.marque} ${v.modele} en réparation depuis ${dureeLabel(heuresDepuis(v.date))} — <u>Voir rappels</u>
+      </div>`).join('');
+  } else { banner.innerHTML = ''; }
+  // Badge flottant
+  majMacroBadge(alertes.length);
+  // Rafraîchir le panneau si ouvert
+  if(document.getElementById('macroRappel').classList.contains('open')) {
+    renderMacroBody(alertes);
+  }
+}
+
+function majMacroBadge(count) {
+  const badge = document.getElementById('macroBadge');
+  const span  = document.getElementById('macroBadgeCount');
+  span.textContent = count;
+  if(count > 0) badge.classList.add('visible');
+  else badge.classList.remove('visible');
+}
+
+function ouvrirMacro() {
+  const vehs = DB.get('vehicules').filter(v=>v.statut==='en cours');
+  const alertes = vehs.filter(v => heuresDepuis(v.date) >= 24);
+  renderMacroBody(alertes);
+  document.getElementById('macroRappel').classList.add('open');
+}
+
+function fermerMacro() {
+  document.getElementById('macroRappel').classList.remove('open');
+}
+
+function renderMacroBody(alertes) {
+  const appeles = DB.getObj('rappels_appeles', {});
+  const body = document.getElementById('macroBody');
+  if(!alertes.length) {
+    body.innerHTML = '<div class="macro-empty">✅ Aucun véhicule en attente de rappel</div>';
+    return;
+  }
+  body.innerHTML = alertes.map(v => {
+    const h = heuresDepuis(v.date);
+    const deja = appeles[v.id];
+    const cardStyle = deja ? 'opacity:0.55;border-left-color:var(--gris);' : '';
+    const statusLabel = deja
+      ? `<span style="font-size:10px;color:var(--vert);">✅ Pris en charge ${new Date(deja).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</span>`
+      : `<span style="font-size:10px;color:var(--orange);">⚠️ Attente intervention</span>`;
+    const rappelBtn = `<div class="mc-btn-rappel" style="cursor:default;">🔔 Ce véhicule est en réparation depuis ${dureeLabel(h)} — Vérifier l'avancement</div>`;
+    return `<div class="macro-card" style="${cardStyle}">
+      <div class="mc-client">${v.client}</div>
+      <div class="mc-veh">${v.marque} ${v.modele}${v.chassis?' • '+v.chassis:''}</div>
+      <div class="mc-duree">⏱ ${dureeLabel(h)} ${statusLabel}</div>
+      <div class="mc-panne">${v.panne.substring(0,60)}${v.panne.length>60?'...':''}</div>
+      <div class="mc-actions">
+        ${rappelBtn}
+        <button class="mc-btn-done" onclick="marquerAppele('${v.id}')">✔ Pris en charge</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function marquerAppele(id) {
+  const appeles = DB.getObj('rappels_appeles', {});
+  appeles[id] = new Date().toISOString();
+  DB.setObj('rappels_appeles', appeles);
+  const vehs = DB.get('vehicules').filter(v=>v.statut==='en cours');
+  const alertes = vehs.filter(v => heuresDepuis(v.date) >= 24);
+  renderMacroBody(alertes);
+}
+
+function toutMarquerAppele() {
+  const vehs = DB.get('vehicules').filter(v=>v.statut==='en cours');
+  const alertes = vehs.filter(v => heuresDepuis(v.date) >= 24);
+  const appeles = DB.getObj('rappels_appeles', {});
+  alertes.forEach(v => { appeles[v.id] = new Date().toISOString(); });
+  DB.setObj('rappels_appeles', appeles);
+  renderMacroBody(alertes);
+  notify('Tous les véhicules marqués comme pris en charge');
+}
+
+// ============================================================
+// VÉHICULES
+// ============================================================
+function renderVehicules() {
+  const search = (document.getElementById('searchVeh')?.value||'').toLowerCase();
+  let vehs = DB.get('vehicules');
+  if(vehFilter !== 'tous') vehs = vehs.filter(v=>v.statut===vehFilter);
+  if(search) vehs = vehs.filter(v=>JSON.stringify(v).toLowerCase().includes(search));
+  const tbody = document.getElementById('tableVehicules');
+  tbody.innerHTML = vehs.length ? vehs.map((v,i)=>`
+    <tr>
+      <td style="color:var(--gris);font-size:11px;">#${String(i+1).padStart(3,'0')}</td>
+      <td><b>${v.client}</b><br><span style="font-size:11px;color:var(--gris);">${v.tel||''}</span></td>
+      <td><b>${v.marque}</b> ${v.modele}<br><span style="font-size:11px;color:var(--gris);">${v.annee||''} • ${v.km?v.km+' km':''}</span></td>
+      <td style="font-size:11px;color:var(--gris);">${v.chassis||'–'}</td>
+      <td><span class="badge badge-bleu">${v.typeCarb||'–'}</span></td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;">${v.panne}</td>
+      <td>${v.technicien||'–'}</td>
+      <td>${statutBadge(v.statut)}</td>
+      <td>
+        ${currentRole==='admin' && v.saisiePar ? `<div style="font-size:10px;color:var(--gris);margin-bottom:4px;">Saisi par: <span style="color:${v.saisiePar==='Technicien'?'var(--vert)':'var(--orange)'};">${v.saisiePar}</span></div>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="voirVehicule('${v.id}')">👁</button>
+        <button class="btn btn-secondary btn-sm" onclick="editVehicule('${v.id}')">✏️</button>
+        ${currentRole==='admin'?`<button class="btn btn-secondary btn-sm" onclick="deleteVehicule('${v.id}')">🗑</button>`:''}
+      </td>
+    </tr>`).join('')
+    : `<tr><td colspan="9"><div class="empty"><div class="empty-icon">🚗</div><p>Aucun véhicule enregistré</p></div></td></tr>`;
+}
+
+function filterVeh(f, btn) {
+  vehFilter = f;
+  document.querySelectorAll('#page-vehicules .tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderVehicules();
+}
+
+function openModal(id) {
+  // populate technicien select
+  if(id==='modalVehicule') {
+    const pers = DB.get('personnel');
+    const sel = document.getElementById('vehTechnicien');
+    sel.innerHTML = '<option value="">-- Sélectionner --</option>' + pers.map(p=>`<option>${p.prenom} ${p.nom}</option>`).join('');
+    document.getElementById('vehId').value='';
+    document.getElementById('vehClient').value='';
+    document.getElementById('vehTel').value='';
+    document.getElementById('vehMarque').value='';
+    document.getElementById('vehModele').value='';
+    document.getElementById('vehChassis').value='';
+    document.getElementById('vehAnnee').value='';
+    document.getElementById('vehKm').value='';
+    document.getElementById('vehNivCarb').value='';
+    document.getElementById('vehNivCarbCustom').value='';
+    document.querySelectorAll('.carb-btn').forEach(b=>{b.style.background='var(--acier2)';b.style.color='var(--gris2)';b.style.borderColor='var(--border)';});
+    document.getElementById('vehTypeCarb').value='';
+    document.getElementById('vehPanne').value='';
+    document.getElementById('vehStatut').value='en cours';
+    document.getElementById('vehDate').value=new Date().toISOString().slice(0,16);
+    document.getElementById('modalVehTitle').textContent='🚗 Enregistrer un Véhicule';
+  }
+  if(id==='modalFinance') {
+    document.getElementById('finId').value='';
+    document.getElementById('finDate').value=new Date().toISOString().slice(0,16);
+    document.getElementById('finDesig').value='';
+    document.getElementById('finPiece').value='';
+    document.getElementById('finPrixPiece').value='';
+    document.getElementById('finMO').value='';
+    document.getElementById('finAvance').value='';
+    document.getElementById('finComment').value='';
+  }
+  if(id==='modalFacture') {
+    // Peupler le sélecteur véhicule depuis la base
+    const vehs = DB.get('vehicules');
+    const sel = document.getElementById('facVehSelect');
+    sel.innerHTML = '<option value="">— Sélectionner un véhicule (optionnel) —</option>'
+      + vehs.map(v=>`<option value="${v.id}">${v.client} — ${v.marque} ${v.modele} (${v.statut})</option>`).join('');
+    document.getElementById('facId').value='';
+    document.getElementById('facVehSelect').value='';
+    document.getElementById('facDate').value=new Date().toISOString().slice(0,10);
+    document.getElementById('facClient').value='';
+    document.getElementById('facVehicule').value='';
+    document.getElementById('facPieces').value='';
+    document.getElementById('facMO').value='';
+    document.getElementById('facAvance').value='';
+    document.getElementById('facReste').value='';
+    document.getElementById('facStatut').value='En attente';
+    // Afficher/cacher le sélecteur selon le rôle
+    document.getElementById('facVehSelectGroup').style.display = currentRole==='admin' ? '' : 'none';
+  }
+  if(id==='modalPersonnel') {
+    document.getElementById('perId').value='';
+    document.getElementById('perPrenom').value='';
+    document.getElementById('perNom').value='';
+    document.getElementById('perTel').value='';
+    document.getElementById('perArrivee').value='';
+    document.getElementById('perDepart').value='';
+  }
+  document.getElementById(id).classList.add('active');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+function saveVehicule() {
+  const client = document.getElementById('vehClient').value.trim();
+  const marque = document.getElementById('vehMarque').value.trim();
+  const modele = document.getElementById('vehModele').value.trim();
+  const panne = document.getElementById('vehPanne').value.trim();
+  if(!client||!marque||!panne) { notify('Remplissez les champs obligatoires (*)','error'); return; }
+  const vehs = DB.get('vehicules');
+  const existing = document.getElementById('vehId').value;
+  const obj = {
+    id: existing || uid(),
+    client, tel: document.getElementById('vehTel').value,
+    marque, modele,
+    chassis: document.getElementById('vehChassis').value,
+    annee: document.getElementById('vehAnnee').value,
+    km: document.getElementById('vehKm').value,
+    nivCarb: document.getElementById('vehNivCarb').value,
+    typeCarb: document.getElementById('vehTypeCarb').value,
+    technicien: document.getElementById('vehTechnicien').value,
+    panne,
+    statut: document.getElementById('vehStatut').value,
+    date: document.getElementById('vehDate').value || new Date().toISOString(),
+    saisiePar: currentRole === 'user' ? 'Technicien' : 'Admin',
+    saisieDate: existing ? undefined : new Date().toISOString()
+  };
+  if(existing) {
+    const idx = vehs.findIndex(v=>v.id===existing);
+    if(idx>=0) vehs[idx]=obj; else vehs.push(obj);
+  } else { vehs.push(obj); }
+  DB.set('vehicules', vehs);
+  closeModal('modalVehicule');
+  renderVehicules();
+  renderDashboard();
+  notify(existing?'Véhicule mis à jour':'Véhicule enregistré');
+}
+
+function editVehicule(id) {
+  const v = DB.get('vehicules').find(x=>x.id===id); if(!v) return;
+  openModal('modalVehicule');
+  const pers = DB.get('personnel');
+  const sel = document.getElementById('vehTechnicien');
+  sel.innerHTML = '<option value="">-- Sélectionner --</option>' + pers.map(p=>`<option>${p.prenom} ${p.nom}</option>`).join('');
+  document.getElementById('vehId').value=v.id;
+  document.getElementById('vehClient').value=v.client;
+  document.getElementById('vehTel').value=v.tel||'';
+  document.getElementById('vehMarque').value=v.marque;
+  document.getElementById('vehModele').value=v.modele;
+  document.getElementById('vehChassis').value=v.chassis||'';
+  document.getElementById('vehAnnee').value=v.annee||'';
+  document.getElementById('vehKm').value=v.km||'';
+  // Restaurer le niveau carburant
+  const nivCarb = v.nivCarb||'';
+  document.getElementById('vehNivCarb').value = nivCarb;
+  document.querySelectorAll('.carb-btn').forEach(b=>{b.style.background='var(--acier2)';b.style.color='var(--gris2)';b.style.borderColor='var(--border)';});
+  if(nivCarb==='Vide'||nivCarb==='Plein') {
+    document.getElementById('vehNivCarbCustom').value='';
+    document.querySelectorAll('.carb-btn').forEach(b=>{ if(b.textContent===nivCarb){b.style.background='var(--rouge)';b.style.color='#fff';b.style.borderColor='var(--rouge)';} });
+  } else {
+    document.getElementById('vehNivCarbCustom').value=nivCarb;
+  }
+  document.getElementById('vehTypeCarb').value=v.typeCarb||'';
+  sel.value=v.technicien||'';
+  document.getElementById('vehPanne').value=v.panne;
+  document.getElementById('vehStatut').value=v.statut;
+  document.getElementById('vehDate').value=v.date?v.date.slice(0,16):'';
+  document.getElementById('modalVehTitle').textContent='✏️ Modifier le Véhicule';
+}
+
+function deleteVehicule(id) {
+  if(!confirm('Supprimer ce véhicule ?')) return;
+  DB.set('vehicules', DB.get('vehicules').filter(v=>v.id!==id));
+  renderVehicules(); renderDashboard(); notify('Supprimé');
+}
+
+let currentDetailId = null;
+function voirVehicule(id) {
+  const v = DB.get('vehicules').find(x=>x.id===id); if(!v) return;
+  currentDetailId = id;
+  document.getElementById('detailTitle').textContent = `🚗 ${v.marque} ${v.modele} — ${v.client}`;
+  document.getElementById('detailContent').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div style="background:var(--acier2);border-radius:8px;padding:14px;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gris);margin-bottom:6px;">Client</div>
+        <div style="font-weight:700;">${v.client}</div>
+        <div style="color:var(--gris);font-size:12px;">${v.tel||'–'}</div>
+      </div>
+      <div style="background:var(--acier2);border-radius:8px;padding:14px;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gris);margin-bottom:6px;">Véhicule</div>
+        <div style="font-weight:700;">${v.marque} ${v.modele} ${v.annee?'('+v.annee+')':''}</div>
+        <div style="color:var(--gris);font-size:12px;">${v.chassis||'Châssis non renseigné'}</div>
+      </div>
+      <div style="background:var(--acier2);border-radius:8px;padding:14px;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gris);margin-bottom:6px;">Carburant</div>
+        <div><span class="badge badge-bleu">${v.typeCarb||'–'}</span></div>
+        <div style="color:var(--gris);font-size:12px;margin-top:4px;">Niveau: ${v.nivCarb||'–'} | ${v.km?v.km+' km':'–'}</div>
+      </div>
+      <div style="background:var(--acier2);border-radius:8px;padding:14px;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gris);margin-bottom:6px;">Statut</div>
+        <div>${statutBadge(v.statut)}</div>
+        <div style="color:var(--gris);font-size:12px;margin-top:4px;">Entrée: ${fmtDateTime(v.date)}</div>
+      </div>
+    </div>
+    <div style="background:var(--acier2);border-radius:8px;padding:14px;margin-bottom:12px;">
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gris);margin-bottom:8px;">Panne déclarée</div>
+      <div>${v.panne}</div>
+    </div>
+    <div style="background:var(--acier2);border-radius:8px;padding:14px;">
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gris);margin-bottom:6px;">Technicien en charge</div>
+      <div style="font-weight:700;">${v.technicien||'Non assigné'}</div>
+    </div>`;
+  document.getElementById('modalVehDetail').classList.add('active');
+}
+
+function imprimerFactureRapide() {
+  if(!currentDetailId) return;
+  const v = DB.get('vehicules').find(x=>x.id===currentDetailId); if(!v) return;
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Fiche - ${v.client}</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:40px;color:#000;max-width:794px;margin:0 auto;}
+    h1{text-align:center;font-size:22px;margin-bottom:4px;}
+    .sub{text-align:center;color:#666;margin-bottom:32px;font-size:13px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:24px;}
+    td,th{border:1px solid #ddd;padding:10px;font-size:13px;}
+    th{background:#f5f5f5;font-weight:600;}
+    .signature{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:48px;}
+    .sign-box{border-top:1px solid #000;padding-top:10px;text-align:center;font-size:12px;}
+    @media print{button{display:none;}}
+  </style></head><body>
+  <div style="text-align:center;">${garageLogoHTML()}</div>
+  <h1>${escH(garageNom())}</h1>
+  <div class="sub">Fiche de Réparation | Date: ${new Date().toLocaleDateString('fr-FR')}</div>
+  <table>
+    <tr><th>CLIENT</th><td>${v.client}</td><th>TÉL.</th><td>${v.tel||'–'}</td></tr>
+    <tr><th>VÉHICULE</th><td>${v.marque} ${v.modele}</td><th>ANNÉE</th><td>${v.annee||'–'}</td></tr>
+    <tr><th>CHÂSSIS</th><td>${v.chassis||'–'}</td><th>KM</th><td>${v.km||'–'}</td></tr>
+    <tr><th>CARBURANT</th><td>${v.typeCarb||'–'}</td><th>NIVEAU</th><td>${v.nivCarb||'–'}</td></tr>
+    <tr><th>PANNE</th><td colspan="3">${v.panne}</td></tr>
+    <tr><th>TECHNICIEN</th><td>${v.technicien||'–'}</td><th>STATUT</th><td>${v.statut}</td></tr>
+    <tr><th>DATE ENTRÉE</th><td colspan="3">${fmtDateTime(v.date)}</td></tr>
+  </table>
+  <div class="signature">
+    <div class="sign-box">Signature Client</div>
+    <div class="sign-box">Cachet & Signature Garage</div>
+  </div>
+  <button onclick="window.print()" style="margin-top:24px;padding:10px 20px;background:#e94560;color:#fff;border:none;cursor:pointer;border-radius:6px;">🖨️ Imprimer</button>
+  </body></html>`);
+}
+
+// ============================================================
+// PERSONNEL
+// ============================================================
+function renderPersonnel() {
+  const pers = DB.get('personnel');
+  const presents = pers.filter(p=>p.arrivee && !p.depart).length;
+  document.getElementById('statsPersonnel').innerHTML = `
+    <div class="stat-card vert"><div class="stat-label">Présents</div><div class="stat-value">${presents}</div></div>
+    <div class="stat-card bleu"><div class="stat-label">Effectif</div><div class="stat-value">${pers.length}</div></div>`;
+  const tbody = document.getElementById('tablePersonnel');
+  tbody.innerHTML = pers.length ? pers.map(p=>`
+    <tr>
+      <td><b>${p.prenom} ${p.nom}</b></td>
+      <td><span class="badge badge-bleu">${p.fonction}</span></td>
+      <td>${p.tel||'–'}</td>
+      <td>${p.arrivee||'–'}</td>
+      <td>${p.depart||'–'}</td>
+      <td>${p.arrivee&&!p.depart?'<span class="badge badge-vert">✅ Présent</span>':'<span class="badge badge-orange">Absent</span>'}</td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="editPersonnel('${p.id}')">✏️</button>
+        ${currentRole==='admin'?`<button class="btn btn-secondary btn-sm" onclick="deletePersonnel('${p.id}')">🗑</button>`:''}
+      </td>
+    </tr>`).join('')
+    : `<tr><td colspan="7"><div class="empty"><div class="empty-icon">👥</div><p>Aucun employé enregistré</p></div></td></tr>`;
+}
+
+function savePersonnel() {
+  const prenom = document.getElementById('perPrenom').value.trim();
+  const nom = document.getElementById('perNom').value.trim();
+  if(!prenom||!nom) { notify('Prénom et Nom obligatoires','error'); return; }
+  const pers = DB.get('personnel');
+  const existing = document.getElementById('perId').value;
+  const obj = {
+    id: existing||uid(), prenom, nom,
+    fonction: document.getElementById('perFonction').value,
+    tel: document.getElementById('perTel').value,
+    arrivee: document.getElementById('perArrivee').value,
+    depart: document.getElementById('perDepart').value,
+    date: new Date().toISOString().slice(0,10)
+  };
+  if(existing) { const i=pers.findIndex(p=>p.id===existing); if(i>=0)pers[i]=obj; else pers.push(obj); }
+  else pers.push(obj);
+  DB.set('personnel', pers);
+  closeModal('modalPersonnel');
+  renderPersonnel();
+  notify(existing?'Mis à jour':'Employé ajouté');
+}
+
+function editPersonnel(id) {
+  const p = DB.get('personnel').find(x=>x.id===id); if(!p) return;
+  openModal('modalPersonnel');
+  document.getElementById('perId').value=p.id;
+  document.getElementById('perPrenom').value=p.prenom;
+  document.getElementById('perNom').value=p.nom;
+  document.getElementById('perFonction').value=p.fonction;
+  document.getElementById('perTel').value=p.tel||'';
+  document.getElementById('perArrivee').value=p.arrivee||'';
+  document.getElementById('perDepart').value=p.depart||'';
+}
+
+function deletePersonnel(id) {
+  if(!confirm('Supprimer cet employé ?')) return;
+  DB.set('personnel', DB.get('personnel').filter(p=>p.id!==id));
+  renderPersonnel(); notify('Supprimé');
+}
+
+// ============================================================
+// FINANCE
+// ============================================================
+function renderFinance() {
+  let fins = DB.get('finances');
+  if(finFilter!=='tous') fins=fins.filter(f=>f.type===finFilter);
+  const all = DB.get('finances');
+  const totalE = all.filter(f=>f.type==='entrée').reduce((s,f)=>s+(parseFloat(f.prixPiece)||0)+(parseFloat(f.mo)||0),0);
+  const totalS = all.filter(f=>f.type==='sortie').reduce((s,f)=>s+(parseFloat(f.prixPiece)||0)+(parseFloat(f.mo)||0),0);
+  document.getElementById('statsFinance').innerHTML = `
+    <div class="stat-card vert"><div class="stat-label">Total Entrées</div><div class="stat-value" style="font-size:22px;">${fmt(totalE)}</div></div>
+    <div class="stat-card rouge"><div class="stat-label">Total Sorties</div><div class="stat-value" style="font-size:22px;">${fmt(totalS)}</div></div>
+    <div class="stat-card orange"><div class="stat-label">Solde</div><div class="stat-value" style="font-size:22px;">${fmt(totalE-totalS)}</div></div>`;
+  const tbody = document.getElementById('tableFinance');
+  tbody.innerHTML = fins.length ? fins.slice().reverse().map(f=>{
+    const total = (parseFloat(f.prixPiece)||0) + (parseFloat(f.mo)||0);
+    const reste = total - (parseFloat(f.avance)||0);
+    return `<tr>
+      <td style="font-size:12px;color:var(--gris);">${fmtDateTime(f.date)}</td>
+      <td>${f.type==='entrée'?'<span class="badge badge-vert">Entrée</span>':'<span class="badge badge-rouge">Sortie</span>'}</td>
+      <td><b>${f.desig}</b></td>
+      <td>${f.piece||'–'}</td>
+      <td>
+        <div>Pièce: ${fmt(f.prixPiece)}</div>
+        <div>MO: ${fmt(f.mo)}</div>
+        <div style="color:var(--orange);font-weight:700;">Reste: ${fmt(reste)}</div>
+      </td>
+      <td><span class="badge badge-bleu">${f.mode}</span></td>
+      <td style="font-size:12px;color:var(--gris);">${f.comment||'–'}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-secondary btn-sm" onclick="apercuFinance('${f.id}')" title="Aperçu">👁</button>
+        <button class="btn btn-secondary btn-sm" onclick="editFinance('${f.id}')" title="Modifier" style="margin-left:4px;">✏️</button>
+        <button class="btn btn-secondary btn-sm" onclick="deleteFinance('${f.id}')" title="Supprimer" style="margin-left:4px;color:var(--rouge);border-color:rgba(233,69,96,0.3);">🗑️</button>
+      </td>
+    </tr>`;}).join('')
+    : `<tr><td colspan="8"><div class="empty"><div class="empty-icon">💰</div><p>Aucune transaction</p></div></td></tr>`;
+}
+
+function filterFin(f, btn) {
+  finFilter = f;
+  document.querySelectorAll('#page-finance .tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFinance();
+}
+
+function saveFinance() {
+  const desig = document.getElementById('finDesig').value.trim();
+  if(!desig) { notify('La désignation est obligatoire','error'); return; }
+  const fins = DB.get('finances');
+  const existing = document.getElementById('finId').value;
+  const obj = {
+    id: existing || uid(),
+    type: document.getElementById('finType').value,
+    date: document.getElementById('finDate').value || new Date().toISOString(),
+    desig,
+    piece: document.getElementById('finPiece').value,
+    prixPiece: document.getElementById('finPrixPiece').value,
+    mo: document.getElementById('finMO').value,
+    avance: document.getElementById('finAvance').value,
+    mode: document.getElementById('finMode').value,
+    comment: document.getElementById('finComment').value
+  };
+  if(existing) {
+    const idx = fins.findIndex(x=>x.id===existing);
+    if(idx>=0) fins[idx]=obj; else fins.push(obj);
+  } else {
+    fins.push(obj);
+  }
+  DB.set('finances', fins);
+  closeModal('modalFinance');
+  renderFinance();
+  notify(existing ? 'Transaction modifiée' : 'Transaction enregistrée');
+}
+
+function editFinance(id) {
+  const f = DB.get('finances').find(x=>x.id===id); if(!f) return;
+  document.getElementById('finId').value = f.id;
+  document.getElementById('finType').value = f.type;
+  document.getElementById('finDate').value = f.date ? f.date.slice(0,16) : '';
+  document.getElementById('finDesig').value = f.desig;
+  document.getElementById('finPiece').value = f.piece||'';
+  document.getElementById('finPrixPiece').value = f.prixPiece||'';
+  document.getElementById('finMO').value = f.mo||'';
+  document.getElementById('finAvance').value = f.avance||'';
+  document.getElementById('finMode').value = f.mode||'Espèces';
+  document.getElementById('finComment').value = f.comment||'';
+  document.getElementById('modalFinance').classList.add('active');
+}
+
+function deleteFinance(id) {
+  if(!confirm('Supprimer cette transaction ?')) return;
+  DB.set('finances', DB.get('finances').filter(f=>f.id!==id));
+  renderFinance();
+  notify('Transaction supprimée');
+}
+
+function apercuFinance(id) {
+  const f = DB.get('finances').find(x=>x.id===id); if(!f) return;
+  const total = (parseFloat(f.prixPiece)||0) + (parseFloat(f.mo)||0);
+  const reste = total - (parseFloat(f.avance)||0);
+  const typeColor = f.type==='entrée' ? '#00d4aa' : '#e94560';
+  const typeLabel = f.type==='entrée' ? 'ENTRÉE' : 'SORTIE';
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Aperçu Transaction</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:40px;color:#000;max-width:640px;margin:0 auto;font-size:13px;}
+    h1{font-size:22px;margin-bottom:4px;text-align:center;}
+    .sub{text-align:center;color:#666;margin-bottom:28px;font-size:12px;}
+    .badge-type{display:inline-block;padding:4px 14px;border-radius:20px;font-weight:700;font-size:13px;color:#fff;background:${typeColor};margin-bottom:20px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+    td,th{border:1px solid #ddd;padding:10px;font-size:13px;}
+    th{background:#f5f5f5;font-weight:600;width:40%;}
+    .total-row{font-weight:700;background:#fff8e1;}
+    .reste-row{font-weight:700;color:#e94560;}
+    @media print{button{display:none;}}
+  </style></head><body>
+  <div style="text-align:center;">${garageLogoHTML()}</div>
+  <h1>${escH(garageNom())}</h1>
+  <div class="sub">Aperçu Transaction | ${new Date(f.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+  <div style="text-align:center;margin-bottom:20px;"><span class="badge-type">${typeLabel}</span></div>
+  <table>
+    <tr><th>Désignation</th><td><b>${f.desig}</b></td></tr>
+    <tr><th>Pièce / Article</th><td>${f.piece||'–'}</td></tr>
+    <tr><th>Prix Pièce</th><td>${fmt_print(f.prixPiece)}</td></tr>
+    <tr><th>Main d'Œuvre</th><td>${fmt_print(f.mo)}</td></tr>
+    <tr class="total-row"><th>TOTAL</th><td>${fmt_print(total)}</td></tr>
+    <tr><th>Avance reçue</th><td>${fmt_print(f.avance)}</td></tr>
+    <tr class="reste-row"><th>RESTE À PAYER</th><td>${fmt_print(reste<0?0:reste)}</td></tr>
+    <tr><th>Mode de paiement</th><td>${f.mode||'–'}</td></tr>
+    <tr><th>Commentaire</th><td>${f.comment||'–'}</td></tr>
+  </table>
+  <button onclick="window.print()" style="display:block;margin:0 auto;padding:10px 28px;background:#e94560;color:#fff;border:none;cursor:pointer;border-radius:6px;font-size:14px;">🖨️ Imprimer</button>
+  </body></html>`);
+  function fmt_print(n){return Number(n||0).toLocaleString('fr-FR')+' GNF';}
+}
+
+// ============================================================
+// FACTURES
+// ============================================================
+function calcFacture() {
+  const p = parseFloat(document.getElementById('facPieces').value)||0;
+  const m = parseFloat(document.getElementById('facMO').value)||0;
+  const a = parseFloat(document.getElementById('facAvance').value)||0;
+  const reste = (p+m) - a;
+  document.getElementById('facReste').value = fmt(reste<0?0:reste);
+}
+
+function saveFacture() {
+  const client = document.getElementById('facClient').value.trim();
+  if(!client) { notify('Le client est obligatoire','error'); return; }
+  const facs = DB.get('factures');
+  const p = parseFloat(document.getElementById('facPieces').value)||0;
+  const m = parseFloat(document.getElementById('facMO').value)||0;
+  const a = parseFloat(document.getElementById('facAvance').value)||0;
+  const existing = document.getElementById('facId').value;
+  const obj = {
+    id: existing || uid(),
+    num: existing ? (facs.find(x=>x.id===existing)||{}).num || ('FAC-'+String(facs.length+1).padStart(4,'0')) : 'FAC-' + String(facs.length+1).padStart(4,'0'),
+    type: document.getElementById('facType').value,
+    date: document.getElementById('facDate').value,
+    client,
+    vehicule: document.getElementById('facVehicule').value,
+    pieces: p, mo: m, avance: a,
+    total: p+m,
+    reste: Math.max(0,(p+m)-a),
+    statut: document.getElementById('facStatut').value
+  };
+  if(existing) {
+    const idx = facs.findIndex(x=>x.id===existing);
+    if(idx>=0) facs[idx]=obj; else facs.push(obj);
+  } else {
+    facs.push(obj);
+  }
+  DB.set('factures', facs);
+  closeModal('modalFacture');
+  renderFactures();
+  notify(existing ? 'Facture modifiée' : 'Document créé');
+}
+
+function typeColor(type) {
+  if(type==='Devis') return 'badge-orange';
+  if(type==='Facture Proforma') return 'badge-bleu';
+  return 'badge-vert';
+}
+
+function renderFactures() {
+  const facs = DB.get('factures');
+  const tbody = document.getElementById('tableFactures');
+  tbody.innerHTML = facs.length ? facs.slice().reverse().map(f=>{
+    return `<tr>
+      <td style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;">${f.num}</td>
+      <td><span class="badge ${typeColor(f.type)}">${f.type}</span></td>
+      <td><b>${f.client}</b></td>
+      <td>${f.vehicule||'–'}</td>
+      <td>
+        <div style="font-weight:700;">${fmt(f.total)}</div>
+        <div style="font-size:11px;color:var(--gris);">Reste: ${fmt(f.reste)}</div>
+      </td>
+      <td>${f.statut==='Payé'?'<span class="badge badge-vert">✅ Payé</span>':f.statut==='Partiellement payé'?'<span class="badge badge-orange">⚡ Partiel</span>':'<span class="badge badge-rouge">⏳ En attente</span>'}</td>
+      <td>${fmtDate(f.date)}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-secondary btn-sm" onclick="imprimerFacture('${f.id}')" title="Imprimer">🖨️</button>
+        <button class="btn btn-secondary btn-sm" onclick="editFacture('${f.id}')" title="Modifier" style="margin-left:4px;">✏️</button>
+        <button class="btn btn-secondary btn-sm" onclick="deleteFacture('${f.id}')" title="Supprimer" style="margin-left:4px;color:var(--rouge);border-color:rgba(233,69,96,0.3);">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('')
+  : `<tr><td colspan="8"><div class="empty"><div class="empty-icon">🧾</div><p>Aucune facture créée</p></div></td></tr>`;
+}
+
+function editFacture(id) {
+  const f = DB.get('factures').find(x=>x.id===id); if(!f) return;
+  openModal('modalFacture');
+  document.getElementById('facId').value = f.id;
+  document.getElementById('facType').value = f.type;
+  document.getElementById('facDate').value = f.date;
+  document.getElementById('facClient').value = f.client;
+  document.getElementById('facVehicule').value = f.vehicule||'';
+  document.getElementById('facPieces').value = f.pieces||0;
+  document.getElementById('facMO').value = f.mo||0;
+  document.getElementById('facAvance').value = f.avance||0;
+  document.getElementById('facStatut').value = f.statut;
+  calcFacture();
+}
+
+function deleteFacture(id) {
+  if(!confirm('Supprimer définitivement cette facture ?')) return;
+  DB.set('factures', DB.get('factures').filter(f=>f.id!==id));
+  renderFactures();
+  notify('Facture supprimée');
+}
+
+function imprimerFacture(id) {
+  const f = DB.get('factures').find(x=>x.id===id); if(!f) return;
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>${f.num}</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:40px;color:#000;max-width:794px;margin:0 auto;font-size:13px;}
+    h1{font-size:26px;margin-bottom:4px;}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:16px;border-bottom:2px solid #000;}
+    .doctype{font-size:20px;font-weight:700;color:#e94560;text-transform:uppercase;letter-spacing:2px;}
+    table{width:100%;border-collapse:collapse;margin:20px 0;}
+    th{background:#e94560;color:#fff;padding:10px;text-align:left;}
+    td{border:1px solid #ddd;padding:10px;}
+    .total-row{font-weight:700;background:#f9f9f9;}
+    .footer{margin-top:48px;display:grid;grid-template-columns:1fr 1fr;gap:40px;}
+    .sign{border-top:1px solid #000;padding-top:8px;text-align:center;font-size:12px;}
+    @media print{button{display:none;}}
+  </style></head><body>
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:14px;">${garageLogoHTML('max-height:64px;max-width:140px;object-fit:contain;')}<div><h1>${escH(garageNom())}</h1><p>${escH(garageLigne())}</p></div></div>
+    <div style="text-align:right;">
+      <div class="doctype">${f.type}</div>
+      <div>N° ${f.num}</div>
+      <div>Date: ${fmtDate(f.date)}</div>
+    </div>
+  </div>
+  <p><b>CLIENT:</b> ${f.client}</p>
+  <p><b>VÉHICULE:</b> ${f.vehicule||'–'}</p>
+  <table>
+    <thead><tr><th>Désignation</th><th>Montant</th></tr></thead>
+    <tbody>
+      <tr><td>Pièces détachées</td><td>${fmt(f.pieces)}</td></tr>
+      <tr><td>Main d'œuvre</td><td>${fmt(f.mo)}</td></tr>
+      <tr class="total-row"><td>TOTAL</td><td>${fmt(f.total)}</td></tr>
+      <tr><td>Avance reçue</td><td>${fmt(f.avance)}</td></tr>
+      <tr class="total-row" style="color:#e94560;"><td>RESTE À PAYER</td><td>${fmt(f.reste)}</td></tr>
+    </tbody>
+  </table>
+  <p>Statut: <b>${f.statut}</b></p>
+  <div class="footer">
+    <div class="sign">Signature Client</div>
+    <div class="sign">Cachet & Signature</div>
+  </div>
+  <button onclick="window.print()" style="margin-top:24px;padding:10px 20px;background:#e94560;color:#fff;border:none;cursor:pointer;border-radius:6px;">🖨️ Imprimer (Format A4)</button>
+  </body></html>`);
+}
+
+// ============================================================
+// PARAMÈTRES
+// ============================================================
+function togglePass(inputId, btnId) {
+  const inp = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  if(inp.type === 'password') {
+    inp.type = 'text';
+    btn.style.color = 'var(--rouge)';
+  } else {
+    inp.type = 'password';
+    btn.style.color = 'var(--gris)';
+  }
+}
+
+function savePasswords() {
+  const ap  = document.getElementById('newAdminPass').value;
+  const apc = document.getElementById('confirmAdminPass').value;
+  const tp  = document.getElementById('newTechPass').value;
+  const tpc = document.getElementById('confirmTechPass').value;
+  const errEl = document.getElementById('passError');
+  errEl.style.display = 'none';
+
+  if(ap && ap !== apc) {
+    errEl.textContent = '❌ Les mots de passe Admin ne correspondent pas.';
+    errEl.style.display = 'block'; return;
+  }
+  if(tp && tp !== tpc) {
+    errEl.textContent = '❌ Les mots de passe Technicien ne correspondent pas.';
+    errEl.style.display = 'block'; return;
+  }
+  if(!ap && !tp) {
+    errEl.textContent = '⚠️ Aucun mot de passe saisi.';
+    errEl.style.display = 'block'; return;
+  }
+
+  const creds = getCredentials();
+  if(ap) creds.admin = ap;
+  if(tp) creds.tech  = tp;
+  DB.setObj('credentials', creds);
+  notify('Mots de passe mis à jour avec succès');
+  ['newAdminPass','confirmAdminPass','newTechPass','confirmTechPass'].forEach(id => {
+    document.getElementById(id).value = '';
+    document.getElementById(id).type  = 'password';
+  });
+  ['eyeAdmin','eyeAdminC','eyeTech','eyeTechC'].forEach(id => {
+    document.getElementById(id).style.color = 'var(--gris)';
+  });
+}
+
+function exportData() {
+  const data = {
+    vehicules: DB.get('vehicules'),
+    personnel: DB.get('personnel'),
+    finances: DB.get('finances'),
+    factures: DB.get('factures'),
+    exportDate: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sauvegarde_garage_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  notify('Export réussi');
+}
+
+function clearData() {
+  ['vehicules','personnel','finances','factures'].forEach(k=>localStorage.removeItem(DB_PREFIX+k));
+  notify('Données réinitialisées','error');
+  renderDashboard();
+}
+
+// ============================================================
+// AUTO-REMPLISSAGE FACTURE DEPUIS VÉHICULE
+// ============================================================
+function autoFillFacture() {
+  const id = document.getElementById('facVehSelect').value;
+  if(!id) return;
+  const v = DB.get('vehicules').find(x=>x.id===id);
+  if(!v) return;
+  document.getElementById('facClient').value = v.client;
+  document.getElementById('facVehicule').value = `${v.marque} ${v.modele}${v.chassis?' – '+v.chassis:''}`;
+  notify('Champs client et véhicule remplis automatiquement ✅');
+}
+
+// ============================================================
+// SYNC TEMPS RÉEL ENTRE SESSIONS (storage event)
+// ============================================================
+window.addEventListener('storage', function(e) {
+  if(!e.key || !e.key.startsWith(DB_PREFIX)) return;
+  const page = document.querySelector('.page.active');
+  if(!page) return;
+  const pid = page.id;
+  if(pid==='page-dashboard') renderDashboard();
+  else if(pid==='page-vehicules') renderVehicules();
+  else if(pid==='page-personnel') renderPersonnel();
+  else if(pid==='page-finance' && currentRole==='admin') renderFinance();
+  else if(pid==='page-factures' && currentRole==='admin') renderFactures();
+  // Rafraîchir aussi le sélecteur véhicule si la modal facture est ouverte
+  if(document.getElementById('modalFacture').classList.contains('active')) {
+    const vehs = DB.get('vehicules');
+    const sel = document.getElementById('facVehSelect');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">— Sélectionner un véhicule (optionnel) —</option>'
+      + vehs.map(v=>`<option value="${v.id}">${v.client} — ${v.marque} ${v.modele} (${v.statut})</option>`).join('');
+    sel.value = prev;
+  }
+});
+
+// ============================================================
+// NIVEAU CARBURANT – boutons + champ libre
+// ============================================================
+function setNivCarb(val, btn) {
+  document.getElementById('vehNivCarb').value = val;
+  document.getElementById('vehNivCarbCustom').value = '';
+  document.querySelectorAll('.carb-btn').forEach(b=>{
+    b.style.background='var(--acier2)';
+    b.style.color='var(--gris2)';
+    b.style.borderColor='var(--border)';
+  });
+  btn.style.background='var(--rouge)';
+  btn.style.color='#fff';
+  btn.style.borderColor='var(--rouge)';
+}
+function setNivCarbCustom(val) {
+  document.getElementById('vehNivCarb').value = val;
+  document.querySelectorAll('.carb-btn').forEach(b=>{
+    b.style.background='var(--acier2)';
+    b.style.color='var(--gris2)';
+    b.style.borderColor='var(--border)';
+  });
+}
+
+// Initialisation appelée par la porte d'abonnement (module) une fois le compte vérifié
+window.initGarage = function(uid){
+  DB_PREFIX = 'atms_' + uid + '_';
+  try {
+    if (!localStorage.getItem('atms_migrated')) {
+      ['vehicules','personnel','finances','factures','garage','credentials','rappels_appeles'].forEach(function(k){
+        var v = localStorage.getItem('atms_'+k);
+        if (v !== null && localStorage.getItem(DB_PREFIX+k) === null) localStorage.setItem(DB_PREFIX+k, v);
+      });
+      localStorage.setItem('atms_migrated', uid);
+    }
+  } catch(e) {}
+  applyBranding();
+};
+window.quitterCompte = function(){ window.__garageSignOut && window.__garageSignOut(); };
+</script>
+
+
+<button id="installBtn" style="display:none;position:fixed;right:14px;bottom:14px;z-index:99999;background:#e94560;color:#fff;border:0;border-radius:999px;padding:12px 18px;font:700 14px Barlow,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer">📲 Installer l'application</button>
+<script>
+(function(){
+  if('serviceWorker' in navigator) window.addEventListener('load',function(){navigator.serviceWorker.register('sw-garage.js').catch(function(){})});
+  var dp=null,b=document.getElementById('installBtn');
+  var standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e;if(!standalone)b.style.display='block'});
+  window.addEventListener('appinstalled',function(){b.style.display='none';dp=null});
+  if(ios&&!standalone)b.style.display='block';
+  b.onclick=function(){
+    if(dp){dp.prompt();dp.userChoice.finally(function(){dp=null;b.style.display='none'})}
+    else alert("Sur iPhone : touchez le bouton Partager, puis « Sur l'écran d'accueil ».");
+  };
+})();
+</script>
+<script type="module">
+import{fbAuth as auth,fbDB as db,doc,getDoc,onSnapshot,signOut,onAuthStateChanged}from"./firebase.js";
+const BACK="garages.html";
+let started=false,unsub=null;
+const back=()=>location.replace(BACK);
+window.__garageSignOut=async()=>{try{await signOut(auth)}catch(e){}back()};
+const ok=d=>d&&!d.blocked&&(d.activeUntil||0)>Date.now();
+onAuthStateChanged(auth,async u=>{
+  if(!u){back();return}
+  try{
+    const a=await getDoc(doc(db,"admins",u.uid));
+    if(a.exists()){location.replace("admin.html");return}
+  }catch(e){}
+  if(unsub)unsub();
+  unsub=onSnapshot(doc(db,"site_garages",u.uid),snap=>{
+    const d=snap.exists()?snap.data():null;
+    if(!ok(d)){back();return}
+    if(!started){
+      started=true;
+      window.initGarage(u.uid);
+      const h=document.getElementById("gate-hide");if(h)h.remove();
+    }
+  },()=>back());
+});
+</script>
+</body>
+</html>
